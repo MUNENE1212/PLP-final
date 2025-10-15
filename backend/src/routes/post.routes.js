@@ -8,7 +8,9 @@ const {
   deletePost,
   toggleLike,
   addComment,
-  deleteComment
+  deleteComment,
+  sharePost,
+  toggleBookmark
 } = require('../controllers/post.controller');
 const { protect, optionalAuth } = require('../middleware/auth');
 const { validate } = require('../middleware/validation');
@@ -37,6 +39,8 @@ router.put('/:id', protect, updatePost);
 router.delete('/:id', protect, deletePost);
 
 router.post('/:id/like', protect, toggleLike);
+router.post('/:id/share', protect, sharePost);
+router.post('/:id/bookmark', protect, toggleBookmark);
 
 router.post(
   '/:id/comment',

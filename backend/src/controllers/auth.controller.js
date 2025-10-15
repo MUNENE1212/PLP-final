@@ -81,21 +81,45 @@ exports.register = async (req, res) => {
       message: 'User registered successfully. Please verify your email.',
       token,
       user: {
-        id: user._id,
+        _id: user._id,
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
         phoneNumber: user.phoneNumber,
         role: user.role,
-        isEmailVerified: user.isEmailVerified
+        profilePicture: user.profilePicture?.url || user.profilePicture,
+        status: user.status,
+        isEmailVerified: user.isEmailVerified,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
       }
     });
   } catch (error) {
-    console.error('Register error:', error);
+    console.error('Register error:', error.message);
+
+    // Handle Mongoose validation errors
+    if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors
+      });
+    }
+
+    // Handle duplicate key errors
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern)[0];
+      return res.status(400).json({
+        success: false,
+        message: `${field.charAt(0).toUpperCase() + field.slice(1)} already exists`
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: 'Error registering user',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -184,15 +208,18 @@ exports.login = async (req, res) => {
       success: true,
       token,
       user: {
-        id: user._id,
+        _id: user._id,
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
         phoneNumber: user.phoneNumber,
         role: user.role,
-        profilePicture: user.profilePicture,
+        profilePicture: user.profilePicture?.url || user.profilePicture,
+        status: user.status,
         isEmailVerified: user.isEmailVerified,
-        rating: user.rating
+        rating: user.rating,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
       }
     });
   } catch (error) {
@@ -273,11 +300,18 @@ exports.verify2FA = async (req, res) => {
       success: true,
       token,
       user: {
-        id: user._id,
+        _id: user._id,
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        role: user.role
+        phoneNumber: user.phoneNumber,
+        role: user.role,
+        profilePicture: user.profilePicture?.url || user.profilePicture,
+        status: user.status,
+        isEmailVerified: user.isEmailVerified,
+        rating: user.rating,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
       }
     });
   } catch (error) {

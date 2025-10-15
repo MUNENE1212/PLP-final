@@ -289,6 +289,71 @@ const UserSchema = new Schema({
     } // percentage
   },
 
+  // Subscription & Pro Features (for technicians)
+  subscription: {
+    plan: {
+      type: String,
+      enum: ['free', 'pro', 'premium'],
+      default: 'free'
+    },
+    status: {
+      type: String,
+      enum: ['active', 'cancelled', 'expired', 'trial'],
+      default: 'active'
+    },
+    startDate: Date,
+    endDate: Date,
+    trialEndsAt: Date,
+    autoRenew: {
+      type: Boolean,
+      default: true
+    },
+    paymentMethod: String,
+    features: {
+      boostedVisibility: {
+        type: Boolean,
+        default: false
+      },
+      boostedPosts: {
+        type: Boolean,
+        default: false
+      },
+      prioritySupport: {
+        type: Boolean,
+        default: false
+      },
+      unlimitedPortfolio: {
+        type: Boolean,
+        default: false
+      },
+      advancedAnalytics: {
+        type: Boolean,
+        default: false
+      },
+      customBadge: {
+        type: Boolean,
+        default: false
+      },
+      featuredListing: {
+        type: Boolean,
+        default: false
+      }
+    },
+    billingHistory: [{
+      amount: Number,
+      currency: {
+        type: String,
+        default: 'KES'
+      },
+      date: Date,
+      transactionId: String,
+      status: {
+        type: String,
+        enum: ['pending', 'completed', 'failed', 'refunded']
+      }
+    }]
+  },
+
   // CORPORATE-SPECIFIC FIELDS
   companyName: String,
   companyRegistration: String,
@@ -585,6 +650,37 @@ UserSchema.methods.addFCMToken = function(token, device, platform) {
 // Remove FCM Token
 UserSchema.methods.removeFCMToken = function(token) {
   this.fcmTokens = this.fcmTokens.filter(t => t.token !== token);
+};
+
+// Check if user has an active pro subscription
+UserSchema.methods.isPro = function() {
+  if (!this.subscription) return false;
+
+  const isProOrPremium = ['pro', 'premium'].includes(this.subscription.plan);
+  const isActive = this.subscription.status === 'active';
+  const notExpired = !this.subscription.endDate || new Date(this.subscription.endDate) > new Date();
+
+  return isProOrPremium && isActive && notExpired;
+};
+
+// Check if user has a specific feature
+UserSchema.methods.hasFeature = function(featureName) {
+  if (!this.subscription || !this.subscription.features) return false;
+  return this.subscription.features[featureName] === true;
+};
+
+// Get subscription boost multiplier for matching algorithm
+UserSchema.methods.getBoostMultiplier = function() {
+  if (!this.isPro()) return 1.0;
+
+  switch (this.subscription.plan) {
+    case 'premium':
+      return 1.5; // 50% boost
+    case 'pro':
+      return 1.25; // 25% boost
+    default:
+      return 1.0;
+  }
 };
 
 // ===== STATIC METHODS =====

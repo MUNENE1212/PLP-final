@@ -2,6 +2,7 @@ const User = require('../models/User');
 const Booking = require('../models/Booking');
 const Review = require('../models/Review');
 const Post = require('../models/Post');
+const mediaService = require('../services/media.service');
 
 /**
  * @desc    Get all users (with filters)
@@ -475,25 +476,27 @@ exports.uploadProfilePicture = async (req, res) => {
       });
     }
 
-    // TODO: Upload to Cloudinary
-    // const result = await cloudinary.uploader.upload(req.file.path);
+    // Upload to Cloudinary
+    const result = await mediaService.uploadProfilePicture(req.file);
 
+    // Update user profile picture
     const user = await User.findByIdAndUpdate(
       req.params.id,
-      { profilePicture: req.file.path }, // Use Cloudinary URL in production
+      { profilePicture: result.url },
       { new: true }
-    ).select('-password');
+    ).select('-password -twoFactorAuth');
 
     res.status(200).json({
       success: true,
       message: 'Profile picture uploaded successfully',
-      profilePicture: user.profilePicture
+      profilePicture: user.profilePicture,
+      publicId: result.publicId
     });
   } catch (error) {
     console.error('Upload profile picture error:', error);
     res.status(500).json({
       success: false,
-      message: 'Error uploading profile picture'
+      message: error.message || 'Error uploading profile picture'
     });
   }
 };

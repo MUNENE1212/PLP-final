@@ -55,21 +55,96 @@ exports.getPosts = async (req, res) => {
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
+    // Fetch more posts than needed to allow for pro boosting
+    const fetchLimit = parseInt(limit) * 3;
+
     const posts = await Post.find(query)
-      .populate('author', 'firstName lastName profilePicture role rating')
+      .populate('author', 'firstName lastName profilePicture role rating subscription')
       .sort(sort)
-      .skip(skip)
-      .limit(parseInt(limit));
+      .limit(fetchLimit);
 
     const total = await Post.countDocuments(query);
 
+    // Calculate engagement score and apply pro boost
+    const postsWithScores = posts.map(post => {
+      // Calculate base engagement score
+      const likesWeight = 3;
+      const commentsWeight = 5;
+      const sharesWeight = 10;
+      const viewsWeight = 0.1;
+      const recencyBonus = Math.max(0, 100 - ((Date.now() - post.createdAt) / (1000 * 60 * 60 * 24))); // Decay over 100 days
+
+      const engagementScore =
+        (post.engagement.likes.length * likesWeight) +
+        (post.comments.length * commentsWeight) +
+        (post.sharesCount * sharesWeight) +
+        (post.engagement.views * viewsWeight) +
+        recencyBonus;
+
+      // Apply pro boost
+      let finalScore = engagementScore;
+      let boostApplied = false;
+      let boostMultiplier = 1.0;
+
+      if (post.author && post.author.subscription) {
+        const { plan, status, endDate, features } = post.author.subscription;
+        const isActive = status === 'active';
+        const notExpired = !endDate || new Date(endDate) > new Date();
+        const hasBoostedPosts = features && features.boostedPosts;
+
+        if (isActive && notExpired && hasBoostedPosts) {
+          boostApplied = true;
+          if (plan === 'premium') {
+            boostMultiplier = 2.0; // 100% boost for premium
+          } else if (plan === 'pro') {
+            boostMultiplier = 1.5; // 50% boost for pro
+          }
+          finalScore = engagementScore * boostMultiplier;
+        }
+      }
+
+      return {
+        post,
+        engagementScore,
+        finalScore,
+        boostApplied,
+        boostMultiplier
+      };
+    });
+
+    // Sort by final score
+    postsWithScores.sort((a, b) => b.finalScore - a.finalScore);
+
+    // Apply pagination after scoring
+    const paginatedScores = postsWithScores.slice(skip, skip + parseInt(limit));
+
+    // Add isLiked and isBookmarked flags for authenticated users
+    const userId = req.user?.id;
+    const postsWithFlags = paginatedScores.map(({ post, boostApplied, boostMultiplier }) => {
+      const postObj = post.toObject();
+      if (userId) {
+        postObj.isLiked = post.engagement.likes.some(id => id.toString() === userId);
+        postObj.isBookmarked = post.bookmarks.some(id => id.toString() === userId);
+      } else {
+        postObj.isLiked = false;
+        postObj.isBookmarked = false;
+      }
+      postObj.likesCount = post.engagement.likes.length;
+      postObj.commentsCount = post.comments.length;
+      postObj.sharesCount = post.sharesCount;
+      postObj.views = post.engagement.views;
+      postObj.isBoosted = boostApplied;
+      postObj.boostLevel = boostMultiplier > 1.0 ? (boostMultiplier === 2.0 ? 'premium' : 'pro') : null;
+      return postObj;
+    });
+
     res.status(200).json({
       success: true,
-      count: posts.length,
+      count: postsWithFlags.length,
       total,
       page: parseInt(page),
       pages: Math.ceil(total / parseInt(limit)),
-      posts
+      posts: postsWithFlags
     });
   } catch (error) {
     console.error('Get posts error:', error);
@@ -277,7 +352,8 @@ exports.addComment = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Comment added successfully',
-      comment: post.comments[post.comments.length - 1]
+      comment: post.comments[post.comments.length - 1],
+      commentsCount: post.comments.length
     });
   } catch (error) {
     console.error('Add comment error:', error);
@@ -325,13 +401,85 @@ exports.deleteComment = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Comment deleted successfully'
+      message: 'Comment deleted successfully',
+      commentsCount: post.comments.length
     });
   } catch (error) {
     console.error('Delete comment error:', error);
     res.status(500).json({
       success: false,
       message: 'Error deleting comment'
+    });
+  }
+};
+
+/**
+ * @desc    Share post
+ * @route   POST /api/v1/posts/:id/share
+ * @access  Private
+ */
+exports.sharePost = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: 'Post not found'
+      });
+    }
+
+    await post.share(req.user.id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Post shared successfully',
+      sharesCount: post.sharesCount
+    });
+  } catch (error) {
+    console.error('Share post error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error sharing post'
+    });
+  }
+};
+
+/**
+ * @desc    Toggle bookmark on post
+ * @route   POST /api/v1/posts/:id/bookmark
+ * @access  Private
+ */
+exports.toggleBookmark = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: 'Post not found'
+      });
+    }
+
+    const isBookmarked = post.bookmarks.includes(req.user.id);
+
+    if (isBookmarked) {
+      await post.unbookmark(req.user.id);
+    } else {
+      await post.bookmark(req.user.id);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: isBookmarked ? 'Bookmark removed' : 'Post bookmarked',
+      bookmarked: !isBookmarked,
+      bookmarksCount: post.bookmarksCount
+    });
+  } catch (error) {
+    console.error('Toggle bookmark error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error toggling bookmark'
     });
   }
 };

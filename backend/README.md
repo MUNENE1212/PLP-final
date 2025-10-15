@@ -1,489 +1,772 @@
-# BaiTech Backend - MongoDB Database Schemas
+# BaiTech Backend API
+
+<div align="center">
+
+![BaiTech Logo](https://via.placeholder.com/150x150?text=BaiTech)
+
+**AI-Powered Technician & Community Platform**
+
+[![Node.js](https://img.shields.io/badge/Node.js-18.x-green.svg)](https://nodejs.org/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-6.x-green.svg)](https://www.mongodb.com/)
+[![Express](https://img.shields.io/badge/Express-4.x-blue.svg)](https://expressjs.com/)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+[Features](#features) • [Quick Start](#quick-start) • [API Docs](#api-documentation) • [Deployment](#deployment) • [Contributing](#contributing)
+
+</div>
+
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Architecture](#architecture)
+- [Quick Start](#quick-start)
+- [Environment Setup](#environment-setup)
+- [API Documentation](#api-documentation)
+- [Database Schema](#database-schema)
+- [Testing](#testing)
+- [Deployment](#deployment)
+- [Contributing](#contributing)
+- [License](#license)
+
+---
 
 ## Overview
 
-This is the backend implementation for the BaiTech AI-Powered Technician & Community Platform. The database schemas are designed to support both web and mobile applications (Phase 2) with a focus on scalability, performance, and maintainability.
+BaiTech is a comprehensive platform connecting customers with skilled technicians. The backend provides a robust RESTful API with real-time capabilities, AI-powered matching, payment processing, and social features.
+
+### Key Highlights
+
+- 🤖 **AI-Powered Matching**: Intelligent technician-customer matching using multi-factor algorithm
+- 💬 **Real-time Chat**: Socket.IO powered messaging system
+- 💳 **Payment Integration**: M-Pesa & Stripe payment processing
+- 🔐 **Secure Authentication**: JWT with refresh tokens, 2FA support
+- 📱 **Push Notifications**: Firebase Cloud Messaging integration
+- 🎯 **Role-Based Access**: Customer, Technician, Admin, Support roles
+- 📊 **Analytics & Reporting**: Comprehensive booking and transaction analytics
+- 🌐 **Social Features**: Community posts, reviews, ratings
+
+---
+
+## Features
+
+### Core Functionality
+
+#### 1. User Management
+- Multi-role system (Customer, Technician, Admin, Corporate, Support)
+- Email & phone verification
+- Two-factor authentication (2FA)
+- Profile management with geolocation
+- KYC verification for technicians
+- Skills & portfolio management
+
+#### 2. Booking System
+- Create, manage, and track service bookings
+- Multi-status workflow (pending → completed)
+- Scheduling with time slots
+- Location-based service requests
+- Cancellation with dynamic fee calculation
+- Dispute resolution system
+
+#### 3. AI Matching Engine
+- **9-factor scoring algorithm**:
+  - Skill match (25%)
+  - Location proximity (20%)
+  - Availability (15%)
+  - Rating (15%)
+  - Experience level (10%)
+  - Pricing (5%)
+  - Response time (5%)
+  - Completion rate (3%)
+  - Customer preference (2%)
+- User preference learning
+- Match feedback & optimization
+- Block/unblock technicians
+
+#### 4. Payment Processing
+- **M-Pesa Integration**: STK Push, callbacks, transaction query
+- **Stripe Integration**: Card payments, refunds, webhooks
+- Transaction history & receipts
+- Platform fee management
+- Wallet system (future)
+
+#### 5. Communication
+- Real-time messaging with Socket.IO
+- Conversation management
+- Typing indicators
+- Read receipts
+- File sharing support
+- Push notifications
+
+#### 6. Media Upload & Storage
+- **Cloudinary Integration**: Cloud-based file storage
+- Image upload with automatic optimization
+- Video upload with thumbnail generation
+- Multiple file uploads (up to 10 files)
+- Profile picture management
+- Responsive image transformations
+- Secure file deletion
+- Direct client upload support
+- Supported formats: JPEG, PNG, GIF, WebP, MP4, AVI, MOV
+- File size limits: Images (5MB), Videos (100MB)
+
+#### 7. Social Features
+- Community posts (text, image, video, portfolio)
+- Comments & replies
+- Likes & shares
+- Hashtags & mentions
+- Feed algorithm (engagement-based)
+- Content moderation
+
+#### 8. Reviews & Ratings
+- Multi-aspect ratings (quality, timeliness, professionalism, communication)
+- Photo/video attachments
+- Response system
+- Rating analytics
+- Verified booking reviews
+
+#### 9. Support System
+- Ticket management
+- Live chat support
+- Priority levels (low, medium, high, urgent)
+- Auto-assignment based on load
+- SLA tracking
+- Customer satisfaction ratings
+
+#### 10. Notifications
+- Push notifications (FCM)
+- Email notifications
+- SMS notifications (Africa's Talking)
+- In-app notifications
+- Customizable preferences
+
+---
 
 ## Tech Stack
 
-- **Runtime**: Node.js (v18+)
-- **Framework**: Express.js
-- **Database**: MongoDB (with Mongoose ODM)
-- **Caching**: Redis
-- **Real-time**: Socket.io
-- **Authentication**: JWT + Refresh Tokens
+### Backend
+
+| Technology | Purpose |
+|------------|---------|
+| **Node.js** | Runtime environment |
+| **Express.js** | Web framework |
+| **MongoDB** | Database |
+| **Mongoose** | ODM |
+| **Socket.IO** | Real-time communication |
+| **JWT** | Authentication |
+| **bcryptjs** | Password hashing |
+| **Stripe** | Payment processing |
+| **Africa's Talking** | SMS gateway |
+| **Firebase Admin** | Push notifications |
+| **Nodemailer** | Email service |
+| **Winston** | Logging |
+| **Swagger** | API documentation |
+
+### Infrastructure
+
+- **Database**: MongoDB (local or Atlas)
+- **Caching**: Redis (optional)
 - **File Storage**: Cloudinary
-- **Payment Gateways**: M-Pesa, Stripe
+- **Email**: SMTP (Gmail, SendGrid)
+- **SMS**: Africa's Talking / Twilio
 
-## Database Schema Overview
+---
 
-### 1. **User Model** (`/src/models/User.js`)
+## Architecture
 
-Comprehensive user schema supporting multiple roles with role-specific fields.
-
-**Key Features:**
-- Multi-role support (Customer, Technician, Admin, Corporate)
-- Geospatial location indexing for proximity searches
-- KYC verification fields
-- Portfolio management for technicians
-- Availability scheduling
-- FCM tokens for push notifications (mobile-ready)
-- Social features (followers, following)
-- Comprehensive rating system
-
-**Important Indexes:**
-- Geospatial index on `location.coordinates` (2dsphere)
-- Text search on name, skills, and bio
-- Compound indexes on role, status, and ratings
-
-**Mobile App Considerations:**
-- FCM tokens array for iOS/Android push notifications
-- Platform-specific device tracking
-- Offline-first data structure
-
-### 2. **Booking Model** (`/src/models/Booking.js`)
-
-Advanced booking system with Finite State Machine (FSM) for status management.
-
-**Key Features:**
-- 16 distinct booking states with valid transitions
-- Geospatial service location
-- AI matching integration
-- Price breakdown with platform fees
-- Dispute resolution system
-- Quality assurance tracking
-- Corporate booking support
-- Warranty management
-
-**FSM States:**
 ```
-pending → matching → assigned → accepted → en_route →
-arrived → in_progress → completed → verified →
-payment_pending → paid
+backend/
+├── src/
+│   ├── config/          # Configuration files
+│   │   ├── db.js        # Database connection
+│   │   ├── swagger.js   # Swagger setup
+│   │   ├── socket.js    # Socket.IO setup
+│   │   └── cloudinary.js # Cloudinary setup
+│   │
+│   ├── controllers/     # Request handlers
+│   │   ├── auth.controller.js
+│   │   ├── user.controller.js
+│   │   ├── booking.controller.js
+│   │   ├── matching.controller.js
+│   │   ├── transaction.controller.js
+│   │   ├── media.controller.js
+│   │   ├── post.controller.js
+│   │   ├── review.controller.js
+│   │   ├── message.controller.js
+│   │   ├── conversation.controller.js
+│   │   ├── notification.controller.js
+│   │   └── support.controller.js
+│   │
+│   ├── models/          # Database models
+│   │   ├── User.js
+│   │   ├── Booking.js
+│   │   ├── Matching.js
+│   │   ├── MatchingPreference.js
+│   │   ├── MatchingInteraction.js
+│   │   ├── Transaction.js
+│   │   ├── Post.js
+│   │   ├── Review.js
+│   │   ├── Message.js
+│   │   ├── Conversation.js
+│   │   ├── Notification.js
+│   │   └── SupportTicket.js
+│   │
+│   ├── routes/          # API routes
+│   │   ├── auth.routes.js
+│   │   ├── user.routes.js
+│   │   ├── booking.routes.js
+│   │   ├── matching.routes.js
+│   │   ├── transaction.routes.js
+│   │   ├── media.routes.js
+│   │   ├── post.routes.js
+│   │   ├── review.routes.js
+│   │   ├── message.routes.js
+│   │   ├── conversation.routes.js
+│   │   ├── notification.routes.js
+│   │   └── support.routes.js
+│   │
+│   ├── middleware/      # Custom middleware
+│   │   ├── auth.js      # Authentication & authorization
+│   │   ├── validation.js # Request validation
+│   │   └── upload.js    # File upload (multer)
+│   │
+│   ├── services/        # Business logic & external services
+│   │   ├── email.service.js
+│   │   ├── sms.service.js
+│   │   ├── payment.service.js
+│   │   ├── notification.service.js
+│   │   └── media.service.js
+│   │
+│   ├── utils/           # Utility functions
+│   │   ├── helpers.js   # Common helpers
+│   │   ├── logger.js    # Winston logger
+│   │   └── encryption.js # Data encryption
+│   │
+│   ├── scripts/         # Utility scripts
+│   │   └── seed.js      # Database seeder
+│   │
+│   └── server.js        # Application entry point
+│
+├── logs/                # Application logs
+├── .env                 # Environment variables
+├── .env.example         # Environment template
+├── package.json         # Dependencies
+└── README.md           # This file
 ```
 
-**Important Methods:**
-- `transitionTo()` - Safe state transitions with validation
-- `calculateCancellationFee()` - Dynamic fee calculation
-- `canBeCancelled()` - Business rule validation
+---
 
-### 3. **Transaction Model** (`/src/models/Transaction.js`)
+## Quick Start
 
-Comprehensive payment and transaction tracking.
+### Prerequisites
 
-**Key Features:**
-- Multi-gateway support (M-Pesa, Stripe, Cash, Wallet)
-- Escrow system for secure payments
-- Refund management (full and partial)
-- Split payments for platform fees
-- Fraud detection integration
-- Settlement tracking for technician payouts
-- Webhook data storage
-- Receipt and invoice generation
+- Node.js >= 18.x
+- MongoDB >= 6.x
+- npm >= 9.x
 
-**Payment Flow:**
-```
-initiated → pending → processing → completed
-                                 ↓
-                            escrow → released
-```
+### Installation
 
-### 4. **Post Model** (`/src/models/Post.js`)
-
-Social media-style post system for community engagement.
-
-**Key Features:**
-- Multiple post types (text, image, video, portfolio, tips, questions)
-- Portfolio showcase for technicians
-- Engagement tracking (likes, comments, shares, views)
-- AI content moderation
-- Hashtag and mention support
-- Feed algorithm with engagement scoring
-- Infinite scroll support
-- Media attachments with Cloudinary integration
-
-**Feed Algorithm:**
-- Weighted engagement score
-- Recency decay factor
-- User-based and explore feeds
-
-### 5. **Review Model** (`/src/models/Review.js`)
-
-Detailed review and rating system.
-
-**Key Features:**
-- Overall rating plus 5 detailed rating categories
-- Helpful voting system
-- Business response capability
-- Sentiment analysis integration
-- Review verification
-- Featured reviews
-- Rating statistics and distribution
-
-**Rating Categories:**
-- Quality
-- Professionalism
-- Communication
-- Punctuality
-- Value for money
-
-### 6. **Message Model** (`/src/models/Message.js`)
-
-Real-time messaging system supporting chat and calls.
-
-**Key Features:**
-- Text, media, and location messages
-- Booking reference messages
-- Call notifications (voice/video)
-- Read receipts with multiple readers
-- Message reactions (emoji)
-- Reply/thread support
-- Edit history
-- Per-user deletion
-- Search within conversations
-
-### 7. **Conversation Model** (`/src/models/Conversation.js`)
-
-Chat conversation management.
-
-**Key Features:**
-- Direct messages (1-on-1)
-- Group chats
-- Booking-specific conversations
-- Support chat
-- Per-user settings (mute, pin, notifications)
-- Unread count tracking
-- Participant management
-- Last message optimization
-
-**Conversation Types:**
-- `direct` - One-on-one chat
-- `group` - Multi-user group
-- `booking` - Booking-related chat
-- `support` - Customer support
-
-### 8. **Notification Model** (`/src/models/Notification.js`)
-
-Multi-channel notification system.
-
-**Key Features:**
-- 30+ notification types
-- Multi-channel delivery (Push, Email, SMS)
-- Notification grouping
-- Priority levels
-- Deep linking for mobile apps
-- Delivery status tracking
-- Category-based filtering
-- Auto-expiry support
-
-**Channels:**
-- Push notifications (FCM)
-- Email (Nodemailer)
-- SMS (Africa's Talking)
-
-## Database Indexes
-
-### Critical Indexes for Performance:
-
-1. **Geospatial Indexes**
-   - `User.location.coordinates` - Find nearby technicians
-   - `Booking.serviceLocation.coordinates` - Location-based bookings
-
-2. **Text Search Indexes**
-   - `User` - Search by name, skills, business
-   - `Post` - Search posts and portfolios
-   - `Review` - Search reviews
-   - `Message` - Search chat messages
-
-3. **Compound Indexes**
-   - `User` - `(role, status, rating)` - Filter and sort
-   - `Booking` - `(customer, status, date)` - User bookings
-   - `Transaction` - `(payer, status, date)` - Transaction history
-
-## Installation
-
-### 1. Clone and Install Dependencies
-
+1. **Clone the repository**
 ```bash
+git clone <repository-url>
 cd backend
+```
+
+2. **Install dependencies**
+```bash
 npm install
 ```
 
-### 2. Environment Configuration
-
-Copy `.env.example` to `.env` and configure:
-
+3. **Set up environment variables**
 ```bash
 cp .env.example .env
+# Edit .env with your configuration
 ```
 
-**Required Variables:**
-```env
-MONGODB_URI=mongodb://localhost:27017/baitech
-JWT_SECRET=your-secret-key
-REDIS_URL=redis://localhost:6379
-CLOUDINARY_CLOUD_NAME=your-cloud-name
-```
-
-### 3. Start MongoDB
-
+4. **Start MongoDB**
 ```bash
-# Using Docker
-docker run -d -p 27017:27017 --name mongodb mongo:7
+# Local MongoDB
+mongod
 
-# Or use MongoDB Atlas cloud
+# Or use MongoDB Atlas connection string in .env
 ```
 
-### 4. Start Redis
-
-```bash
-# Using Docker
-docker run -d -p 6379:6379 --name redis redis:7
-
-# Or use Redis Cloud
-```
-
-### 5. Run the Server
-
-```bash
-# Development
-npm run dev
-
-# Production
-npm start
-```
-
-## Database Setup
-
-### Create Indexes
-
-Indexes are automatically created on first connection when `NODE_ENV=development`.
-
-For production, manually create indexes:
-
-```bash
-npm run indexes
-```
-
-### Seed Database (Development)
-
+5. **Seed database (optional)**
 ```bash
 npm run seed
 ```
 
-## API Endpoints (To Be Implemented)
-
-### Authentication
-- `POST /api/v1/auth/register` - User registration
-- `POST /api/v1/auth/login` - User login
-- `POST /api/v1/auth/refresh` - Refresh token
-- `POST /api/v1/auth/logout` - Logout
-
-### Users
-- `GET /api/v1/users/me` - Get current user
-- `PUT /api/v1/users/me` - Update profile
-- `GET /api/v1/users/:id` - Get user profile
-- `GET /api/v1/users/technicians/nearby` - Find nearby technicians
-
-### Bookings
-- `POST /api/v1/bookings` - Create booking
-- `GET /api/v1/bookings` - List bookings
-- `GET /api/v1/bookings/:id` - Get booking details
-- `PUT /api/v1/bookings/:id/status` - Update booking status
-- `DELETE /api/v1/bookings/:id` - Cancel booking
-
-### Payments
-- `POST /api/v1/payments/mpesa` - Initiate M-Pesa payment
-- `POST /api/v1/payments/mpesa/callback` - M-Pesa webhook
-- `POST /api/v1/payments/stripe` - Stripe payment
-- `GET /api/v1/payments/transactions` - Transaction history
-
-### Social
-- `POST /api/v1/posts` - Create post
-- `GET /api/v1/posts/feed` - Get user feed
-- `GET /api/v1/posts/explore` - Explore feed
-- `POST /api/v1/posts/:id/like` - Like post
-- `POST /api/v1/posts/:id/comment` - Comment on post
-
-### Reviews
-- `POST /api/v1/reviews` - Create review
-- `GET /api/v1/reviews/user/:id` - Get user reviews
-- `PUT /api/v1/reviews/:id/response` - Add business response
-
-### Messages
-- `GET /api/v1/conversations` - List conversations
-- `POST /api/v1/conversations/:id/messages` - Send message
-- `GET /api/v1/conversations/:id/messages` - Get messages
-- `PUT /api/v1/messages/:id/read` - Mark as read
-
-### Notifications
-- `GET /api/v1/notifications` - List notifications
-- `PUT /api/v1/notifications/:id/read` - Mark as read
-- `PUT /api/v1/notifications/read-all` - Mark all as read
-
-## Mobile App Integration
-
-### Push Notifications (FCM)
-
-Register device token:
-```javascript
-POST /api/v1/users/fcm-token
-{
-  "token": "fcm_device_token",
-  "device": "iPhone 14 Pro",
-  "platform": "ios"
-}
-```
-
-### Deep Linking
-
-All notifications include deep links:
-```javascript
-{
-  "deepLink": "baitech://booking/123",
-  "actionData": {
-    "action": "view_booking",
-    "bookingId": "123"
-  }
-}
-```
-
-### Offline-First Considerations
-
-1. **Optimistic Updates**: Client updates local state immediately
-2. **Sync Queue**: Failed requests queued for retry
-3. **Conflict Resolution**: Last-write-wins with timestamps
-4. **Local Cache**: Redux persist for offline data
-
-## Performance Optimization
-
-### 1. Indexing Strategy
-- All frequently queried fields indexed
-- Compound indexes for common query patterns
-- Text indexes for search functionality
-
-### 2. Caching with Redis
-```javascript
-// Cache user profile
-await redis.setex(`user:${userId}`, 3600, JSON.stringify(user));
-
-// Cache feed
-await redis.setex(`feed:${userId}`, 600, JSON.stringify(posts));
-```
-
-### 3. Query Optimization
-- Use `.lean()` for read-only queries
-- Select only required fields
-- Populate sparingly
-- Implement pagination
-
-### 4. Aggregation Pipelines
-- Use for complex analytics
-- Index all fields used in `$match`
-- Limit results early in pipeline
-
-## Security Features
-
-1. **Authentication**
-   - JWT with refresh tokens
-   - Bcrypt password hashing (12 rounds)
-   - 2FA support with speakeasy
-
-2. **Authorization**
-   - Role-based access control
-   - Resource ownership validation
-   - Admin-only endpoints
-
-3. **Data Protection**
-   - MongoDB sanitization
-   - XSS prevention
-   - Rate limiting
-   - Helmet.js security headers
-
-4. **Compliance**
-   - GDPR consent tracking
-   - Data anonymization
-   - Audit logs
-   - Right to deletion
-
-## Monitoring & Maintenance
-
-### Health Check
+6. **Start the server**
 ```bash
-curl http://localhost:5000/health
+# Development mode with auto-reload
+npm run dev
+
+# Production mode
+npm start
 ```
 
-### Database Statistics
-```javascript
-const { getDatabaseStats } = require('./config/db');
-const stats = await getDatabaseStats();
-```
+7. **Access the API**
+- API Server: http://localhost:5000
+- API Documentation: http://localhost:5000/api-docs
+- Health Check: http://localhost:5000/health
 
-### Cleanup Old Data
+### Sample Credentials (After Seeding)
+
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | admin@baitech.com | Admin@123 |
+| Technician | tech1@baitech.com | Tech@123 |
+| Customer | customer1@gmail.com | Customer@123 |
+| Support | support@baitech.com | Support@123 |
+
+---
+
+## Environment Setup
+
+### Required Environment Variables
+
+Create a `.env` file in the root directory:
+
 ```bash
-npm run cleanup
+# Server Configuration
+NODE_ENV=development
+PORT=5000
+API_VERSION=v1
+
+# Database
+MONGODB_URI=mongodb://localhost:27017/baitech
+
+# JWT
+JWT_SECRET=your-super-secret-jwt-key
+JWT_REFRESH_SECRET=your-refresh-secret
+JWT_EXPIRE=15m
+JWT_REFRESH_EXPIRE=7d
+
+# Email (Nodemailer)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+EMAIL_FROM=noreply@baitech.com
+
+# SMS (Africa's Talking)
+AT_USERNAME=your-username
+AT_API_KEY=your-api-key
+AT_SENDER_ID=BAITECH
+
+# Payment - M-Pesa
+MPESA_CONSUMER_KEY=your-consumer-key
+MPESA_CONSUMER_SECRET=your-consumer-secret
+MPESA_PASSKEY=your-passkey
+MPESA_SHORTCODE=174379
+MPESA_ENVIRONMENT=sandbox
+MPESA_CALLBACK_URL=https://yourdomain.com/api/v1/payments/mpesa/callback
+
+# Payment - Stripe
+STRIPE_SECRET_KEY=sk_test_your_stripe_key
+STRIPE_PUBLISHABLE_KEY=pk_test_your_publishable_key
+STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
+
+# Firebase (Push Notifications)
+FIREBASE_SERVICE_ACCOUNT=./config/firebase-service-account.json
+
+# Cloudinary
+CLOUDINARY_CLOUD_NAME=your-cloud-name
+CLOUDINARY_API_KEY=your-api-key
+CLOUDINARY_API_SECRET=your-api-secret
+
+# Client URLs
+CLIENT_WEB_URL=http://localhost:3000
+CLIENT_MOBILE_URL=baitech://
 ```
 
-This automatically:
-- Deletes messages older than 90 days
-- Removes read notifications older than 30 days
-- Cleans up deleted conversations
+See [ENV_VARIABLES.md](ENV_VARIABLES.md) for complete list and descriptions.
+
+---
+
+## API Documentation
+
+### Interactive Documentation
+
+Access the interactive Swagger UI at: **http://localhost:5000/api-docs**
+
+### API Endpoints Overview
+
+#### Authentication
+```
+POST   /api/v1/auth/register          # Register new user
+POST   /api/v1/auth/login             # Login user
+POST   /api/v1/auth/verify-2fa        # Verify 2FA code
+GET    /api/v1/auth/me                # Get current user
+POST   /api/v1/auth/forgot-password   # Request password reset
+POST   /api/v1/auth/reset-password    # Reset password
+GET    /api/v1/auth/verify-email/:token  # Verify email
+POST   /api/v1/auth/setup-2fa         # Setup 2FA
+POST   /api/v1/auth/enable-2fa        # Enable 2FA
+POST   /api/v1/auth/disable-2fa       # Disable 2FA
+```
+
+#### AI Matching (NEW)
+```
+POST   /api/v1/matching/find-technicians    # Find AI-matched technicians
+GET    /api/v1/matching/my-matches          # Get user's matches
+GET    /api/v1/matching/:id                 # Get match details
+POST   /api/v1/matching/:id/accept          # Accept match & create booking
+POST   /api/v1/matching/:id/reject          # Reject match
+POST   /api/v1/matching/:id/feedback        # Add match feedback
+GET    /api/v1/matching/preferences         # Get preferences
+PUT    /api/v1/matching/preferences         # Update preferences
+POST   /api/v1/matching/block/:technicianId # Block technician
+DELETE /api/v1/matching/block/:technicianId # Unblock technician
+```
+
+#### Media Upload (NEW)
+```
+POST   /api/v1/media/upload/image              # Upload single image
+POST   /api/v1/media/upload/images             # Upload multiple images
+POST   /api/v1/media/upload/video              # Upload single video
+POST   /api/v1/media/upload/media              # Upload mixed media
+POST   /api/v1/media/upload/profile-picture    # Upload profile picture
+DELETE /api/v1/media/:publicId                 # Delete file
+POST   /api/v1/media/delete-multiple           # Delete multiple files
+GET    /api/v1/media/:publicId/details         # Get file details
+POST   /api/v1/media/generate-signature        # Generate upload signature
+POST   /api/v1/media/optimize-url              # Get optimized URL
+```
+
+#### Users
+```
+GET    /api/v1/users                   # Get all users
+GET    /api/v1/users/:id               # Get user by ID
+PUT    /api/v1/users/:id               # Update user
+DELETE /api/v1/users/:id               # Delete user
+GET    /api/v1/users/technicians/search  # Search technicians
+```
+
+#### Bookings
+```
+POST   /api/v1/bookings                # Create booking
+GET    /api/v1/bookings                # Get all bookings
+GET    /api/v1/bookings/:id            # Get booking by ID
+PUT    /api/v1/bookings/:id            # Update booking
+DELETE /api/v1/bookings/:id            # Cancel booking
+POST   /api/v1/bookings/:id/accept     # Accept booking
+POST   /api/v1/bookings/:id/complete   # Complete booking
+```
+
+See [API_ROUTES_SUMMARY.md](API_ROUTES_SUMMARY.md) for complete endpoint documentation.
+
+---
+
+## Database Schema
+
+### Models Overview
+
+| Model | Description | Key Features |
+|-------|-------------|--------------|
+| **User** | User accounts & profiles | Multi-role, geolocation, skills, KYC |
+| **Booking** | Service bookings | Status workflow, pricing, scheduling |
+| **Matching** | AI match records | Scores, reasons, algorithm details |
+| **MatchingPreference** | User preferences | Custom weights, blocked users |
+| **MatchingInteraction** | AI interactions | Analytics, feedback, performance |
+| **Transaction** | Payment records | M-Pesa, Stripe, refunds |
+| **Post** | Social posts | Media, engagement, moderation |
+| **Review** | Ratings & reviews | Multi-aspect ratings, responses |
+| **Message** | Chat messages | Text, media, read receipts |
+| **Conversation** | Chat threads | Participants, unread counts |
+| **Notification** | User notifications | Push, email, SMS |
+| **SupportTicket** | Customer support | Priority, assignment, SLA |
+
+See [DATABASE_SCHEMA_SUMMARY.md](DATABASE_SCHEMA_SUMMARY.md) for detailed schemas.
+
+---
 
 ## Testing
 
+### Run Tests
 ```bash
 # Run all tests
 npm test
+
+# Run with coverage
+npm test -- --coverage
+
+# Run specific test file
+npm test -- user.test.js
 
 # Watch mode
 npm run test:watch
 ```
 
+### Test Endpoints Manually
+
+Use the included Swagger UI or tools like Postman/Insomnia:
+
+```bash
+# Health check
+curl http://localhost:5000/health
+
+# Register user
+curl -X POST http://localhost:5000/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "firstName": "John",
+    "lastName": "Doe",
+    "email": "john@example.com",
+    "phoneNumber": "+254712345678",
+    "password": "Password@123"
+  }'
+
+# Login
+curl -X POST http://localhost:5000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "john@example.com",
+    "password": "Password@123"
+  }'
+```
+
+---
+
 ## Deployment
 
-### Docker Deployment
+### Production Checklist
 
+- [ ] Set `NODE_ENV=production`
+- [ ] Use strong JWT secrets
+- [ ] Enable HTTPS
+- [ ] Configure CORS properly
+- [ ] Set up MongoDB Atlas
+- [ ] Configure Redis for sessions
+- [ ] Set up CloudFlare/CDN
+- [ ] Enable rate limiting
+- [ ] Configure monitoring (New Relic, Datadog)
+- [ ] Set up error tracking (Sentry)
+- [ ] Configure backups
+- [ ] Set up CI/CD pipeline
+
+### Deployment Options
+
+#### 1. Heroku
 ```bash
-docker-compose up -d
+# Install Heroku CLI
+heroku create baitech-api
+
+# Set environment variables
+heroku config:set NODE_ENV=production
+heroku config:set MONGODB_URI=your-mongodb-uri
+# ... set other variables
+
+# Deploy
+git push heroku main
 ```
 
-### Environment Variables for Production
-
-Ensure these are set:
-- `NODE_ENV=production`
-- Strong `JWT_SECRET`
-- MongoDB Atlas connection string
-- Redis Cloud URL
-- All API keys for integrations
-
-## Troubleshooting
-
-### Connection Issues
+#### 2. Docker
 ```bash
-# Check MongoDB
-mongosh mongodb://localhost:27017
+# Build image
+docker build -t baitech-backend .
 
-# Check Redis
-redis-cli ping
+# Run container
+docker run -p 5000:5000 --env-file .env baitech-backend
 ```
 
-### Index Issues
+#### 3. VPS (Ubuntu)
 ```bash
-# Rebuild indexes
-db.users.reIndex()
+# Install Node.js
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# Install PM2
+sudo npm install -g pm2
+
+# Clone and setup
+git clone <repo> /var/www/baitech-backend
+cd /var/www/baitech-backend
+npm install --production
+
+# Start with PM2
+pm2 start src/server.js --name baitech-api
+pm2 save
+pm2 startup
 ```
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.
+
+---
 
 ## Contributing
 
-1. Create feature branch
-2. Write tests
-3. Update documentation
-4. Submit PR
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+### Development Workflow
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Make your changes
+4. Run tests: `npm test`
+5. Commit: `git commit -m 'Add amazing feature'`
+6. Push: `git push origin feature/amazing-feature`
+7. Open a Pull Request
+
+### Code Style
+
+- Use ESLint configuration
+- Follow Airbnb style guide
+- Write meaningful commit messages
+- Add tests for new features
+- Update documentation
+
+---
+
+## Scripts
+
+```bash
+# Development
+npm run dev          # Start with nodemon (auto-reload)
+npm start            # Start production server
+
+# Database
+npm run seed         # Seed database with sample data
+npm run indexes      # Create database indexes
+npm run cleanup      # Clean up old data
+
+# Testing
+npm test             # Run tests
+npm run test:watch   # Run tests in watch mode
+
+# Utilities
+npm run lint         # Lint code
+npm run format       # Format code with Prettier
+```
+
+---
+
+## Troubleshooting
+
+### Common Issues
+
+**MongoDB Connection Error**
+```bash
+# Check if MongoDB is running
+sudo systemctl status mongod
+
+# Start MongoDB
+sudo systemctl start mongod
+```
+
+**Port Already in Use**
+```bash
+# Find process using port 5000
+lsof -i :5000
+
+# Kill process
+kill -9 <PID>
+```
+
+**Module Not Found**
+```bash
+# Clear cache and reinstall
+rm -rf node_modules package-lock.json
+npm install
+```
+
+**JWT Token Invalid**
+- Check JWT_SECRET in .env
+- Ensure token hasn't expired
+- Verify Authorization header format: `Bearer <token>`
+
+---
+
+## Performance Tips
+
+1. **Use indexes** - Already configured in models
+2. **Enable caching** - Use Redis for sessions
+3. **Connection pooling** - MongoDB connection pool configured
+4. **Compression** - Gzip enabled in production
+5. **Rate limiting** - Configured for API endpoints
+6. **Pagination** - Always paginate large datasets
+7. **Database queries** - Use select(), lean(), populate() wisely
+
+---
+
+## Security
+
+- JWT authentication with refresh tokens
+- Password hashing with bcrypt (12 rounds)
+- Request validation with express-validator
+- MongoDB injection prevention
+- XSS protection
+- CORS configuration
+- Rate limiting
+- Helmet.js security headers
+- 2FA support
+
+---
+
+## Monitoring & Logging
+
+### Logging
+
+Logs are stored in `logs/` directory:
+- `combined.log` - All logs
+- `error.log` - Error logs only
+- `exceptions.log` - Uncaught exceptions
+- `rejections.log` - Unhandled promise rejections
+
+### Health Monitoring
+
+```bash
+# Health check endpoint
+GET /health
+
+# Response
+{
+  "status": "healthy",
+  "timestamp": "2025-10-15T10:00:00.000Z",
+  "uptime": 3600,
+  "environment": "production",
+  "database": {
+    "status": "connected",
+    "isHealthy": true,
+    "host": "localhost",
+    "database": "baitech"
+  }
+}
+```
+
+---
 
 ## License
 
-MIT License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
 
 ## Support
 
-For issues or questions, contact: support@baitech.com
+For support and questions:
+- Email: support@baitech.com
+- Documentation: https://docs.baitech.com
+- Issue Tracker: https://github.com/baitech/backend/issues
+
+---
+
+## Acknowledgments
+
+- Express.js team
+- MongoDB team
+- Socket.IO team
+- All contributors
+
+---
+
+<div align="center">
+
+**Made with ❤️ by the BaiTech Team**
+
+[Website](https://baitech.com) • [Twitter](https://twitter.com/baitech) • [LinkedIn](https://linkedin.com/company/baitech)
+
+</div>

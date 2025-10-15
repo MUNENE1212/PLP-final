@@ -148,6 +148,8 @@ app.use('/api/v1/conversations', require('./routes/conversation.routes'));
 app.use('/api/v1/messages', require('./routes/message.routes'));
 app.use('/api/v1/notifications', require('./routes/notification.routes'));
 app.use('/api/v1/support', require('./routes/support.routes'));
+app.use('/api/v1/matching', require('./routes/matching.routes'));
+app.use('/api/v1/media', require('./routes/media.routes'));
 
 // 404 Handler
 app.use((req, res) => {

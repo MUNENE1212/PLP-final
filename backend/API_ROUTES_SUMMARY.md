@@ -1,7 +1,7 @@
 # BaiTech API Routes Summary
 
 ## Overview
-Complete REST API implementation for the BaiTech platform with 9 main route modules covering all core functionality.
+Complete REST API implementation for the BaiTech platform with 12 main route modules covering all core functionality.
 
 ---
 
@@ -140,7 +140,238 @@ http://localhost:5000/api/v1
 
 ---
 
-## 5. Post Routes (`/api/v1/posts`)
+## 5. AI Matching Routes (`/api/v1/matching`)  **NEW**
+
+### Protected Routes
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/find-technicians` | Find AI-matched technicians | Yes (Customer) |
+| GET | `/my-matches` | Get user's active matches | Yes |
+| GET | `/:id` | Get specific match details | Yes (Participant) |
+| POST | `/:id/accept` | Accept match & create booking | Yes (Customer) |
+| POST | `/:id/reject` | Reject a match | Yes (Customer) |
+| POST | `/:id/feedback` | Add match feedback | Yes (Customer) |
+| GET | `/preferences` | Get matching preferences | Yes |
+| PUT | `/preferences` | Update matching preferences | Yes |
+| POST | `/block/:technicianId` | Block technician from matches | Yes (Customer) |
+| DELETE | `/block/:technicianId` | Unblock technician | Yes (Customer) |
+
+**AI Matching Algorithm (9 Factors):**
+1. **Skill Match** (25%) - Technician's proficiency in required skill
+2. **Location Proximity** (20%) - Distance between customer and technician
+3. **Availability** (15%) - Current availability status
+4. **Rating** (15%) - Overall rating (5-star to 100 scale)
+5. **Experience Level** (10%) - Years of experience + completed jobs
+6. **Pricing** (5%) - Rate vs budget compatibility
+7. **Response Time** (5%) - Average response time
+8. **Completion Rate** (3%) - Job completion rate
+9. **Customer Preference** (2%) - Past positive interactions
+
+**Match Quality Levels:**
+- **Excellent** (90-100): Perfect match
+- **Very Good** (75-89): Highly recommended
+- **Good** (60-74): Recommended
+- **Fair** (40-59): Acceptable
+- **Poor** (0-39): Not recommended
+
+**Request Example:**
+```json
+POST /api/v1/matching/find-technicians
+{
+  "serviceCategory": "plumbing",
+  "location": {
+    "coordinates": [36.817223, -1.286389],
+    "address": "123 Main St, Nairobi"
+  },
+  "urgency": "high",
+  "budget": 5000,
+  "preferredDate": "2025-10-15T10:00:00Z",
+  "description": "Leaking kitchen sink"
+}
+```
+
+**Response Example:**
+```json
+{
+  "success": true,
+  "count": 5,
+  "data": [
+    {
+      "_id": "match_id",
+      "technician": {
+        "firstName": "John",
+        "lastName": "Doe",
+        "rating": 4.8,
+        "hourlyRate": 1500
+      },
+      "scores": {
+        "overall": 87.5,
+        "skillMatch": 90,
+        "locationProximity": 95,
+        "availability": 100,
+        "rating": 96
+      },
+      "distance": 3.2,
+      "matchReasons": [
+        {
+          "reason": "Expert in required service category",
+          "weight": 0.25,
+          "score": 90
+        }
+      ]
+    }
+  ],
+  "sessionId": "uuid-session-id"
+}
+```
+
+**Features:**
+- Multi-factor intelligent scoring
+- User preference learning
+- Block/unblock technicians
+- Custom matching weights
+- Match feedback & optimization
+- Analytics & tracking
+- GDPR compliant data retention
+
+---
+
+## 6. Support Routes (`/api/v1/support`)
+
+### Protected Routes
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| GET | `/tickets` | Get all support tickets | Yes |
+| POST | `/tickets` | Create new support ticket | Yes |
+| GET | `/tickets/:id` | Get ticket details | Yes (Customer/Support) |
+| PUT | `/tickets/:id` | Update ticket | Yes (Support/Admin) |
+| POST | `/tickets/:id/assign` | Assign ticket to support agent | Yes (Support/Admin) |
+| POST | `/tickets/:id/message` | Add message to ticket | Yes (Customer/Support) |
+| PUT | `/tickets/:id/close` | Close ticket | Yes (Support/Admin) |
+| PUT | `/tickets/:id/reopen` | Reopen ticket | Yes (Customer) |
+| POST | `/tickets/:id/escalate` | Escalate ticket | Yes (Support/Admin) |
+| POST | `/tickets/:id/rating` | Rate support experience | Yes (Customer) |
+
+**Ticket Categories:**
+- `account`: Account-related issues
+- `booking`: Booking problems
+- `payment`: Payment/refund issues
+- `technical`: Technical problems
+- `billing`: Billing inquiries
+- `complaint`: Complaints
+- `feature_request`: Feature suggestions
+- `bug_report`: Bug reports
+- `general`: General inquiries
+- `other`: Other issues
+
+**Priority Levels:**
+- `low`: Can wait 48+ hours
+- `medium`: Respond within 24 hours
+- `high`: Respond within 4 hours
+- `urgent`: Immediate attention required
+
+**Ticket Status Flow:**
+1. `open` → Customer creates ticket
+2. `assigned` → Assigned to support agent
+3. `in_progress` → Agent working on it
+4. `waiting_customer` → Waiting for customer response
+5. `waiting_internal` → Waiting for internal team
+6. `resolved` → Issue resolved
+7. `closed` → Ticket closed
+
+**Features:**
+- Auto-assignment based on agent load
+- SLA tracking
+- Priority escalation
+- Multi-channel support (email, chat, phone)
+- Knowledge base integration
+- Customer satisfaction ratings
+- Support analytics
+
+---
+
+## 7. Media Upload Routes (`/api/v1/media`) **NEW**
+
+### Protected Routes
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/upload/image` | Upload single image | Yes |
+| POST | `/upload/images` | Upload multiple images (max 10) | Yes |
+| POST | `/upload/video` | Upload single video | Yes |
+| POST | `/upload/media` | Upload mixed media (images/videos) | Yes |
+| POST | `/upload/profile-picture` | Upload profile picture | Yes |
+| DELETE | `/:publicId` | Delete single file from Cloudinary | Yes |
+| POST | `/delete-multiple` | Delete multiple files | Yes |
+| GET | `/:publicId/details` | Get file details from Cloudinary | Yes |
+| POST | `/generate-signature` | Generate signed upload URL | Yes |
+
+### Public Routes
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/optimize-url` | Generate optimized image URL with transformations |
+
+**Upload Limits:**
+- **Images**: 5MB per file, formats: jpeg, jpg, png, gif, webp
+- **Videos**: 100MB per file, formats: mp4, avi, mov, wmv, flv, mkv, webm
+- **Multiple uploads**: Maximum 10 files at once
+- **Profile pictures**: 2MB limit, auto-cropped to 500x500
+
+**Upload Example:**
+```bash
+POST /api/v1/media/upload/image
+Authorization: Bearer <your-jwt-token>
+Content-Type: multipart/form-data
+
+{
+  "image": <file>,
+  "folder": "baitech/posts" (optional)
+}
+```
+
+**Response Example:**
+```json
+{
+  "success": true,
+  "message": "Image uploaded successfully",
+  "data": {
+    "type": "image",
+    "url": "https://res.cloudinary.com/your-cloud/image/upload/v1234567890/baitech/posts/abc123.jpg",
+    "publicId": "baitech/posts/abc123",
+    "width": 1200,
+    "height": 800,
+    "format": "jpg",
+    "size": 245678
+  }
+}
+```
+
+**Delete Example:**
+```bash
+DELETE /api/v1/media/baitech%2Fposts%2Fabc123?resourceType=image
+Authorization: Bearer <your-jwt-token>
+```
+
+**Features:**
+- Cloudinary cloud storage integration
+- Automatic image optimization
+- Video thumbnail generation
+- Secure file deletion
+- Direct client upload signatures
+- Responsive image transformations
+- Temporary file cleanup
+- File type validation
+- Size limit enforcement
+
+**Folders:**
+- `baitech/profiles` - Profile pictures
+- `baitech/images` - General images
+- `baitech/videos` - Videos
+- `baitech/posts` - Post media
+- `baitech/bookings` - Booking photos
+
+---
+
+## 8. Post Routes (`/api/v1/posts`)
 
 ### Public Routes
 | Method | Endpoint | Description |
@@ -174,7 +405,7 @@ http://localhost:5000/api/v1
 
 ---
 
-## 6. Review Routes (`/api/v1/reviews`)
+## 9. Review Routes (`/api/v1/reviews`)
 
 ### Public Routes
 | Method | Endpoint | Description |
@@ -208,7 +439,7 @@ http://localhost:5000/api/v1
 
 ---
 
-## 7. Conversation Routes (`/api/v1/conversations`)
+## 10. Conversation Routes (`/api/v1/conversations`)
 
 ### Protected Routes
 | Method | Endpoint | Description | Auth Required |
@@ -233,7 +464,7 @@ http://localhost:5000/api/v1
 
 ---
 
-## 8. Message Routes (`/api/v1/messages`)
+## 11. Message Routes (`/api/v1/messages`)
 
 ### Protected Routes
 | Method | Endpoint | Description | Auth Required |
@@ -264,7 +495,7 @@ http://localhost:5000/api/v1
 
 ---
 
-## 9. Notification Routes (`/api/v1/notifications`)
+## 12. Notification Routes (`/api/v1/notifications`)
 
 ### Protected Routes
 | Method | Endpoint | Description | Auth Required |
@@ -449,15 +680,22 @@ Content-Type: application/json
 
 ## Next Steps
 
-### TODO Items (marked in code):
-1. **Email Integration**: Implement email sending for verification, password reset
-2. **SMS Integration**: Implement Africa's Talking SMS notifications
-3. **Push Notifications**: Implement FCM push notifications
-4. **File Upload**: Implement Cloudinary integration for images/files
-5. **Socket.io**: Implement real-time messaging
-6. **Payment Gateways**: Integrate M-Pesa and Stripe APIs
-7. **AI Matching**: Implement technician matching algorithm
-8. **Content Moderation**: Implement AI content moderation for posts
+### Completed Items:
+1. ✅ **Email Integration**: Nodemailer service for verification, password reset
+2. ✅ **SMS Integration**: Africa's Talking SMS notifications
+3. ✅ **Push Notifications**: FCM push notifications setup
+4. ✅ **File Upload**: Cloudinary integration for images/videos with optimization
+5. ✅ **Socket.io**: Real-time messaging setup
+6. ✅ **Payment Gateways**: M-Pesa and Stripe API integration
+7. ✅ **AI Matching**: Intelligent technician matching algorithm with 9 factors
+8. ✅ **Support System**: Complete ticket management with SLA tracking
+
+### Future Enhancements:
+1. **Content Moderation**: Implement AI content moderation for posts
+2. **Analytics Dashboard**: Admin analytics and reporting
+3. **WebRTC Integration**: Video/voice calling for consultations
+4. **Advanced Search**: Elasticsearch integration for better search
+5. **Recommendation Engine**: ML-based service recommendations
 
 ### Recommended Testing Tools:
 - **Postman**: API testing and documentation
@@ -513,12 +751,33 @@ backend/src/
 
 All routes have been successfully implemented with:
 
-- **9 Route Modules**: Auth, Users, Bookings, Transactions, Posts, Reviews, Conversations, Messages, Notifications
-- **80+ Endpoints**: Comprehensive API coverage
-- **Role-Based Access Control**: Customer, Technician, Corporate, Admin
-- **Advanced Features**: 2FA, Geospatial search, Escrow payments, Real-time messaging ready
-- **Production Ready**: Error handling, validation, security middleware
+- **12 Route Modules**: Auth, Users, Bookings, Transactions, AI Matching, Support, Media, Posts, Reviews, Conversations, Messages, Notifications
+- **110+ Endpoints**: Comprehensive API coverage
+- **Role-Based Access Control**: Customer, Technician, Corporate, Admin, Support
+- **Advanced Features**:
+  - AI-powered matching algorithm
+  - 2FA with TOTP
+  - Geospatial search
+  - Escrow payments
+  - Real-time messaging (Socket.IO ready)
+  - Push notifications (FCM)
+  - Support ticket system with SLA tracking
+  - Social features (posts, reviews, comments)
+- **Production Ready**: Error handling, validation, security middleware, logging, monitoring
 
-**Total Lines of Code**: ~3,500+ lines across controllers and routes
+**Total Lines of Code**: ~6,000+ lines across models, controllers, routes, services, and utilities
 
-The API is ready for frontend integration and mobile app development! 🚀
+**New in this version:**
+- 🤖 **AI Matching System**: Intelligent technician-customer matching with 9-factor algorithm
+- 🎫 **Support System**: Complete ticket management with auto-assignment and SLA tracking
+- 📧 **Email Service**: Nodemailer integration for transactional emails
+- 📱 **SMS Service**: Africa's Talking integration for SMS notifications
+- 💳 **Payment Services**: M-Pesa STK Push and Stripe integration
+- 🔔 **Notification Service**: Multi-channel notifications (Push, Email, SMS)
+- 📸 **Media Upload System**: Cloudinary integration for images/videos with optimization
+- 🔌 **Socket.IO**: Real-time communication setup
+- 🛠️ **Utilities**: Helper functions, logger, encryption
+
+The API is fully production-ready for frontend integration and mobile app development! 🚀
+
+**Last Updated**: October 2025

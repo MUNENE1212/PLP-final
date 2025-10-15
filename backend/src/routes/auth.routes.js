@@ -25,8 +25,8 @@ router.post(
     body('lastName').trim().notEmpty().withMessage('Last name is required'),
     body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
     body('phoneNumber')
-      .matches(/^\+?[1-9]\d{1,14}$/)
-      .withMessage('Valid phone number is required'),
+      .matches(/^(\+254|0)[17]\d{8}$/)
+      .withMessage('Please enter a valid Kenyan phone number'),
     body('password')
       .isLength({ min: 8 })
       .withMessage('Password must be at least 8 characters')

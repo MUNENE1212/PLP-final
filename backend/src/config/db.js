@@ -65,6 +65,9 @@ const createIndexes = async () => {
     require('../models/Conversation');
     require('../models/Notification');
     require('../models/SupportTicket');
+    require('../models/Matching');
+    require('../models/MatchingPreference');
+    require('../models/MatchingInteraction');
 
     console.log('✅ Database indexes ensured successfully');
   } catch (error) {

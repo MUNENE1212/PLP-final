@@ -1387,4 +1387,552 @@
  *         $ref: '#/components/responses/UnauthorizedError'
  */
 
+/**
+ * @swagger
+ * /api/v1/matching/find-technicians:
+ *   post:
+ *     summary: Find smart-matched technicians for a service request
+ *     description: Uses intelligent algorithms to match customers with the best technicians based on skills, location, availability, ratings, and preferences
+ *     tags: [Smart Matching]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - serviceCategory
+ *               - location
+ *             properties:
+ *               serviceCategory:
+ *                 type: string
+ *                 enum: [plumbing, electrical, carpentry, painting, cleaning, appliance_repair, hvac, locksmith, landscaping, roofing, flooring, masonry, welding, pest_control, general_handyman, other]
+ *                 example: plumbing
+ *               location:
+ *                 type: object
+ *                 required:
+ *                   - coordinates
+ *                 properties:
+ *                   coordinates:
+ *                     type: array
+ *                     items:
+ *                       type: number
+ *                     minItems: 2
+ *                     maxItems: 2
+ *                     description: [longitude, latitude]
+ *                     example: [36.817223, -1.286389]
+ *                   address:
+ *                     type: string
+ *                     example: "123 Main St, Nairobi"
+ *               urgency:
+ *                 type: string
+ *                 enum: [low, medium, high, emergency]
+ *                 default: medium
+ *               budget:
+ *                 type: number
+ *                 example: 5000
+ *                 description: Budget in local currency
+ *               preferredDate:
+ *                 type: string
+ *                 format: date-time
+ *                 example: "2025-10-15T10:00:00Z"
+ *               description:
+ *                 type: string
+ *                 example: "Leaking kitchen sink needs urgent repair"
+ *     responses:
+ *       200:
+ *         description: Matched technicians found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 count:
+ *                   type: integer
+ *                   example: 5
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                       technician:
+ *                         $ref: '#/components/schemas/User'
+ *                       scores:
+ *                         type: object
+ *                         properties:
+ *                           overall:
+ *                             type: number
+ *                             example: 87.5
+ *                           skillMatch:
+ *                             type: number
+ *                           locationProximity:
+ *                             type: number
+ *                           availability:
+ *                             type: number
+ *                           rating:
+ *                             type: number
+ *                       distance:
+ *                         type: number
+ *                         example: 3.2
+ *                         description: Distance in kilometers
+ *                       matchReasons:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             reason:
+ *                               type: string
+ *                             weight:
+ *                               type: number
+ *                             score:
+ *                               type: number
+ *                 sessionId:
+ *                   type: string
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
+
+/**
+ * @swagger
+ * /api/v1/matching/my-matches:
+ *   get:
+ *     summary: Get user's active matches
+ *     description: Retrieve all active smart-matched results for the current user
+ *     tags: [Smart Matching]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: serviceCategory
+ *         schema:
+ *           type: string
+ *         description: Filter by service category
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [suggested, viewed, contacted, accepted, rejected, expired]
+ *         description: Filter by match status
+ *     responses:
+ *       200:
+ *         description: List of active matches
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 count:
+ *                   type: integer
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
+
+/**
+ * @swagger
+ * /api/v1/matching/{id}:
+ *   get:
+ *     summary: Get matching details
+ *     description: Get detailed information about a specific match
+ *     tags: [Smart Matching]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Matching ID
+ *     responses:
+ *       200:
+ *         description: Matching details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *       403:
+ *         $ref: '#/components/responses/ForbiddenError'
+ */
+
+/**
+ * @swagger
+ * /api/v1/matching/{id}/accept:
+ *   post:
+ *     summary: Accept a match and create booking
+ *     description: Accept a smart-matched recommendation and automatically create a booking with the matched technician
+ *     tags: [Smart Matching]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Matching ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - scheduledDate
+ *               - scheduledTime
+ *             properties:
+ *               scheduledDate:
+ *                 type: string
+ *                 format: date
+ *                 example: "2025-10-15"
+ *               scheduledTime:
+ *                 type: string
+ *                 pattern: "^([01]?[0-9]|2[0-3]):[0-5][0-9]$"
+ *                 example: "14:30"
+ *               description:
+ *                 type: string
+ *                 maxLength: 1000
+ *                 example: "Fix leaking pipe in kitchen"
+ *               estimatedDuration:
+ *                 type: number
+ *                 example: 2
+ *                 description: Estimated duration in hours
+ *     responses:
+ *       201:
+ *         description: Match accepted and booking created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     matching:
+ *                       type: object
+ *                     booking:
+ *                       $ref: '#/components/schemas/Booking'
+ *       403:
+ *         $ref: '#/components/responses/ForbiddenError'
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ */
+
+/**
+ * @swagger
+ * /api/v1/matching/{id}/reject:
+ *   post:
+ *     summary: Reject a match
+ *     description: Reject a smart-matched recommendation (helps improve future recommendations)
+ *     tags: [Smart Matching]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Matching ID
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               reason:
+ *                 type: string
+ *                 maxLength: 500
+ *                 example: "Too far from my location"
+ *     responses:
+ *       200:
+ *         description: Match rejected
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *       403:
+ *         $ref: '#/components/responses/ForbiddenError'
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ */
+
+/**
+ * @swagger
+ * /api/v1/matching/{id}/feedback:
+ *   post:
+ *     summary: Add feedback to a match
+ *     description: Provide feedback on match quality to improve AI recommendations
+ *     tags: [Smart Matching]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Matching ID
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               helpful:
+ *                 type: boolean
+ *                 example: true
+ *               rating:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 5
+ *                 example: 4
+ *               accuracy:
+ *                 type: string
+ *                 enum: [accurate, partially_accurate, inaccurate]
+ *                 example: accurate
+ *               comment:
+ *                 type: string
+ *                 maxLength: 500
+ *                 example: "Great match! Exactly what I was looking for."
+ *     responses:
+ *       200:
+ *         description: Feedback added
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       403:
+ *         $ref: '#/components/responses/ForbiddenError'
+ */
+
+/**
+ * @swagger
+ * /api/v1/matching/preferences:
+ *   get:
+ *     summary: Get user matching preferences
+ *     description: Retrieve current user's AI matching preferences
+ *     tags: [Smart Matching]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User preferences
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     general:
+ *                       type: object
+ *                       properties:
+ *                         maxDistance:
+ *                           type: number
+ *                           example: 25
+ *                         priceRange:
+ *                           type: object
+ *                         responseTime:
+ *                           type: string
+ *                     technicianPreferences:
+ *                       type: object
+ *                     scheduling:
+ *                       type: object
+ *                     ai:
+ *                       type: object
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *   put:
+ *     summary: Update user matching preferences
+ *     description: Update AI matching preferences to improve future recommendations
+ *     tags: [Smart Matching]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               general:
+ *                 type: object
+ *                 properties:
+ *                   maxDistance:
+ *                     type: number
+ *                     minimum: 1
+ *                     maximum: 100
+ *                     example: 25
+ *                   priceRange:
+ *                     type: object
+ *                     properties:
+ *                       min:
+ *                         type: number
+ *                       max:
+ *                         type: number
+ *                       preference:
+ *                         type: string
+ *                         enum: [budget, moderate, premium, any]
+ *               technicianPreferences:
+ *                 type: object
+ *                 properties:
+ *                   minRating:
+ *                     type: number
+ *                     minimum: 0
+ *                     maximum: 5
+ *                     example: 4.0
+ *                   experienceLevel:
+ *                     type: string
+ *                     enum: [any, beginner, intermediate, advanced, expert]
+ *                   requireCertifications:
+ *                     type: boolean
+ *                   requireBackgroundCheck:
+ *                     type: boolean
+ *               ai:
+ *                 type: object
+ *                 properties:
+ *                   enableAIRecommendations:
+ *                     type: boolean
+ *                   autoMatch:
+ *                     type: boolean
+ *                   personalizationLevel:
+ *                     type: string
+ *                     enum: [minimal, moderate, high]
+ *               customWeights:
+ *                 type: object
+ *                 description: Custom weights for matching algorithm (must sum to 100)
+ *                 properties:
+ *                   skillMatch:
+ *                     type: number
+ *                   locationProximity:
+ *                     type: number
+ *                   availability:
+ *                     type: number
+ *                   rating:
+ *                     type: number
+ *     responses:
+ *       200:
+ *         description: Preferences updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
+
+/**
+ * @swagger
+ * /api/v1/matching/block/{technicianId}:
+ *   post:
+ *     summary: Block a technician from future matches
+ *     description: Prevent a specific technician from appearing in future AI matches
+ *     tags: [Smart Matching]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: technicianId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Technician user ID to block
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               reason:
+ *                 type: string
+ *                 maxLength: 500
+ *                 example: "Poor communication in previous interactions"
+ *     responses:
+ *       200:
+ *         description: Technician blocked
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *   delete:
+ *     summary: Unblock a technician
+ *     description: Remove a technician from the blocked list
+ *     tags: [Smart Matching]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: technicianId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Technician user ID to unblock
+ *     responses:
+ *       200:
+ *         description: Technician unblocked
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
+
 module.exports = {};
