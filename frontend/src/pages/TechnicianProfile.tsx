@@ -18,6 +18,10 @@ import Button from '@/components/ui/Button';
 import Loading from '@/components/ui/Loading';
 import { cn } from '@/lib/utils';
 import axios from '@/lib/axios';
+import { useAppSelector, useAppDispatch } from '@/store/hooks';
+import { createConversation, fetchConversations } from '@/store/slices/messagingSlice';
+import toast from 'react-hot-toast';
+import { MessageCircle } from 'lucide-react';
 
 interface Technician {
   _id: string;
@@ -58,10 +62,14 @@ interface Technician {
 const TechnicianProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { user } = useAppSelector((state) => state.auth);
 
   const [technician, setTechnician] = useState<Technician | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hasActiveBooking, setHasActiveBooking] = useState(false);
+  const [isCheckingBooking, setIsCheckingBooking] = useState(true);
 
   useEffect(() => {
     const fetchTechnician = async () => {
@@ -76,10 +84,36 @@ const TechnicianProfile: React.FC = () => {
       }
     };
 
+    const checkActiveBooking = async () => {
+      try {
+        setIsCheckingBooking(true);
+        // Check if user has any active or past bookings with this technician
+        const response = await axios.get(`/bookings`, {
+          params: {
+            technician: id,
+            status: ['accepted', 'in_progress', 'completed'].join(','),
+          },
+        });
+
+        const bookings = response.data.bookings || response.data.data || [];
+        setHasActiveBooking(bookings.length > 0);
+      } catch (err) {
+        console.error('Error checking bookings:', err);
+        setHasActiveBooking(false);
+      } finally {
+        setIsCheckingBooking(false);
+      }
+    };
+
     if (id) {
       fetchTechnician();
+      if (user) {
+        checkActiveBooking();
+      } else {
+        setIsCheckingBooking(false);
+      }
     }
-  }, [id]);
+  }, [id, user]);
 
   const getProfilePicture = () => {
     if (!technician) return '';
@@ -87,6 +121,33 @@ const TechnicianProfile: React.FC = () => {
       technician.profilePicture ||
       `https://ui-avatars.com/api/?name=${technician.firstName}+${technician.lastName}&background=random`
     );
+  };
+
+  const handleSendMessage = async () => {
+    if (!hasActiveBooking) {
+      toast.error('You need an active booking with this technician to send a message');
+      return;
+    }
+
+    try {
+      // Check if conversation already exists
+      await dispatch(fetchConversations({ status: 'active' }));
+
+      // Create or navigate to conversation
+      const result = await dispatch(
+        createConversation({
+          type: 'booking',
+          participants: [id!],
+          booking: undefined, // Will be set by backend based on active booking
+        })
+      ).unwrap();
+
+      toast.success('Opening conversation...');
+      navigate('/messages');
+    } catch (error: any) {
+      console.error('Failed to create conversation:', error);
+      toast.error(error || 'Failed to start conversation');
+    }
   };
 
   if (isLoading) {
@@ -220,11 +281,30 @@ const TechnicianProfile: React.FC = () => {
             variant="outline"
             size="lg"
             className="flex items-center space-x-2"
+            onClick={handleSendMessage}
+            disabled={!hasActiveBooking || isCheckingBooking}
+            title={
+              hasActiveBooking
+                ? 'Send a message'
+                : 'You need an active booking to message this technician'
+            }
           >
-            <Phone className="h-4 w-4" />
-            <span>Contact</span>
+            <MessageCircle className="h-4 w-4" />
+            <span>Message</span>
           </Button>
         </div>
+
+        {/* Booking Required Notice */}
+        {!isCheckingBooking && !hasActiveBooking && (
+          <div className="mt-4 rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
+            <div className="flex items-start space-x-2">
+              <Shield className="h-4 w-4 mt-0.5 flex-shrink-0" />
+              <p>
+                For your safety, you can only message technicians you've booked. Book this technician to start a conversation.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Details Grid */}
@@ -287,22 +367,44 @@ const TechnicianProfile: React.FC = () => {
           {/* Contact Info */}
           <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
             <h2 className="mb-4 flex items-center text-lg font-bold text-gray-900">
-              <Phone className="mr-2 h-5 w-5 text-primary-600" />
-              Contact Information
+              <MapPin className="mr-2 h-5 w-5 text-primary-600" />
+              Location
             </h2>
             <div className="space-y-3">
-              <div className="flex items-center space-x-3 text-gray-700">
-                <Phone className="h-4 w-4 text-gray-400" />
-                <span>{technician.phoneNumber}</span>
-              </div>
-              <div className="flex items-center space-x-3 text-gray-700">
-                <Mail className="h-4 w-4 text-gray-400" />
-                <span>{technician.email}</span>
-              </div>
-              {technician.location?.address && (
+              {technician.location?.address ? (
                 <div className="flex items-center space-x-3 text-gray-700">
                   <MapPin className="h-4 w-4 text-gray-400" />
                   <span>{technician.location.address}</span>
+                </div>
+              ) : (
+                <p className="text-gray-500">Location not specified</p>
+              )}
+
+              {/* Only show contact info if user has active booking */}
+              {hasActiveBooking ? (
+                <>
+                  <div className="pt-3 border-t border-gray-200">
+                    <p className="text-xs text-gray-500 mb-2">Contact information (visible due to active booking):</p>
+                    <div className="flex items-center space-x-3 text-gray-700 mb-2">
+                      <Phone className="h-4 w-4 text-gray-400" />
+                      <span>{technician.phoneNumber}</span>
+                    </div>
+                    <div className="flex items-center space-x-3 text-gray-700">
+                      <Mail className="h-4 w-4 text-gray-400" />
+                      <span>{technician.email}</span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="pt-3 border-t border-gray-200">
+                  <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-600">
+                    <div className="flex items-start space-x-2">
+                      <Shield className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                      <p>
+                        Contact information is protected. Book this technician to view their phone number and email.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

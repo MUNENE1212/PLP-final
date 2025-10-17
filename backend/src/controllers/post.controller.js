@@ -74,11 +74,17 @@ exports.getPosts = async (req, res) => {
       const viewsWeight = 0.1;
       const recencyBonus = Math.max(0, 100 - ((Date.now() - post.createdAt) / (1000 * 60 * 60 * 24))); // Decay over 100 days
 
+      // Safely access engagement fields with defaults
+      const likesCount = post.engagement?.likes?.length || 0;
+      const commentsCount = post.comments?.length || 0;
+      const sharesCount = post.sharesCount || 0;
+      const viewsCount = post.engagement?.views || 0;
+
       const engagementScore =
-        (post.engagement.likes.length * likesWeight) +
-        (post.comments.length * commentsWeight) +
-        (post.sharesCount * sharesWeight) +
-        (post.engagement.views * viewsWeight) +
+        (likesCount * likesWeight) +
+        (commentsCount * commentsWeight) +
+        (sharesCount * sharesWeight) +
+        (viewsCount * viewsWeight) +
         recencyBonus;
 
       // Apply pro boost
@@ -123,16 +129,16 @@ exports.getPosts = async (req, res) => {
     const postsWithFlags = paginatedScores.map(({ post, boostApplied, boostMultiplier }) => {
       const postObj = post.toObject();
       if (userId) {
-        postObj.isLiked = post.engagement.likes.some(id => id.toString() === userId);
-        postObj.isBookmarked = post.bookmarks.some(id => id.toString() === userId);
+        postObj.isLiked = post.engagement?.likes?.some(id => id.toString() === userId) || false;
+        postObj.isBookmarked = post.bookmarks?.some(id => id.toString() === userId) || false;
       } else {
         postObj.isLiked = false;
         postObj.isBookmarked = false;
       }
-      postObj.likesCount = post.engagement.likes.length;
-      postObj.commentsCount = post.comments.length;
-      postObj.sharesCount = post.sharesCount;
-      postObj.views = post.engagement.views;
+      postObj.likesCount = post.engagement?.likes?.length || 0;
+      postObj.commentsCount = post.comments?.length || 0;
+      postObj.sharesCount = post.sharesCount || 0;
+      postObj.views = post.engagement?.views || 0;
       postObj.isBoosted = boostApplied;
       postObj.boostLevel = boostMultiplier > 1.0 ? (boostMultiplier === 2.0 ? 'premium' : 'pro') : null;
       return postObj;

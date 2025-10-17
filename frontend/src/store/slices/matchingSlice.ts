@@ -73,22 +73,31 @@ export interface MatchingPreference {
       preference: string;
     };
     responseTime: string;
-    languages: string[];
+    languages?: string[];
     defaultUrgency: string;
   };
   technicianPreferences: {
     ratingImportance: number;
     minRating: number;
-    experienceLevel: string;
+    experienceLevel?: string;
     minYearsExperience: number;
     requireCertifications: boolean;
     requireBackgroundCheck: boolean;
     requireInsurance: boolean;
   };
+  communication?: {
+    preferredMethod: string;
+    expectedResponseTime?: string;
+    notifyOnMatch: boolean;
+    notifyOnBetterMatch: boolean;
+    matchNotificationFrequency: string;
+  };
   ai: {
     enableAIRecommendations: boolean;
     autoMatch: boolean;
     enableSmartScheduling: boolean;
+    enablePricePrediction?: boolean;
+    allowBehaviorLearning?: boolean;
     personalizationLevel: string;
   };
   customWeights?: Partial<{

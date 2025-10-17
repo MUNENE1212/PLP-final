@@ -176,23 +176,88 @@ export interface Match {
 }
 
 // Message Types
+export interface Attachment {
+  type: 'image' | 'video' | 'audio' | 'document' | 'location';
+  url: string;
+  publicId?: string;
+  thumbnail?: string;
+  filename?: string;
+  size?: number;
+  mimeType?: string;
+  duration?: number;
+  coordinates?: {
+    latitude: number;
+    longitude: number;
+  };
+  locationName?: string;
+}
+
+export interface ReadReceipt {
+  user: string;
+  readAt: string;
+}
+
+export interface Reaction {
+  user: string;
+  emoji: string;
+  createdAt: string;
+}
+
 export interface Message {
   _id: string;
   conversation: string;
-  sender: User;
-  type: 'text' | 'image' | 'video' | 'document' | 'location';
-  content?: string;
-  mediaUrl?: string;
-  read: boolean;
+  sender: User | string;
+  type: 'text' | 'image' | 'video' | 'audio' | 'document' | 'location' | 'booking' | 'system' | 'call';
+  text?: string;
+  attachments?: Attachment[];
+  bookingRef?: string;
+  replyTo?: string;
+  status: 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
+  readBy: ReadReceipt[];
+  reactions: Reaction[];
+  mentions?: string[];
+  isEdited: boolean;
+  editedAt?: string;
+  isDeleted: boolean;
+  deletedAt?: string;
+  deletedFor: string[];
   createdAt: string;
+  updatedAt: string;
+}
+
+export interface ParticipantSettings {
+  user: string;
+  role: 'admin' | 'member';
+  joinedAt: string;
+  leftAt?: string;
+  isMuted: boolean;
+  mutedUntil?: string;
+  isPinned: boolean;
+  unreadCount: number;
+  lastReadAt?: string;
+  customNickname?: string;
 }
 
 export interface Conversation {
   _id: string;
-  participants: User[];
-  lastMessage?: Message;
-  unreadCount: number;
   type: 'direct' | 'group' | 'booking' | 'support';
+  participants: ParticipantSettings[];
+  name?: string;
+  description?: string;
+  avatar?: {
+    url: string;
+    publicId: string;
+  };
+  booking?: string | Booking;
+  lastMessage?: Message | string;
+  lastMessageAt: string;
+  status: 'active' | 'archived' | 'deleted';
+  createdBy?: string;
+  settings: {
+    allowMediaSharing: boolean;
+    allowCalls: boolean;
+    onlyAdminsCanSend: boolean;
+  };
   createdAt: string;
   updatedAt: string;
 }

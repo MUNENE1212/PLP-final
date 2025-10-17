@@ -683,6 +683,45 @@ UserSchema.methods.getBoostMultiplier = function() {
   }
 };
 
+// Get public profile (hides sensitive fields unless user has active booking)
+UserSchema.methods.getPublicProfile = async function(requestingUserId = null) {
+  const userObject = this.toObject();
+
+  // Always remove these fields from public profile
+  delete userObject.password;
+  delete userObject.refreshTokens;
+  delete userObject.emailVerificationToken;
+  delete userObject.phoneVerificationCode;
+  delete userObject.passwordResetToken;
+  delete userObject.twoFactorSecret;
+  delete userObject.fcmTokens;
+  delete userObject.loginHistory;
+  delete userObject.kyc;
+
+  // If no requesting user or same user, return all visible data
+  if (!requestingUserId || requestingUserId.toString() === this._id.toString()) {
+    return userObject;
+  }
+
+  // Check if users have an active booking together
+  const Booking = require('mongoose').model('Booking');
+  const hasActiveBooking = await Booking.exists({
+    $or: [
+      { customer: requestingUserId, technician: this._id },
+      { customer: this._id, technician: requestingUserId }
+    ],
+    status: { $in: ['accepted', 'in_progress', 'completed'] }
+  });
+
+  // If no active booking, hide sensitive contact information
+  if (!hasActiveBooking) {
+    delete userObject.email;
+    delete userObject.phoneNumber;
+  }
+
+  return userObject;
+};
+
 // ===== STATIC METHODS =====
 
 // Find technicians by skill and location

@@ -11,12 +11,21 @@ import Dashboard from './pages/Dashboard';
 import FindTechnicians from './pages/FindTechnicians';
 import TechnicianProfile from './pages/TechnicianProfile';
 import MyBookings from './pages/MyBookings';
+import CreateBooking from './pages/CreateBooking';
+import BookingDetail from './pages/BookingDetail';
+import MatchingPreferences from './pages/MatchingPreferences';
 import ProfileSettings from './pages/ProfileSettings';
+import Messages from './pages/Messages';
+import Support from './pages/Support';
 import NotFound from './pages/NotFound';
 import { useAppSelector } from './store/hooks';
+import { useSocket } from './hooks/useSocket';
 
 const App: React.FC = () => {
   const { isAuthenticated } = useAppSelector((state) => state.auth);
+
+  // Initialize socket connection
+  useSocket();
 
   return (
     <ErrorBoundary>
@@ -63,7 +72,12 @@ const App: React.FC = () => {
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="find-technicians" element={<FindTechnicians />} />
               <Route path="technicians/:id" element={<TechnicianProfile />} />
+              <Route path="booking/create" element={<CreateBooking />} />
+              <Route path="bookings/:id" element={<BookingDetail />} />
               <Route path="bookings" element={<MyBookings />} />
+              <Route path="messages" element={<Messages />} />
+              <Route path="support" element={<Support />} />
+              <Route path="preferences" element={<MatchingPreferences />} />
               <Route path="settings" element={<ProfileSettings />} />
             </Route>
 
