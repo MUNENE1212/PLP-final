@@ -20,6 +20,7 @@ import {
 } from '@/store/slices/postSlice';
 import { cn } from '@/lib/utils';
 import { timeAgo } from '@/lib/utils';
+import { formatRating } from '@/utils/rating';
 
 interface PostCardProps {
   post: Post;
@@ -110,7 +111,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               </Link>
               {post.author.rating && post.author.rating.count > 0 && (
                 <span className="flex items-center text-sm text-yellow-600">
-                  ⭐ {post.author.rating.average.toFixed(1)}
+                  ⭐ {formatRating(post.author.rating)}
                 </span>
               )}
             </div>

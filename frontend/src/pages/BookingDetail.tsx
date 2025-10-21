@@ -22,6 +22,7 @@ import {
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
+import { formatRating } from '@/utils/rating';
 
 const STATUS_CONFIG: Record<
   string,
@@ -334,9 +335,7 @@ const BookingDetail: React.FC = () => {
                     </p>
                     {booking.technician.rating && (
                       <p className="text-sm text-gray-600">
-                        ⭐ {typeof booking.technician.rating === 'object'
-                          ? (booking.technician.rating?.average || 0).toFixed(1)
-                          : (booking.technician.rating || 0).toFixed(1)}
+                        ⭐ {formatRating(booking.technician.rating)}
                       </p>
                     )}
                   </div>

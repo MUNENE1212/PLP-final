@@ -358,23 +358,39 @@ exports.acceptMatch = async (req, res) => {
       });
     }
 
-    const { scheduledDate, scheduledTime, description, estimatedDuration } = req.body;
+    const { scheduledDate, scheduledTime, description, estimatedDuration, serviceType } = req.body;
+
+    // Parse the time to calculate end time
+    const [hours, minutes] = scheduledTime.split(':');
+    const startDate = new Date(scheduledDate);
+    startDate.setHours(parseInt(hours), parseInt(minutes), 0);
+
+    const durationMinutes = estimatedDuration || 120; // default 2 hours
+    const endDate = new Date(startDate.getTime() + durationMinutes * 60000);
+    const endTime = `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`;
 
     // Create booking from match
     const booking = new Booking({
       customer: matching.customer,
       technician: matching.technician,
       serviceCategory: matching.serviceCategory,
+      serviceType: serviceType || `${matching.serviceCategory} service`,
       description: description || 'Booking from AI match',
-      location: matching.location,
+      serviceLocation: matching.location,
       urgency: matching.urgency,
-      schedule: {
+      timeSlot: {
         date: scheduledDate,
-        time: scheduledTime,
-        estimatedDuration: estimatedDuration || 2
+        startTime: scheduledTime,
+        endTime: endTime,
+        estimatedDuration: durationMinutes
       },
       pricing: {
-        serviceCharge: 0, // To be filled by technician
+        basePrice: 0,
+        serviceCharge: 0,
+        platformFee: 0,
+        tax: 0,
+        discount: 0,
+        totalAmount: 0, // Required field
         currency: 'KES'
       },
       source: 'ai_matching'

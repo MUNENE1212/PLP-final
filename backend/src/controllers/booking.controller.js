@@ -166,10 +166,13 @@ exports.getBookings = async (req, res) => {
  */
 exports.getBooking = async (req, res) => {
   try {
+    console.log('Fetching booking with ID:', req.params.id);
+
     const booking = await Booking.findById(req.params.id)
       .populate('customer', 'firstName lastName email phoneNumber profilePicture location')
-      .populate('technician', 'firstName lastName email phoneNumber profilePicture rating skills location')
-      .populate('alternativeTechnicians.technician', 'firstName lastName rating skills profilePicture');
+      .populate('technician', 'firstName lastName email phoneNumber profilePicture rating skills location');
+
+    console.log('Booking found:', booking ? 'Yes' : 'No');
 
     if (!booking) {
       return res.status(404).json({
@@ -191,15 +194,19 @@ exports.getBooking = async (req, res) => {
       });
     }
 
+    console.log('Returning booking successfully');
     res.status(200).json({
       success: true,
       booking
     });
   } catch (error) {
     console.error('Get booking error:', error);
+    console.error('Error details:', error.message);
+    console.error('Error stack:', error.stack);
     res.status(500).json({
       success: false,
-      message: 'Error fetching booking'
+      message: 'Error fetching booking',
+      error: error.message
     });
   }
 };

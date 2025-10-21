@@ -128,6 +128,7 @@ export interface AcceptMatchParams {
   scheduledTime: string;
   description?: string;
   estimatedDuration?: number;
+  serviceType?: string;
 }
 
 interface MatchingState {

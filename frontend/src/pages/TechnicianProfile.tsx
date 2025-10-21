@@ -22,6 +22,7 @@ import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { createConversation, fetchConversations } from '@/store/slices/messagingSlice';
 import toast from 'react-hot-toast';
 import { MessageCircle } from 'lucide-react';
+import { formatRating } from '@/utils/rating';
 
 interface Technician {
   _id: string;
@@ -213,9 +214,7 @@ const TechnicianProfile: React.FC = () => {
                   <div className="flex items-center space-x-1">
                     <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
                     <span className="text-lg font-semibold">
-                      {typeof technician.rating === 'object'
-                        ? (technician.rating?.average || 0).toFixed(1)
-                        : (technician.rating || 0).toFixed(1)}
+                      {formatRating(technician.rating)}
                     </span>
                   </div>
                   {technician.completedJobs && (

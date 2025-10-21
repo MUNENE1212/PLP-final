@@ -15,6 +15,7 @@ import {
 import { Match } from '@/store/slices/matchingSlice';
 import { cn } from '@/lib/utils';
 import Button from '../ui/Button';
+import { formatRating } from '@/utils/rating';
 
 interface TechnicianCardProps {
   match: Match;
@@ -108,9 +109,7 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
                 <div className="flex items-center space-x-1">
                   <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                   <span className="font-medium">
-                    {typeof match.technician.rating === 'object'
-                      ? (match.technician.rating?.average || 0).toFixed(1)
-                      : (match.technician.rating || 0).toFixed(1)}
+                    {formatRating(match.technician.rating)}
                   </span>
                 </div>
                 <div className="flex items-center space-x-1">

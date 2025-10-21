@@ -65,8 +65,8 @@ const BookingSchema = new Schema({
   // Reference IDs
   bookingNumber: {
     type: String,
-    unique: true,
-    required: true
+    unique: true
+    // Note: Auto-generated in pre-save hook, not required here
   },
   customer: {
     type: Schema.Types.ObjectId,
@@ -330,7 +330,7 @@ const BookingSchema = new Schema({
   // Metadata
   source: {
     type: String,
-    enum: ['mobile_app', 'web_app', 'admin_panel', 'api'],
+    enum: ['mobile_app', 'web_app', 'admin_panel', 'api', 'ai_matching'],
     default: 'mobile_app'
   },
   isRecurring: {

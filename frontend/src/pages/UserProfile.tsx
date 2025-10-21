@@ -11,6 +11,7 @@ import { MapPin, Calendar, Briefcase, Star, Users, FileText, UserPlus, UserMinus
 import Button from '@/components/ui/Button';
 import PostCard from '@/components/social/PostCard';
 import toast from 'react-hot-toast';
+import { formatRating, getRatingCount } from '@/utils/rating';
 
 const UserProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -174,8 +175,8 @@ const UserProfile: React.FC = () => {
                   <div className="flex items-center space-x-2">
                     <Star className="h-5 w-5 text-yellow-500" />
                     <span className="text-gray-700">
-                      <strong>{currentProfile.rating.average.toFixed(1)}</strong> (
-                      {currentProfile.rating.count} reviews)
+                      <strong>{formatRating(currentProfile.rating)}</strong> (
+                      {getRatingCount(currentProfile.rating)} reviews)
                     </span>
                   </div>
                 )}

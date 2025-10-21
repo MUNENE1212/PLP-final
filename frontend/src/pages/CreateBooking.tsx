@@ -8,6 +8,7 @@ import Input from '@/components/ui/Input';
 import { Calendar, MapPin, Clock, FileText, DollarSign, User, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
+import { formatRating } from '@/utils/rating';
 
 const SERVICE_CATEGORIES = [
   { value: 'plumbing', label: 'Plumbing' },
@@ -147,6 +148,7 @@ const CreateBooking: React.FC = () => {
           scheduledTime: formData.scheduledTime!,
           description: formData.description,
           estimatedDuration: formData.estimatedDuration,
+          serviceType: formData.serviceType,
         };
 
         const result = await dispatch(acceptMatch(acceptParams)).unwrap();
@@ -208,7 +210,7 @@ const CreateBooking: React.FC = () => {
               </h3>
               <div className="flex items-center space-x-4 text-sm text-gray-600">
                 <span className="flex items-center">
-                  ⭐ {locationState.technician.rating?.toFixed(1) || 'N/A'}
+                  ⭐ {formatRating(locationState.technician.rating)}
                 </span>
                 {locationState.technician.hourlyRate && (
                   <span className="flex items-center">
