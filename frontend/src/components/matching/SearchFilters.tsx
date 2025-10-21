@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Search, MapPin, DollarSign, Zap, Calendar } from 'lucide-react';
+import { Search, MapPin, DollarSign, Zap, Calendar, Loader2 } from 'lucide-react';
 import Button from '../ui/Button';
 import { FindTechniciansParams } from '@/store/slices/matchingSlice';
+import { geocodeAddress } from '@/services/geocoding.service';
+import toast from 'react-hot-toast';
 
 interface SearchFiltersProps {
   onSearch: (params: FindTechniciansParams) => void;
@@ -44,6 +46,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, isSearching = f
   const [description, setDescription] = useState('');
   const [useCurrentLocation, setUseCurrentLocation] = useState(false);
   const [locationError, setLocationError] = useState('');
+  const [isGeocodingAddress, setIsGeocodingAddress] = useState(false);
 
   // Get user's current location
   const getCurrentLocation = () => {
@@ -54,14 +57,48 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, isSearching = f
           setCoordinates([position.coords.longitude, position.coords.latitude]);
           setUseCurrentLocation(true);
           setAddress('Current Location');
+          toast.success('Using your current location');
         },
         (error) => {
           setLocationError('Unable to get your location. Please enter an address.');
+          toast.error('Could not get your location');
           console.error('Error getting location:', error);
         }
       );
     } else {
       setLocationError('Geolocation is not supported by your browser.');
+      toast.error('Geolocation not supported');
+    }
+  };
+
+  // Geocode the entered address
+  const handleGeocodeAddress = async () => {
+    if (!address.trim()) {
+      toast.error('Please enter an address first');
+      return;
+    }
+
+    setIsGeocodingAddress(true);
+    setLocationError('');
+
+    try {
+      const result = await geocodeAddress(address, '', 'Kenya');
+
+      if (result && result.coordinates) {
+        setCoordinates(result.coordinates);
+        setUseCurrentLocation(false);
+        toast.success('Location coordinates found!');
+        console.log('Geocoded address to coordinates:', result.coordinates);
+      } else {
+        setLocationError('Could not find coordinates for this address. Try a more specific location.');
+        toast.error('Could not find this location');
+      }
+    } catch (error) {
+      console.error('Geocoding error:', error);
+      setLocationError('Error finding location. Please try again.');
+      toast.error('Failed to find location');
+    } finally {
+      setIsGeocodingAddress(false);
     }
   };
 
@@ -81,6 +118,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, isSearching = f
     const params: FindTechniciansParams = {
       serviceCategory,
       location: {
+        type: 'Point',
         coordinates,
         address: address || 'Current Location',
       },
@@ -90,6 +128,8 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, isSearching = f
       ...(description && { description }),
     };
 
+    console.log('Search params:', params);
+    console.log('Location coordinates:', coordinates);
     onSearch(params);
   };
 
@@ -127,30 +167,59 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, isSearching = f
             <MapPin className="mr-1 inline h-4 w-4" />
             Location *
           </label>
-          <div className="flex space-x-2">
-            <input
-              type="text"
-              value={address}
-              onChange={(e) => {
-                setAddress(e.target.value);
-                setUseCurrentLocation(false);
-              }}
-              placeholder="Enter your address or area"
-              className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20"
-            />
+          <div className="space-y-2">
+            <div className="flex space-x-2">
+              <input
+                type="text"
+                value={address}
+                onChange={(e) => {
+                  setAddress(e.target.value);
+                  setUseCurrentLocation(false);
+                }}
+                placeholder="Enter your city or area (e.g., Juja, Nairobi)"
+                className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleGeocodeAddress}
+                disabled={isGeocodingAddress || !address.trim()}
+                className="whitespace-nowrap"
+              >
+                {isGeocodingAddress ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  </>
+                ) : (
+                  'Find Location'
+                )}
+              </Button>
+            </div>
             <Button
               type="button"
               variant="outline"
+              size="sm"
               onClick={getCurrentLocation}
-              className="whitespace-nowrap"
+              className="w-full"
             >
-              Use My Location
+              <MapPin className="mr-2 h-4 w-4" />
+              Use My Current Location
             </Button>
           </div>
           {locationError && <p className="mt-1 text-sm text-red-600">{locationError}</p>}
           {useCurrentLocation && (
-            <p className="mt-1 text-sm text-green-600">Using your current location</p>
+            <p className="mt-1 text-sm text-green-600">
+              ✓ Using your current location
+            </p>
           )}
+          {!useCurrentLocation && coordinates[0] !== 36.8219 && (
+            <p className="mt-1 text-sm text-green-600">
+              ✓ Location set: {coordinates[0].toFixed(4)}, {coordinates[1].toFixed(4)}
+            </p>
+          )}
+          <p className="mt-1 text-xs text-gray-500">
+            Enter your location or use GPS for accurate technician matching
+          </p>
         </div>
 
         {/* Urgency */}

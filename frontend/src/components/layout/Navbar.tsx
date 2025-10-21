@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { logout } from '@/store/slices/authSlice';
 import Button from '../ui/Button';
-import { User, LogOut, Bell, Settings, HelpCircle } from 'lucide-react';
+import { User, LogOut, Bell, Settings, HelpCircle, Sliders } from 'lucide-react';
 
 const Navbar: React.FC = () => {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
@@ -35,12 +35,21 @@ const Navbar: React.FC = () => {
                 Dashboard
               </Link>
               {user?.role === 'customer' && (
-                <Link
-                  to="/find-technicians"
-                  className="text-gray-700 hover:text-primary-600 transition-colors"
-                >
-                  Find Technicians
-                </Link>
+                <>
+                  <Link
+                    to="/find-technicians"
+                    className="text-gray-700 hover:text-primary-600 transition-colors"
+                  >
+                    Find Technicians
+                  </Link>
+                  <Link
+                    to="/preferences"
+                    className="text-gray-700 hover:text-primary-600 transition-colors flex items-center"
+                  >
+                    <Sliders className="h-4 w-4 mr-1" />
+                    Match Preferences
+                  </Link>
+                </>
               )}
               <Link
                 to="/bookings"

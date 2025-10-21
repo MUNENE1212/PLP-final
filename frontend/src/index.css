@@ -49,7 +49,7 @@
   }
 
   .card {
-    @apply rounded-lg border bg-white shadow-sm;
+    @apply rounded-lg border bg-yellow shadow-sm;
   }
 
   .card-header {

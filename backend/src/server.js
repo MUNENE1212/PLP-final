@@ -9,6 +9,7 @@ const rateLimit = require('express-rate-limit');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./config/swagger');
 const { connectDB, createIndexes } = require('./config/db');
+const { initializeSocket } = require('./config/socket');
 
 // Initialize Express app
 const app = express();
@@ -221,6 +222,9 @@ const server = app.listen(PORT, () => {
 ╚═══════════════════════════════════════╝
   `);
 });
+
+// Initialize Socket.IO
+initializeSocket(server);
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {

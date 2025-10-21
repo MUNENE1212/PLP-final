@@ -16,8 +16,12 @@ import {
   Save,
   X,
   CheckCircle,
+  Navigation,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { geocodeAddress, getCurrentCoordinates } from '@/services/geocoding.service';
+import toast from 'react-hot-toast';
 
 interface Skill {
   name: string;
@@ -34,7 +38,9 @@ interface FormData {
   location: {
     address: string;
     city: string;
+    county: string;
     country: string;
+    coordinates: [number, number]; // [longitude, latitude]
   };
   skills?: Skill[];
 }
@@ -52,7 +58,9 @@ const ProfileSettings: React.FC = () => {
     location: {
       address: '',
       city: '',
+      county: '',
       country: '',
+      coordinates: [0, 0],
     },
     skills: [],
   });
@@ -62,6 +70,8 @@ const ProfileSettings: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isGeocodingLocation, setIsGeocodingLocation] = useState(false);
+  const [isGettingCurrentLocation, setIsGettingCurrentLocation] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -73,7 +83,9 @@ const ProfileSettings: React.FC = () => {
         location: {
           address: user.location?.address || '',
           city: user.location?.city || '',
-          country: user.location?.country || '',
+          county: user.location?.county || '',
+          country: user.location?.country || 'Kenya',
+          coordinates: user.location?.coordinates || [0, 0],
         },
         skills: user.skills || [],
       });
@@ -142,10 +154,82 @@ const ProfileSettings: React.FC = () => {
     );
   };
 
+  // Geocode address when city or address changes
+  const handleGeocodeLocation = async () => {
+    const { address, city, country } = formData.location;
+
+    if (!city && !address) {
+      toast.error('Please enter at least a city or address');
+      return;
+    }
+
+    setIsGeocodingLocation(true);
+    try {
+      const result = await geocodeAddress(address, city, country);
+
+      if (result) {
+        setFormData((prev) => ({
+          ...prev,
+          location: {
+            ...prev.location,
+            coordinates: result.coordinates,
+            city: result.city || prev.location.city,
+            county: result.county || prev.location.county,
+          },
+        }));
+        toast.success('Location coordinates updated successfully!');
+        setHasChanges(true);
+      } else {
+        toast.error('Could not find coordinates for this location. Please try a more specific address.');
+      }
+    } catch (error) {
+      console.error('Geocoding error:', error);
+      toast.error('Failed to geocode location. Please try again.');
+    } finally {
+      setIsGeocodingLocation(false);
+    }
+  };
+
+  // Get current location from browser
+  const handleGetCurrentLocation = async () => {
+    setIsGettingCurrentLocation(true);
+    try {
+      const coordinates = await getCurrentCoordinates();
+
+      if (coordinates) {
+        setFormData((prev) => ({
+          ...prev,
+          location: {
+            ...prev.location,
+            coordinates,
+          },
+        }));
+        toast.success('Current location coordinates obtained!');
+        setHasChanges(true);
+      } else {
+        toast.error('Could not get current location. Please enable location services.');
+      }
+    } catch (error) {
+      console.error('Get current location error:', error);
+      toast.error('Failed to get current location. Please check browser permissions.');
+    } finally {
+      setIsGettingCurrentLocation(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!user) return;
+
+    // Validate coordinates
+    const { coordinates } = formData.location;
+    if (coordinates[0] === 0 && coordinates[1] === 0) {
+      toast.error(
+        'Please set your location coordinates by clicking "Get Coordinates from Address" or "Use Current Location"'
+      );
+      return;
+    }
 
     try {
       // Prepare update data
@@ -157,9 +241,10 @@ const ProfileSettings: React.FC = () => {
         bio: formData.bio,
         location: {
           type: 'Point',
-          coordinates: user.location?.coordinates || [0, 0],
+          coordinates: formData.location.coordinates,
           address: formData.location.address,
           city: formData.location.city,
+          county: formData.location.county,
           country: formData.location.country,
         },
       };
@@ -405,6 +490,11 @@ const ProfileSettings: React.FC = () => {
             <MapPin className="mr-2 h-5 w-5 text-primary-600" />
             Location Information
           </h2>
+          <p className="mb-4 text-sm text-gray-600">
+            Location coordinates are used to match you with nearby customers/technicians.
+            Enter your address and click "Get Coordinates from Address" or use your current location.
+          </p>
+
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
               <label
@@ -429,7 +519,7 @@ const ProfileSettings: React.FC = () => {
                 htmlFor="location.city"
                 className="block text-sm font-medium text-gray-700"
               >
-                City
+                City <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -438,6 +528,26 @@ const ProfileSettings: React.FC = () => {
                 value={formData.location.city}
                 onChange={handleInputChange}
                 className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20"
+                placeholder="e.g., Nairobi"
+                required
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="location.county"
+                className="block text-sm font-medium text-gray-700"
+              >
+                County
+              </label>
+              <input
+                type="text"
+                id="location.county"
+                name="location.county"
+                value={formData.location.county}
+                onChange={handleInputChange}
+                className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20"
+                placeholder="e.g., Nairobi County"
               />
             </div>
 
@@ -455,7 +565,74 @@ const ProfileSettings: React.FC = () => {
                 value={formData.location.country}
                 onChange={handleInputChange}
                 className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20"
+                placeholder="Kenya"
               />
+            </div>
+
+            {/* Coordinates Display */}
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Coordinates <span className="text-red-500">*</span>
+              </label>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="flex-1 rounded-lg border border-gray-300 bg-gray-50 px-4 py-2 text-sm text-gray-700">
+                  <span className="font-medium">Longitude:</span> {formData.location.coordinates[0].toFixed(6)}
+                  {' | '}
+                  <span className="font-medium">Latitude:</span> {formData.location.coordinates[1].toFixed(6)}
+                </div>
+                {formData.location.coordinates[0] === 0 && formData.location.coordinates[1] === 0 && (
+                  <span className="text-xs text-red-500">Not set</span>
+                )}
+                {formData.location.coordinates[0] !== 0 && formData.location.coordinates[1] !== 0 && (
+                  <span className="text-xs text-green-600">Set ✓</span>
+                )}
+              </div>
+
+              {/* Geocoding Buttons */}
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleGeocodeLocation}
+                  disabled={isGeocodingLocation || isGettingCurrentLocation}
+                >
+                  {isGeocodingLocation ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Geocoding...
+                    </>
+                  ) : (
+                    <>
+                      <MapPin className="mr-2 h-4 w-4" />
+                      Get Coordinates from Address
+                    </>
+                  )}
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleGetCurrentLocation}
+                  disabled={isGeocodingLocation || isGettingCurrentLocation}
+                >
+                  {isGettingCurrentLocation ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Getting Location...
+                    </>
+                  ) : (
+                    <>
+                      <Navigation className="mr-2 h-4 w-4" />
+                      Use Current Location
+                    </>
+                  )}
+                </Button>
+              </div>
+              <p className="mt-2 text-xs text-gray-500">
+                Coordinates are required for location-based matching. Click one of the buttons above to set them.
+              </p>
             </div>
           </div>
         </div>

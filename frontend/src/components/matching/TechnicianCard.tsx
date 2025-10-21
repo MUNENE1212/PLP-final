@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   MapPin,
   Star,
@@ -28,7 +29,13 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
   onAccept,
   onReject,
 }) => {
+  const navigate = useNavigate();
   const [showScores, setShowScores] = useState(false);
+
+  const handleProfileClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/profile/${match.technician._id}`);
+  };
 
   const getMatchQualityBadge = (score: number) => {
     if (score >= 90) {
@@ -70,11 +77,12 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
         <div className="flex items-start justify-between">
           <div className="flex space-x-4">
             {/* Profile Picture */}
-            <div className="relative">
+            <div className="relative cursor-pointer" onClick={handleProfileClick}>
               <img
                 src={getProfilePicture()}
                 alt={match.technician.firstName}
-                className="h-20 w-20 rounded-full object-cover ring-4 ring-gray-100"
+                className="h-20 w-20 rounded-full object-cover ring-4 ring-gray-100 hover:ring-primary-500 transition-all"
+                title={`View ${match.technician.firstName}'s profile`}
               />
               {match.technician.availability?.status === 'available' && (
                 <div className="absolute bottom-0 right-0 h-5 w-5 rounded-full border-2 border-white bg-green-500" />
@@ -84,7 +92,11 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
             {/* Info */}
             <div className="flex-1">
               <div className="flex items-center space-x-3">
-                <h3 className="text-xl font-bold text-gray-900">
+                <h3
+                  className="text-xl font-bold text-gray-900 cursor-pointer hover:text-primary-600 transition-colors"
+                  onClick={handleProfileClick}
+                  title={`View ${match.technician.firstName}'s profile`}
+                >
                   {match.technician.firstName} {match.technician.lastName}
                 </h3>
                 {match.scores.overall >= 85 && (
@@ -95,7 +107,11 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
               <div className="mt-1 flex items-center space-x-4 text-sm text-gray-600">
                 <div className="flex items-center space-x-1">
                   <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  <span className="font-medium">{match.technician.rating.toFixed(1)}</span>
+                  <span className="font-medium">
+                    {typeof match.technician.rating === 'object'
+                      ? (match.technician.rating?.average || 0).toFixed(1)
+                      : (match.technician.rating || 0).toFixed(1)}
+                  </span>
                 </div>
                 <div className="flex items-center space-x-1">
                   <MapPin className="h-4 w-4" />

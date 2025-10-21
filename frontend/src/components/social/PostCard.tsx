@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Heart,
   MessageCircle,
@@ -93,16 +94,20 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       {/* Header */}
       <div className="flex items-start justify-between p-4">
         <div className="flex space-x-3">
-          <img
-            src={getProfilePicture(post.author)}
-            alt={post.author.firstName}
-            className="h-12 w-12 rounded-full object-cover ring-2 ring-gray-100"
-          />
+          <Link to={`/profile/${post.author._id}`}>
+            <img
+              src={getProfilePicture(post.author)}
+              alt={post.author.firstName}
+              className="h-12 w-12 rounded-full object-cover ring-2 ring-gray-100 cursor-pointer hover:ring-primary-500 transition-all"
+            />
+          </Link>
           <div>
             <div className="flex items-center space-x-2">
-              <h3 className="font-semibold text-gray-900">
-                {post.author.firstName} {post.author.lastName}
-              </h3>
+              <Link to={`/profile/${post.author._id}`}>
+                <h3 className="font-semibold text-gray-900 hover:text-primary-600 transition-colors cursor-pointer">
+                  {post.author.firstName} {post.author.lastName}
+                </h3>
+              </Link>
               {post.author.rating && post.author.rating.count > 0 && (
                 <span className="flex items-center text-sm text-yellow-600">
                   ⭐ {post.author.rating.average.toFixed(1)}
@@ -288,28 +293,39 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
           {/* Comments List */}
           <div className="space-y-3">
-            {post.comments.map((comment) => (
-              <div key={comment._id} className="flex space-x-2">
-                <img
-                  src={getProfilePicture(comment.user)}
-                  alt={comment.user.firstName}
-                  className="h-8 w-8 rounded-full object-cover"
-                />
-                <div className="flex-1">
-                  <div className="rounded-lg bg-gray-50 px-3 py-2">
-                    <p className="text-sm font-semibold text-gray-900">
-                      {comment.user.firstName} {comment.user.lastName}
-                    </p>
-                    <p className="text-sm text-gray-700">{comment.text}</p>
-                  </div>
-                  <div className="mt-1 flex items-center space-x-3 text-xs text-gray-500">
-                    <span>{timeAgo(comment.createdAt)}</span>
-                    <button className="hover:underline">Like</button>
-                    <button className="hover:underline">Reply</button>
+            {post.comments.map((comment) => {
+              // Safety check: Ensure comment.user is populated
+              if (!comment.user || typeof comment.user !== 'object' || !comment.user._id) {
+                return null;
+              }
+
+              return (
+                <div key={comment._id} className="flex space-x-2">
+                  <Link to={`/profile/${comment.user._id}`}>
+                    <img
+                      src={getProfilePicture(comment.user)}
+                      alt={comment.user.firstName}
+                      className="h-8 w-8 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-primary-500 transition-all"
+                    />
+                  </Link>
+                  <div className="flex-1">
+                    <div className="rounded-lg bg-gray-50 px-3 py-2">
+                      <Link to={`/profile/${comment.user._id}`}>
+                        <p className="text-sm font-semibold text-gray-900 hover:text-primary-600 transition-colors cursor-pointer">
+                          {comment.user.firstName} {comment.user.lastName}
+                        </p>
+                      </Link>
+                      <p className="text-sm text-gray-700">{comment.text}</p>
+                    </div>
+                    <div className="mt-1 flex items-center space-x-3 text-xs text-gray-500">
+                      <span>{timeAgo(comment.createdAt)}</span>
+                      <button className="hover:underline">Like</button>
+                      <button className="hover:underline">Reply</button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

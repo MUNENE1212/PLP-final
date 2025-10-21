@@ -10,6 +10,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import FindTechnicians from './pages/FindTechnicians';
 import TechnicianProfile from './pages/TechnicianProfile';
+import UserProfile from './pages/UserProfile';
 import MyBookings from './pages/MyBookings';
 import CreateBooking from './pages/CreateBooking';
 import BookingDetail from './pages/BookingDetail';
@@ -72,6 +73,7 @@ const App: React.FC = () => {
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="find-technicians" element={<FindTechnicians />} />
               <Route path="technicians/:id" element={<TechnicianProfile />} />
+              <Route path="profile/:id" element={<UserProfile />} />
               <Route path="booking/create" element={<CreateBooking />} />
               <Route path="bookings/:id" element={<BookingDetail />} />
               <Route path="bookings" element={<MyBookings />} />

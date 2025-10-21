@@ -37,6 +37,7 @@ export interface User {
     coordinates: [number, number]; // [longitude, latitude]
     address?: string;
     city?: string;
+    county?: string;
     country?: string;
   };
   skills?: Array<{

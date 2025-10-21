@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Message, User } from '@/types';
 import { format, formatDistanceToNow } from 'date-fns';
 import { useAppSelector } from '@/store/hooks';
@@ -18,10 +19,17 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   onReact,
   onDelete,
 }) => {
+  const navigate = useNavigate();
   const [showOptions, setShowOptions] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
 
   const sender = typeof message.sender === 'object' ? message.sender : null;
+
+  const handleAvatarClick = () => {
+    if (sender && sender._id) {
+      navigate(`/profile/${sender._id}`);
+    }
+  };
 
   const getSenderName = () => {
     if (!sender) return 'User';
@@ -111,15 +119,16 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     >
       {/* Avatar for other users */}
       {!isOwn && showAvatar && sender && (
-        <div className="mr-2 flex-shrink-0">
+        <div className="mr-2 flex-shrink-0 cursor-pointer" onClick={handleAvatarClick}>
           {sender.profilePicture ? (
             <img
               src={sender.profilePicture}
               alt={getSenderName()}
-              className="w-8 h-8 rounded-full object-cover"
+              className="w-8 h-8 rounded-full object-cover hover:ring-2 hover:ring-primary-500 transition-all"
+              title={`View ${getSenderName()}'s profile`}
             />
           ) : (
-            <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold">
+            <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold hover:ring-2 hover:ring-primary-500 transition-all">
               {sender.firstName?.[0]}{sender.lastName?.[0]}
             </div>
           )}
@@ -129,7 +138,13 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
       <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'} max-w-[70%]`}>
         {/* Sender name for group chats */}
         {!isOwn && sender && (
-          <span className="text-xs text-gray-500 mb-1 px-1">{getSenderName()}</span>
+          <span
+            className="text-xs text-gray-500 mb-1 px-1 cursor-pointer hover:text-primary-600 transition-colors"
+            onClick={handleAvatarClick}
+            title={`View ${getSenderName()}'s profile`}
+          >
+            {getSenderName()}
+          </span>
         )}
 
         {/* Message bubble */}

@@ -50,7 +50,17 @@ exports.getPosts = async (req, res) => {
     const query = { status: 'published', visibility: 'public' };
 
     if (type) query.type = type;
-    if (author) query.author = author;
+    // Only add author filter if it's a valid value (not 'undefined' string or empty)
+    if (author && author !== 'undefined' && author.trim() !== '') {
+      // Validate ObjectId format
+      if (!/^[0-9a-fA-F]{24}$/.test(author)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid author ID format'
+        });
+      }
+      query.author = author;
+    }
     if (hashtag) query.hashtags = hashtag;
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -60,6 +70,7 @@ exports.getPosts = async (req, res) => {
 
     const posts = await Post.find(query)
       .populate('author', 'firstName lastName profilePicture role rating subscription')
+      .populate('comments.user', '_id firstName lastName profilePicture')
       .sort(sort)
       .limit(fetchLimit);
 
@@ -170,7 +181,7 @@ exports.getPost = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id)
       .populate('author', 'firstName lastName profilePicture role rating')
-      .populate('comments.user', 'firstName lastName profilePicture');
+      .populate('comments.user', '_id firstName lastName profilePicture');
 
     if (!post) {
       return res.status(404).json({
@@ -180,7 +191,10 @@ exports.getPost = async (req, res) => {
     }
 
     // Increment views
-    post.engagement.views += 1;
+    if (!post.engagement) {
+      post.engagement = { likes: [], views: 0, shares: [] };
+    }
+    post.engagement.views = (post.engagement.views || 0) + 1;
     await post.save();
 
     res.status(200).json({
@@ -300,6 +314,14 @@ exports.toggleLike = async (req, res) => {
       });
     }
 
+    // Ensure engagement object exists
+    if (!post.engagement) {
+      post.engagement = { likes: [], views: 0, shares: [] };
+    }
+    if (!post.engagement.likes) {
+      post.engagement.likes = [];
+    }
+
     const isLiked = post.engagement.likes.includes(req.user.id);
 
     if (isLiked) {
@@ -353,7 +375,7 @@ exports.addComment = async (req, res) => {
 
     await post.save();
 
-    await post.populate('comments.user', 'firstName lastName profilePicture');
+    await post.populate('comments.user', '_id firstName lastName profilePicture');
 
     res.status(201).json({
       success: true,

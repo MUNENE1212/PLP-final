@@ -14,7 +14,12 @@ class SocketService {
     }
 
     const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
-    const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    // Socket.IO connects to the root server URL, not the API path
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+    // Remove /api/v1 from the URL to get the base server URL
+    const backendUrl = apiUrl.replace(/\/api\/v\d+$/, '');
+
+    console.log('Connecting to Socket.IO server:', backendUrl);
 
     this.socket = io(backendUrl, {
       auth: {

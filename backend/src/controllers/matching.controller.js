@@ -45,37 +45,74 @@ exports.findTechnicians = async (req, res) => {
     // Find available technicians with the required skill
     const techniciansQuery = {
       role: 'technician',
-      'status.isActive': true,
-      'status.isVerified': true,
-      'skills.category': serviceCategory
+      status: 'active', // Fixed: status is a string, not nested object
+      'skills.category': serviceCategory,
+      'location.coordinates': { $exists: true, $ne: null } // Ensure location exists
     };
 
+    console.log('Finding technicians with query:', JSON.stringify(techniciansQuery, null, 2));
+    console.log('Service category:', serviceCategory);
+    console.log('Location:', location);
+
+    // First, let's count total technicians
+    const totalTechsCount = await User.countDocuments({ role: 'technician' });
+    console.log(`Total technicians in database: ${totalTechsCount}`);
+
     // Apply preference filters
-    if (preferences.technicianPreferences.minRating) {
-      techniciansQuery.rating = { $gte: preferences.technicianPreferences.minRating };
+    // Only apply minRating filter if it's greater than 0
+    // This allows new technicians without ratings to show up
+    if (preferences.technicianPreferences.minRating && preferences.technicianPreferences.minRating > 0) {
+      // Include technicians with no ratings (count: 0) OR ratings >= minRating
+      techniciansQuery.$or = [
+        { 'rating.count': 0 }, // New technicians with no ratings
+        { 'rating.average': { $gte: preferences.technicianPreferences.minRating } } // Rated technicians meeting minimum
+      ];
+      console.log('Added minRating filter:', preferences.technicianPreferences.minRating, '(allowing unrated technicians)');
     }
 
     if (preferences.technicianPreferences.requireCertifications) {
       techniciansQuery['certifications.0'] = { $exists: true };
+      console.log('Added certifications filter');
     }
 
     if (preferences.technicianPreferences.requireBackgroundCheck) {
       techniciansQuery['verification.backgroundCheck'] = true;
+      console.log('Added background check filter');
     }
 
     if (preferences.technicianPreferences.requireInsurance) {
       techniciansQuery['verification.insurance'] = true;
+      console.log('Added insurance filter');
     }
+
+    console.log('Final query:', JSON.stringify(techniciansQuery, null, 2));
 
     // Find technicians
     let technicians = await User.find(techniciansQuery)
       .select('firstName lastName profilePicture rating skills location availability hourlyRate yearsOfExperience completedJobs avgResponseTime completionRate')
       .lean();
 
+    console.log(`Found ${technicians.length} technicians matching query`);
+
+    if (technicians.length > 0) {
+      console.log('Technicians found:');
+      technicians.forEach(t => {
+        console.log(`  - ${t.firstName} ${t.lastName}: skills=${JSON.stringify(t.skills)}, location=${JSON.stringify(t.location)}`);
+      });
+    }
+
     // Calculate distances and filter by max distance
     const maxDistance = preferences.general.maxDistance || 50;
+    console.log(`Max distance setting: ${maxDistance} km`);
+    console.log(`Customer location coordinates:`, location?.coordinates);
+
     technicians = technicians.filter(tech => {
-      if (!tech.location?.coordinates || !location?.coordinates) return false;
+      if (!tech.location?.coordinates || !location?.coordinates) {
+        console.log(`Technician ${tech._id} skipped - missing location coordinates`);
+        console.log(`  Tech location:`, tech.location);
+        console.log(`  Customer location:`, location);
+        return false;
+      }
 
       const distance = calculateDistance(
         location.coordinates[1], location.coordinates[0],
@@ -83,14 +120,20 @@ exports.findTechnicians = async (req, res) => {
       );
 
       tech.distance = distance;
-      return distance <= maxDistance;
+      const withinRange = distance <= maxDistance;
+      console.log(`Technician ${tech._id}: ${tech.firstName} ${tech.lastName} - ${distance}km away - ${withinRange ? 'INCLUDED' : 'EXCLUDED'}`);
+      return withinRange;
     });
+
+    console.log(`After distance filter: ${technicians.length} technicians`);
 
     // Check for blocked technicians
     const blockedIds = preferences.learnedPreferences.blockedTechnicians.map(
       b => b.technician.toString()
     );
     technicians = technicians.filter(tech => !blockedIds.includes(tech._id.toString()));
+
+    console.log(`After blocked filter: ${technicians.length} technicians`);
 
     // Calculate match scores for each technician
     const matches = [];
@@ -157,11 +200,15 @@ exports.findTechnicians = async (req, res) => {
       matches.push(matching);
     }
 
+    console.log(`Created ${matches.length} match records`);
+
     // Sort by overall score (now includes pro boost)
     matches.sort((a, b) => b.scores.overall - a.scores.overall);
 
     // Take top matches
     const topMatches = matches.slice(0, 10);
+
+    console.log(`Returning top ${topMatches.length} matches`);
 
     // Populate technician details
     await Matching.populate(topMatches, {
@@ -187,7 +234,7 @@ exports.findTechnicians = async (req, res) => {
     preferences.totalMatches += topMatches.length;
     await preferences.save();
 
-    res.status(200).json({
+    const response = {
       success: true,
       count: topMatches.length,
       data: topMatches,
@@ -196,9 +243,13 @@ exports.findTechnicians = async (req, res) => {
         maxDistance: preferences.general.maxDistance,
         minRating: preferences.technicianPreferences.minRating
       }
-    });
+    };
+
+    console.log('Sending response with', topMatches.length, 'matches');
+    res.status(200).json(response);
   } catch (error) {
     console.error('Error in findTechnicians:', error);
+    console.error('Error stack:', error.stack);
     res.status(500).json({
       success: false,
       message: 'Error finding technicians',

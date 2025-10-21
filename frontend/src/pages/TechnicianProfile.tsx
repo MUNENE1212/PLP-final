@@ -212,7 +212,11 @@ const TechnicianProfile: React.FC = () => {
                 <div className="mt-2 flex items-center space-x-4">
                   <div className="flex items-center space-x-1">
                     <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                    <span className="text-lg font-semibold">{technician.rating.toFixed(1)}</span>
+                    <span className="text-lg font-semibold">
+                      {typeof technician.rating === 'object'
+                        ? (technician.rating?.average || 0).toFixed(1)
+                        : (technician.rating || 0).toFixed(1)}
+                    </span>
                   </div>
                   {technician.completedJobs && (
                     <div className="flex items-center space-x-1 text-gray-600">

@@ -4,6 +4,7 @@ import postReducer from './slices/postSlice';
 import matchingReducer from './slices/matchingSlice';
 import bookingReducer from './slices/bookingSlice';
 import messagingReducer from './slices/messagingSlice';
+import userReducer from './slices/userSlice';
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
     matching: matchingReducer,
     bookings: bookingReducer,
     messaging: messagingReducer,
+    user: userReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

@@ -48,16 +48,22 @@ const SkillSchema = new Schema({
 }, { _id: false });
 
 const AvailabilitySchema = new Schema({
-  dayOfWeek: {
-    type: Number, // 0 = Sunday, 6 = Saturday
-    required: true
-  },
-  startTime: String, // "09:00"
-  endTime: String, // "17:00"
   isAvailable: {
     type: Boolean,
-    default: true
-  }
+    default: false
+  },
+  schedule: [{
+    dayOfWeek: {
+      type: Number, // 0 = Sunday, 6 = Saturday
+      required: true
+    },
+    startTime: String, // "09:00"
+    endTime: String, // "17:00"
+    isAvailable: {
+      type: Boolean,
+      default: true
+    }
+  }]
 }, { _id: false });
 
 const PortfolioSchema = new Schema({
@@ -188,7 +194,7 @@ const UserSchema = new Schema({
     default: undefined // Only for technicians
   },
   availability: {
-    type: [AvailabilitySchema],
+    type: AvailabilitySchema,
     default: undefined
   },
   portfolio: {
@@ -607,13 +613,21 @@ UserSchema.methods.generatePasswordResetToken = function() {
 UserSchema.methods.isAvailableAt = function(dayOfWeek, time) {
   if (!this.availability || this.role !== 'technician') return false;
 
-  const availability = this.availability.find(a => a.dayOfWeek === dayOfWeek);
-  if (!availability || !availability.isAvailable) return false;
+  // Check if generally available first
+  if (!this.availability.isAvailable) return false;
+
+  // If no schedule defined, assume available if isAvailable flag is true
+  if (!this.availability.schedule || this.availability.schedule.length === 0) {
+    return this.availability.isAvailable;
+  }
+
+  const scheduleSlot = this.availability.schedule.find(a => a.dayOfWeek === dayOfWeek);
+  if (!scheduleSlot || !scheduleSlot.isAvailable) return false;
 
   // Check if time is within range
   const [hours, minutes] = time.split(':').map(Number);
-  const [startHours, startMinutes] = availability.startTime.split(':').map(Number);
-  const [endHours, endMinutes] = availability.endTime.split(':').map(Number);
+  const [startHours, startMinutes] = scheduleSlot.startTime.split(':').map(Number);
+  const [endHours, endMinutes] = scheduleSlot.endTime.split(':').map(Number);
 
   const timeInMinutes = hours * 60 + minutes;
   const startInMinutes = startHours * 60 + startMinutes;

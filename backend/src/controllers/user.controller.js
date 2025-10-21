@@ -219,42 +219,11 @@ exports.updateUser = async (req, res) => {
       });
     }
 
-    const allowedFields = [
-      'firstName',
-      'lastName',
-      'bio',
-      'profilePicture',
-      'phoneNumber',
-      'location',
-      'businessName',
-      'skills',
-      'availability',
-      'preferences',
-      'emergencyContact',
-      'socialLinks'
-    ];
+    // Log the incoming data for debugging
+    console.log('Update user request body:', JSON.stringify(req.body, null, 2));
 
-    const updates = {};
-    allowedFields.forEach(field => {
-      if (req.body[field] !== undefined) {
-        updates[field] = req.body[field];
-      }
-    });
-
-    // Admin-only fields
-    if (req.user.role === 'admin') {
-      if (req.body.role) updates.role = req.body.role;
-      if (req.body.status) updates.status = req.body.status;
-    }
-
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      updates,
-      {
-        new: true,
-        runValidators: true
-      }
-    ).select('-password -twoFactorAuth');
+    // Find the user first
+    const user = await User.findById(req.params.id);
 
     if (!user) {
       return res.status(404).json({
@@ -263,10 +232,71 @@ exports.updateUser = async (req, res) => {
       });
     }
 
+    // Simple fields
+    const simpleFields = [
+      'firstName',
+      'lastName',
+      'bio',
+      'profilePicture',
+      'phoneNumber',
+      'businessName',
+      'preferences',
+      'emergencyContact',
+      'socialLinks'
+    ];
+
+    // Update simple fields
+    simpleFields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        user[field] = req.body[field];
+      }
+    });
+
+    // Handle location update (nested object)
+    if (req.body.location) {
+      console.log('Updating location:', req.body.location);
+      user.location = {
+        type: 'Point',
+        coordinates: req.body.location.coordinates || user.location?.coordinates || [0, 0],
+        address: req.body.location.address || user.location?.address || '',
+        city: req.body.location.city || user.location?.city || '',
+        county: req.body.location.county || user.location?.county || '',
+        country: req.body.location.country || user.location?.country || 'Kenya'
+      };
+      user.markModified('location');
+      console.log('Location after update:', user.location);
+    }
+
+    // Handle skills update (array of objects)
+    if (req.body.skills !== undefined) {
+      console.log('Updating skills:', req.body.skills);
+      user.skills = req.body.skills;
+      user.markModified('skills');
+      console.log('Skills after update:', user.skills);
+    }
+
+    // Handle availability update (nested object)
+    if (req.body.availability !== undefined) {
+      user.availability = req.body.availability;
+      user.markModified('availability');
+    }
+
+    // Admin-only fields
+    if (req.user.role === 'admin') {
+      if (req.body.role) user.role = req.body.role;
+      if (req.body.status) user.status = req.body.status;
+    }
+
+    // Save the user
+    await user.save({ validateModifiedOnly: true });
+
+    // Return user without sensitive data
+    const updatedUser = await User.findById(req.params.id).select('-password -twoFactorAuth');
+
     res.status(200).json({
       success: true,
       message: 'Profile updated successfully',
-      user
+      user: updatedUser
     });
   } catch (error) {
     console.error('Update user error:', error);
@@ -562,6 +592,13 @@ exports.updateAvailability = async (req, res) => {
 
     const user = await User.findById(req.params.id);
 
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
     if (user.role !== 'technician') {
       return res.status(400).json({
         success: false,
@@ -571,14 +608,37 @@ exports.updateAvailability = async (req, res) => {
 
     const { isAvailable, schedule } = req.body;
 
+    // Initialize availability object if it doesn't exist
+    if (!user.availability) {
+      user.availability = {
+        isAvailable: false,
+        schedule: []
+      };
+    }
+
+    // Handle simple boolean availability toggle
     if (isAvailable !== undefined) {
-      user.availability.isAvailable = isAvailable;
+      // For simple toggle, store as object with isAvailable flag
+      user.availability = {
+        isAvailable: isAvailable,
+        schedule: user.availability.schedule || []
+      };
     }
 
+    // Handle schedule updates
     if (schedule) {
-      user.availability.schedule = schedule;
+      if (!user.availability || typeof user.availability === 'boolean') {
+        user.availability = {
+          isAvailable: user.availability || false,
+          schedule: schedule
+        };
+      } else {
+        user.availability.schedule = schedule;
+      }
     }
 
+    // Mark as modified for nested objects
+    user.markModified('availability');
     await user.save();
 
     res.status(200).json({
@@ -590,7 +650,8 @@ exports.updateAvailability = async (req, res) => {
     console.error('Update availability error:', error);
     res.status(500).json({
       success: false,
-      message: 'Error updating availability'
+      message: 'Error updating availability',
+      error: error.message
     });
   }
 };

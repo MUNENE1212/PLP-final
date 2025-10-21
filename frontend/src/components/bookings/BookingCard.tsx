@@ -192,10 +192,17 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, userRole }) => {
 
         {/* Other Party (Customer or Technician) */}
         {otherParty && (
-          <div className="flex items-start space-x-2">
+          <div
+            className="flex items-start space-x-2 cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/profile/${otherParty._id}`);
+            }}
+            title={`View ${otherParty.firstName} ${otherParty.lastName}'s profile`}
+          >
             <User className="mt-0.5 h-4 w-4 text-gray-400" />
             <div>
-              <p className="text-sm font-medium text-gray-900">
+              <p className="text-sm font-medium text-gray-900 hover:text-primary-600 transition-colors">
                 {otherParty.firstName} {otherParty.lastName}
               </p>
               <p className="text-xs text-gray-500">

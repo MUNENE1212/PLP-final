@@ -312,7 +312,7 @@ MatchingSchema.statics.calculateMatchScore = function(customer, technician, cont
     skillMatch: calculateSkillMatch(technician, context),
     locationProximity: calculateLocationScore(customer, technician, context),
     availability: calculateAvailabilityScore(technician),
-    rating: (technician.rating || 0) * 20, // Convert 5-star to 100 scale
+    rating: calculateRatingScore(technician), // Fixed: proper rating calculation
     experienceLevel: calculateExperienceScore(technician),
     pricing: calculatePricingScore(technician, context),
     responseTime: calculateResponseTimeScore(technician),
@@ -320,9 +320,19 @@ MatchingSchema.statics.calculateMatchScore = function(customer, technician, cont
     customerPreference: calculatePreferenceScore(customer, technician)
   };
 
+  // Validate all scores are numbers
+  Object.keys(scores).forEach(key => {
+    if (isNaN(scores[key]) || !isFinite(scores[key])) {
+      console.warn(`Invalid score for ${key}:`, scores[key], 'Setting to 0');
+      scores[key] = 0;
+    }
+  });
+
   // Calculate weighted overall score
   const overall = Object.keys(weights).reduce((total, key) => {
-    return total + (scores[key] * weights[key]);
+    const score = scores[key] || 0;
+    const weight = weights[key] || 0;
+    return total + (score * weight);
   }, 0);
 
   return { scores: { ...scores, overall: Math.round(overall) }, weights };
@@ -362,10 +372,37 @@ function calculateLocationScore(customer, technician, context) {
   return 10;
 }
 
+function calculateRatingScore(technician) {
+  // Convert rating to 0-100 scale
+  // Handle both object format { average: X, count: Y } and number format
+  if (!technician.rating) return 0;
+
+  if (typeof technician.rating === 'object') {
+    const avg = technician.rating.average || 0;
+    const count = technician.rating.count || 0;
+
+    // Penalize technicians with very few ratings
+    if (count === 0) return 50; // New technicians get neutral score
+    if (count < 5) return avg * 20 * 0.8; // 80% weight for < 5 reviews
+    return avg * 20; // Full weight for 5+ reviews (convert 5-star to 100 scale)
+  }
+
+  // If rating is a number, treat it as average
+  return (technician.rating || 0) * 20;
+}
+
 function calculateAvailabilityScore(technician) {
   // Check current availability
-  if (technician.availability?.status === 'available') return 100;
-  if (technician.availability?.status === 'busy') return 50;
+  if (!technician.availability) return 30;
+
+  // Handle different availability formats
+  if (typeof technician.availability === 'object') {
+    if (technician.availability.isAvailable === true) return 100;
+    if (technician.availability.isAvailable === false) return 30;
+    if (technician.availability.status === 'available') return 100;
+    if (technician.availability.status === 'busy') return 50;
+  }
+
   return 30;
 }
 
