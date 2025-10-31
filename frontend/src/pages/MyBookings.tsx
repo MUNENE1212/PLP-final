@@ -46,11 +46,11 @@ const MyBookings: React.FC = () => {
     <div className="mx-auto max-w-7xl">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="flex items-center text-3xl font-bold text-gray-900">
+        <h1 className="flex items-center text-3xl font-bold text-gray-900 dark:text-gray-100">
           <Calendar className="mr-3 h-8 w-8 text-primary-600" />
           My Bookings
         </h1>
-        <p className="mt-2 text-gray-600">
+        <p className="mt-2 text-gray-600 dark:text-gray-400">
           Manage and track all your service bookings
         </p>
       </div>
@@ -81,7 +81,7 @@ const MyBookings: React.FC = () => {
         </div>
 
         {/* Status Filters */}
-        <div className="rounded-lg border border-gray-200 bg-white p-2 shadow-sm">
+        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-2 shadow-sm">
           <div className="flex items-center space-x-2 overflow-x-auto">
             <Filter className="h-4 w-4 text-gray-400" />
             {statusFilters.map((filter) => {
@@ -108,11 +108,11 @@ const MyBookings: React.FC = () => {
 
       {/* Stats Summary */}
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Bookings</p>
-              <p className="mt-1 text-2xl font-bold text-gray-900">
+              <p className="text-sm text-gray-600 dark:text-gray-400">Total Bookings</p>
+              <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-gray-100">
                 {pagination.total}
               </p>
             </div>
@@ -120,10 +120,10 @@ const MyBookings: React.FC = () => {
           </div>
         </div>
 
-        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Active</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Active</p>
               <p className="mt-1 text-2xl font-bold text-blue-600">
                 {bookings.filter((b) =>
                   ['pending', 'assigned', 'accepted', 'in_progress'].includes(b.status)
@@ -136,10 +136,10 @@ const MyBookings: React.FC = () => {
           </div>
         </div>
 
-        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Completed</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Completed</p>
               <p className="mt-1 text-2xl font-bold text-green-600">
                 {bookings.filter((b) => b.status === 'completed').length}
               </p>
@@ -150,16 +150,16 @@ const MyBookings: React.FC = () => {
           </div>
         </div>
 
-        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Cancelled</p>
-              <p className="mt-1 text-2xl font-bold text-gray-600">
+              <p className="text-sm text-gray-600 dark:text-gray-400">Cancelled</p>
+              <p className="mt-1 text-2xl font-bold text-gray-600 dark:text-gray-400">
                 {bookings.filter((b) => b.status === 'cancelled').length}
               </p>
             </div>
             <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
-              <Calendar className="h-6 w-6 text-gray-600" />
+              <Calendar className="h-6 w-6 text-gray-600 dark:text-gray-400" />
             </div>
           </div>
         </div>
@@ -171,12 +171,12 @@ const MyBookings: React.FC = () => {
           <Loading size="lg" text="Loading bookings..." />
         </div>
       ) : filteredBookings.length === 0 ? (
-        <div className="rounded-lg border border-gray-200 bg-white p-12 text-center shadow-sm">
+        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-12 text-center shadow-sm">
           <Package className="mx-auto h-16 w-16 text-gray-400" />
-          <h3 className="mt-4 text-lg font-semibold text-gray-900">
+          <h3 className="mt-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
             No bookings found
           </h3>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
             {activeFilter !== 'all'
               ? `No ${activeFilter} bookings at the moment.`
               : searchQuery

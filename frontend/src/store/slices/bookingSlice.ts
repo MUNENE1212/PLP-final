@@ -28,6 +28,22 @@ export interface BookingPricing {
   discount?: number;
   totalAmount: number;
   currency: string;
+  bookingFee?: number;
+}
+
+export interface BookingFee {
+  required: boolean;
+  percentage: number;
+  amount: number;
+  status: 'pending' | 'paid' | 'held' | 'released' | 'refunded';
+  paidAt?: string;
+  releasedAt?: string;
+  refundedAt?: string;
+  heldInEscrow?: boolean;
+  escrowReleaseCondition?: 'job_verified' | 'support_approved' | 'auto_released';
+  transactionId?: string;
+  refundTransactionId?: string;
+  notes?: string;
 }
 
 export interface BookingUser {
@@ -52,6 +68,7 @@ export interface Booking {
   timeSlot: TimeSlot;
   status: string;
   pricing: BookingPricing;
+  bookingFee?: BookingFee;
   images?: Array<{ url: string; caption?: string }>;
   createdAt: string;
   updatedAt: string;
@@ -73,6 +90,7 @@ export interface CreateBookingData {
   technician?: string;
   urgency?: string;
   images?: string[];
+  quantity?: number;
 }
 
 export interface UpdateBookingStatusData {

@@ -1,0 +1,92 @@
+# Render Blueprint for EmEnTech Platform
+# This file configures all services for deployment on Render.com
+
+services:
+  # Backend API Service
+  - type: web
+    name: ementech-backend
+    env: node
+    region: oregon
+    plan: starter
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: MONGODB_URI
+        sync: false  # Set in Render dashboard
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRE
+        value: 30d
+      - key: CORS_ORIGIN
+        fromService:
+          type: web
+          name: ementech-frontend
+          property: host
+      # M-Pesa Configuration
+      - key: MPESA_CONSUMER_KEY
+        sync: false
+      - key: MPESA_CONSUMER_SECRET
+        sync: false
+      - key: MPESA_PASSKEY
+        sync: false
+      - key: MPESA_SHORTCODE
+        value: 174379
+      - key: MPESA_ENVIRONMENT
+        value: sandbox
+      - key: MPESA_CALLBACK_URL
+        value: https://ementech-backend.onrender.com/api/v1/payments/mpesa/callback
+      # Redis Configuration
+      - key: REDIS_HOST
+        fromService:
+          type: redis
+          name: ementech-redis
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: redis
+          name: ementech-redis
+          property: port
+    healthCheckPath: /api/v1/health
+    autoDeploy: true
+
+  # Frontend Service
+  - type: web
+    name: ementech-frontend
+    env: static
+    region: oregon
+    plan: starter
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: ./frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://ementech-backend.onrender.com/api/v1
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: X-XSS-Protection
+        value: 1; mode=block
+    autoDeploy: true
+
+  # Redis Cache
+  - type: redis
+    name: ementech-redis
+    region: oregon
+    plan: starter
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
+
+# Database (MongoDB Atlas - configured separately)
+databases: []

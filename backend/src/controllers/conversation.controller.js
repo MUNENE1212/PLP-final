@@ -11,16 +11,16 @@ exports.createConversation = async (req, res) => {
     const { type, participants, name, booking } = req.body;
 
     // Ensure current user is in participants
-    const allParticipants = [...new Set([req.user.id, ...participants])];
+    const allParticipantIds = [...new Set([req.user.id, ...participants])];
 
     // For direct messages, check if conversation already exists
-    if (type === 'direct' && allParticipants.length === 2) {
+    if (type === 'direct' && allParticipantIds.length === 2) {
       const existing = await Conversation.findOne({
         type: 'direct',
-        participants: { $all: allParticipants, $size: 2 }
-      });
+        'participants.user': { $all: allParticipantIds }
+      }).populate('participants.user', 'firstName lastName profilePicture');
 
-      if (existing) {
+      if (existing && existing.participants.length === 2) {
         return res.status(200).json({
           success: true,
           message: 'Conversation already exists',
@@ -29,21 +29,25 @@ exports.createConversation = async (req, res) => {
       }
     }
 
-    // Create conversation
+    // Create conversation with participant subdocuments
+    const participantDocs = allParticipantIds.map(userId => ({
+      user: userId,
+      role: userId === req.user.id ? 'admin' : 'member',
+      joinedAt: new Date(),
+      unreadCount: 0,
+      isMuted: false,
+      isPinned: false
+    }));
+
     const conversation = await Conversation.create({
       type,
-      participants: allParticipants,
+      participants: participantDocs,
       name,
       booking,
-      participantSettings: allParticipants.map(p => ({
-        user: p,
-        unreadCount: 0,
-        isMuted: false,
-        isPinned: false
-      }))
+      createdBy: req.user.id
     });
 
-    await conversation.populate('participants', 'firstName lastName profilePicture');
+    await conversation.populate('participants.user', 'firstName lastName profilePicture');
 
     res.status(201).json({
       success: true,
@@ -70,9 +74,8 @@ exports.getConversations = async (req, res) => {
     const { type, page = 1, limit = 20 } = req.query;
 
     const query = {
-      participants: req.user.id,
-      'participantSettings.user': req.user.id,
-      'participantSettings.isArchived': { $ne: true }
+      'participants.user': req.user.id,
+      'participants.leftAt': { $exists: false }
     };
 
     if (type) query.type = type;
@@ -80,9 +83,9 @@ exports.getConversations = async (req, res) => {
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const conversations = await Conversation.find(query)
-      .populate('participants', 'firstName lastName profilePicture role')
-      .populate('lastMessage.sender', 'firstName lastName')
-      .sort('-lastMessage.timestamp')
+      .populate('participants.user', 'firstName lastName profilePicture role')
+      .populate('lastMessage')
+      .sort({ lastMessageAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
 
@@ -113,7 +116,7 @@ exports.getConversations = async (req, res) => {
 exports.getConversation = async (req, res) => {
   try {
     const conversation = await Conversation.findById(req.params.id)
-      .populate('participants', 'firstName lastName profilePicture role email phoneNumber')
+      .populate('participants.user', 'firstName lastName profilePicture role email phoneNumber')
       .populate('booking');
 
     if (!conversation) {
@@ -125,7 +128,7 @@ exports.getConversation = async (req, res) => {
 
     // Check if user is participant
     const isParticipant = conversation.participants.some(
-      p => p._id.toString() === req.user.id
+      p => p.user._id.toString() === req.user.id
     );
 
     if (!isParticipant) {
@@ -155,7 +158,7 @@ exports.getConversation = async (req, res) => {
  */
 exports.updateSettings = async (req, res) => {
   try {
-    const { isMuted, isPinned, isArchived } = req.body;
+    const { isMuted, isPinned } = req.body;
 
     const conversation = await Conversation.findById(req.params.id);
 
@@ -166,27 +169,26 @@ exports.updateSettings = async (req, res) => {
       });
     }
 
-    const participantSettings = conversation.participantSettings.find(
-      ps => ps.user.toString() === req.user.id
+    const participant = conversation.participants.find(
+      p => p.user.toString() === req.user.id
     );
 
-    if (!participantSettings) {
+    if (!participant) {
       return res.status(403).json({
         success: false,
         message: 'Not a participant in this conversation'
       });
     }
 
-    if (isMuted !== undefined) participantSettings.isMuted = isMuted;
-    if (isPinned !== undefined) participantSettings.isPinned = isPinned;
-    if (isArchived !== undefined) participantSettings.isArchived = isArchived;
+    if (isMuted !== undefined) participant.isMuted = isMuted;
+    if (isPinned !== undefined) participant.isPinned = isPinned;
 
     await conversation.save();
 
     res.status(200).json({
       success: true,
       message: 'Settings updated successfully',
-      settings: participantSettings
+      settings: participant
     });
   } catch (error) {
     console.error('Update settings error:', error);
@@ -222,23 +224,32 @@ exports.addParticipant = async (req, res) => {
       });
     }
 
-    if (!conversation.participants.includes(req.user.id)) {
+    const isParticipant = conversation.participants.some(
+      p => p.user.toString() === req.user.id
+    );
+
+    if (!isParticipant) {
       return res.status(403).json({
         success: false,
         message: 'Not a participant in this conversation'
       });
     }
 
-    if (conversation.participants.includes(userId)) {
+    const alreadyParticipant = conversation.participants.some(
+      p => p.user.toString() === userId
+    );
+
+    if (alreadyParticipant) {
       return res.status(400).json({
         success: false,
         message: 'User is already a participant'
       });
     }
 
-    conversation.participants.push(userId);
-    conversation.participantSettings.push({
+    conversation.participants.push({
       user: userId,
+      role: 'member',
+      joinedAt: new Date(),
       unreadCount: 0,
       isMuted: false,
       isPinned: false
@@ -246,7 +257,7 @@ exports.addParticipant = async (req, res) => {
 
     await conversation.save();
 
-    await conversation.populate('participants', 'firstName lastName profilePicture');
+    await conversation.populate('participants.user', 'firstName lastName profilePicture');
 
     res.status(200).json({
       success: true,
@@ -287,7 +298,11 @@ exports.removeParticipant = async (req, res) => {
       });
     }
 
-    if (!conversation.participants.includes(req.user.id)) {
+    const isParticipant = conversation.participants.some(
+      p => p.user.toString() === req.user.id
+    );
+
+    if (!isParticipant) {
       return res.status(403).json({
         success: false,
         message: 'Not a participant in this conversation'
@@ -295,11 +310,7 @@ exports.removeParticipant = async (req, res) => {
     }
 
     conversation.participants = conversation.participants.filter(
-      p => p.toString() !== userId
-    );
-
-    conversation.participantSettings = conversation.participantSettings.filter(
-      ps => ps.user.toString() !== userId
+      p => p.user.toString() !== userId
     );
 
     await conversation.save();

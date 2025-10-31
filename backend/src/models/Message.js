@@ -47,16 +47,14 @@ const MessageSchema = new Schema({
   conversation: {
     type: Schema.Types.ObjectId,
     ref: 'Conversation',
-    required: true,
-    index: true
+    required: true
   },
 
   // Sender
   sender: {
     type: Schema.Types.ObjectId,
     ref: 'User',
-    required: true,
-    index: true
+    required: true
   },
 
   // Message Type
@@ -74,8 +72,7 @@ const MessageSchema = new Schema({
       'call'            // Call notification
     ],
     default: 'text',
-    required: true,
-    index: true
+    required: true
   },
 
   // Content (encrypted)
@@ -132,8 +129,7 @@ const MessageSchema = new Schema({
   status: {
     type: String,
     enum: ['sending', 'sent', 'delivered', 'read', 'failed'],
-    default: 'sent',
-    index: true
+    default: 'sent'
   },
 
   // Read Receipts

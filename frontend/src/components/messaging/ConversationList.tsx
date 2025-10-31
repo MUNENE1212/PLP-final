@@ -98,7 +98,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
   }
 
   return (
-    <div className="flex flex-col h-full bg-white border-r">
+    <div className="flex flex-col h-full bg-white dark:bg-gray-800 border-r">
       {/* Header */}
       <div className="p-4 border-b">
         <h2 className="text-xl font-bold mb-3">Messages</h2>

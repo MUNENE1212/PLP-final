@@ -9,6 +9,7 @@
     "test": "jest --detectOpenHandles",
     "test:watch": "jest --watch",
     "seed": "node src/scripts/seed.js",
+    "seed:pricing": "node src/scripts/seedPricing.js",
     "indexes": "node src/scripts/createIndexes.js",
     "cleanup": "node src/scripts/cleanup.js"
   },

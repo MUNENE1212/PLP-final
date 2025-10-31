@@ -34,12 +34,12 @@ const Feed: React.FC = () => {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4">
+    <div className="mx-auto max-w-2xl space-y-4 ">
       {/* Create Post */}
       <CreatePost />
 
       {/* Filters */}
-      <div className="rounded-lg border border-gray-200 bg-white p-2 shadow-sm">
+      <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-sky-200 dark:bg-gray-800 p-2 shadow-sm">
         <div className="flex space-x-1 overflow-x-auto">
           {filters.map((filter) => {
             const Icon = filter.icon;
@@ -68,12 +68,12 @@ const Feed: React.FC = () => {
           <Loading size="lg" text="Loading your feed..." />
         </div>
       ) : posts.length === 0 ? (
-        <div className="rounded-lg border border-gray-200 bg-white p-12 text-center shadow-sm">
+        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-12 text-center shadow-sm">
           <div className="mx-auto max-w-sm">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
               <TrendingUp className="h-8 w-8 text-gray-400" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900">No posts yet</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">No posts yet</h3>
             <p className="mt-2 text-sm text-gray-500">
               {activeFilter === 'following'
                 ? "Follow other users to see their posts here, or switch to 'For You' to see all public posts."
@@ -95,7 +95,7 @@ const Feed: React.FC = () => {
                   const type = activeFilter === 'all' || activeFilter === 'following' ? undefined : activeFilter;
                   dispatch(fetchFeed({ page: pagination.page + 1, limit: 20, type }));
                 }}
-                className="rounded-lg border border-gray-200 bg-white px-6 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
+                className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-6 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 shadow-sm transition-colors hover:bg-gray-50 dark:bg-gray-900"
               >
                 Load More
               </button>

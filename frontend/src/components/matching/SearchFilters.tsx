@@ -134,22 +134,22 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, isSearching = f
   };
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+    <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-indigo-50 dark:bg-gray-800 p-6 shadow-sm">
       <div className="mb-6 flex items-center space-x-2">
         <Search className="h-6 w-6 text-primary-600" />
-        <h2 className="text-xl font-bold text-gray-900">Find a Technician</h2>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Find a Technician</h2>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Service Category */}
         <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700">
+          <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
             What service do you need? *
           </label>
           <select
             value={serviceCategory}
             onChange={(e) => setServiceCategory(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20"
+            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20 text-gray-700 dark:text-gray-200 bg-indigo-100 dark:bg-gray-700"
             required
           >
             <option value="">Select a service...</option>
@@ -163,7 +163,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, isSearching = f
 
         {/* Location */}
         <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700">
+          <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
             <MapPin className="mr-1 inline h-4 w-4" />
             Location *
           </label>
@@ -177,7 +177,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, isSearching = f
                   setUseCurrentLocation(false);
                 }}
                 placeholder="Enter your city or area (e.g., Juja, Nairobi)"
-                className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20"
+                className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20 bg-indigo-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200"
               />
               <Button
                 type="button"
@@ -224,7 +224,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, isSearching = f
 
         {/* Urgency */}
         <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700">
+          <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
             <Zap className="mr-1 inline h-4 w-4" />
             How urgent is this?
           </label>
@@ -237,7 +237,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, isSearching = f
                 className={`rounded-lg border-2 px-4 py-2.5 text-sm font-medium transition-all ${
                   urgency === level.value
                     ? 'border-primary-500 bg-primary-50 text-primary-700'
-                    : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
+                    : 'border-gray-200 bg-indigo-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:border-gray-300'
                 }`}
               >
                 {level.label}
@@ -248,12 +248,12 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, isSearching = f
 
         {/* Budget */}
         <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700">
+          <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
             <DollarSign className="mr-1 inline h-4 w-4" />
             Budget (Optional)
           </label>
-          <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">KES</span>
+          <div className="relative ">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 ">KES</span>
             <input
               type="number"
               value={budget}
@@ -261,7 +261,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, isSearching = f
               placeholder="0"
               min="0"
               step="100"
-              className="w-full rounded-lg border border-gray-300 py-2.5 pl-16 pr-4 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20"
+              className="w-full rounded-lg border border-gray-300 py-2.5 pl-16 pr-4 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20 bg-indigo-100 dark:bg-gray-700"
             />
           </div>
           <p className="mt-1 text-xs text-gray-500">
@@ -271,7 +271,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, isSearching = f
 
         {/* Preferred Date */}
         <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700">
+          <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
             <Calendar className="mr-1 inline h-4 w-4" />
             Preferred Date (Optional)
           </label>
@@ -280,13 +280,13 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, isSearching = f
             value={preferredDate}
             onChange={(e) => setPreferredDate(e.target.value)}
             min={new Date().toISOString().split('T')[0]}
-            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20"
+            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20 bg-indigo-100 dark:bg-gray-700"
           />
         </div>
 
         {/* Description */}
         <div>
-          <label className="mb-2 block text-sm font-medium text-gray-700">
+          <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
             Description (Optional)
           </label>
           <textarea
@@ -295,7 +295,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, isSearching = f
             placeholder="Describe the work you need done..."
             rows={3}
             maxLength={500}
-            className="w-full resize-none rounded-lg border border-gray-300 px-4 py-2.5 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20"
+            className="w-full resize-none rounded-lg border border-gray-300 px-4 py-2.5 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20 bg-indigo-100 dark:bg-gray-700"
           />
           <p className="mt-1 text-xs text-gray-500">{description.length}/500 characters</p>
         </div>

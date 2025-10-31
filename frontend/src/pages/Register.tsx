@@ -108,7 +108,7 @@ const Register: React.FC = () => {
             />
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 I am a<span className="text-red-500 ml-1">*</span>
               </label>
               <div className="grid grid-cols-2 gap-4">
@@ -153,7 +153,7 @@ const Register: React.FC = () => {
               {...register('confirmPassword')}
             />
 
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
               By signing up, you agree to our{' '}
               <Link to="/terms" className="text-primary-600 hover:text-primary-700">
                 Terms of Service
@@ -174,7 +174,7 @@ const Register: React.FC = () => {
               Create Account
             </Button>
 
-            <div className="text-center text-sm text-gray-600">
+            <div className="text-center text-sm text-gray-600 dark:text-gray-400">
               Already have an account?{' '}
               <Link
                 to="/login"

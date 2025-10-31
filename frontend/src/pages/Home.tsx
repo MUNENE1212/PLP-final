@@ -28,16 +28,16 @@ const Home: React.FC = () => {
   ];
 
   return (
-    <div className="bg-white">
+    <div className="bg-white dark:bg-gray-900">
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl md:text-6xl">
+            <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-100 sm:text-5xl md:text-6xl">
               <span className="block">Connect with Skilled</span>
-              <span className="block text-primary-600">Technicians Instantly</span>
+              <span className="block text-primary-600 dark:text-primary-400">Technicians Instantly</span>
             </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg text-gray-600">
+            <p className="mx-auto mt-6 max-w-2xl text-lg text-gray-600 dark:text-gray-400">
               BaiTech uses AI to match you with the best technicians in your area.
               Get quality service from verified professionals.
             </p>
@@ -58,11 +58,11 @@ const Home: React.FC = () => {
       </div>
 
       {/* Features Section */}
-      <div className="bg-gray-50 py-24">
+      <div className="bg-gray-50 dark:bg-gray-900 dark:bg-gray-800 py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900">Why Choose BaiTech?</h2>
-            <p className="mt-4 text-lg text-gray-600">
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Why Choose BaiTech?</h2>
+            <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
               Everything you need to find and book skilled technicians
             </p>
           </div>
@@ -73,15 +73,15 @@ const Home: React.FC = () => {
               return (
                 <div
                   key={feature.title}
-                  className="rounded-lg bg-white p-6 shadow-sm hover:shadow-md transition-shadow"
+                  className="rounded-lg bg-white dark:bg-gray-700 p-6 shadow-sm hover:shadow-md dark:hover:shadow-gray-900 transition-shadow"
                 >
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary-100">
-                    <Icon className="h-6 w-6 text-primary-600" />
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary-100 dark:bg-primary-900/30">
+                    <Icon className="h-6 w-6 text-primary-600 dark:text-primary-400" />
                   </div>
-                  <h3 className="mt-4 text-lg font-semibold text-gray-900">
+                  <h3 className="mt-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
                     {feature.title}
                   </h3>
-                  <p className="mt-2 text-gray-600">{feature.description}</p>
+                  <p className="mt-2 text-gray-600 dark:text-gray-400">{feature.description}</p>
                 </div>
               );
             })}
@@ -90,12 +90,12 @@ const Home: React.FC = () => {
       </div>
 
       {/* CTA Section */}
-      <div className="bg-primary-600 py-16">
+      <div className="bg-primary-600 dark:bg-primary-700 py-16">
         <div className="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-white">
             Ready to get started?
           </h2>
-          <p className="mt-4 text-lg text-primary-100">
+          <p className="mt-4 text-lg text-primary-100 dark:text-primary-200">
             Join thousands of customers and technicians on BaiTech
           </p>
           <div className="mt-8">

@@ -46,7 +46,7 @@ const CreatePost: React.FC = () => {
   const selectedType = postTypes.find(t => t.value === type);
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+    <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-indigo-50 dark:bg-gray-800 p-4 shadow-sm">
       {/* Header */}
       <div className="flex items-center space-x-3">
         <img
@@ -55,10 +55,10 @@ const CreatePost: React.FC = () => {
           className="h-10 w-10 rounded-full object-cover ring-2 ring-gray-100"
         />
         <div className="flex-1">
-          <h3 className="text-sm font-medium text-gray-900">
+          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
             {user?.firstName} {user?.lastName}
           </h3>
-          <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
+          <p className="text-xs text-amber-500 capitalize">{user?.role}</p>
         </div>
       </div>
 
@@ -99,7 +99,7 @@ const CreatePost: React.FC = () => {
             <button
               type="button"
               onClick={() => setType('text')}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-gray-400 hover:text-gray-600 dark:text-gray-400"
             >
               <X className="h-4 w-4" />
             </button>
@@ -111,7 +111,7 @@ const CreatePost: React.FC = () => {
           value={caption}
           onChange={(e) => setCaption(e.target.value)}
           placeholder={`What's on your mind, ${user?.firstName}?`}
-          className="w-full resize-none rounded-lg border border-gray-200 p-3 text-sm placeholder-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20"
+          className="w-full resize-none rounded-lg border border-gray-200 dark:border-gray-700 p-3 text-sm placeholder-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20 bg-indigo-100 dark:bg-gray-900 dark:text-gray-100"
           rows={3}
           maxLength={2000}
         />
@@ -127,7 +127,7 @@ const CreatePost: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowTypeSelector(!showTypeSelector)}
-              className="flex items-center space-x-1 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-600 transition-colors hover:bg-gray-50"
+              className="flex items-center space-x-1 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors hover:bg-gray-50 dark:bg-gray-900"
             >
               <span className="text-lg">{selectedType?.icon}</span>
               <span className="hidden sm:inline">Type</span>
@@ -135,7 +135,7 @@ const CreatePost: React.FC = () => {
 
             <button
               type="button"
-              className="flex items-center space-x-1 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-600 transition-colors hover:bg-gray-50"
+              className="flex items-center space-x-1 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors hover:bg-gray-50 dark:bg-gray-900"
               disabled
               title="Coming soon"
             >
@@ -145,7 +145,7 @@ const CreatePost: React.FC = () => {
 
             <button
               type="button"
-              className="flex items-center space-x-1 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-600 transition-colors hover:bg-gray-50"
+              className="flex items-center space-x-1 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors hover:bg-gray-50 dark:bg-gray-900"
               disabled
               title="Coming soon"
             >
@@ -155,7 +155,7 @@ const CreatePost: React.FC = () => {
 
             <button
               type="button"
-              className="flex items-center space-x-1 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-600 transition-colors hover:bg-gray-50"
+              className="flex items-center space-x-1 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors hover:bg-gray-50 dark:bg-gray-900"
               disabled
               title="Coming soon"
             >

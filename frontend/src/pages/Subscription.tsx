@@ -27,10 +27,10 @@ const Subscription: React.FC = () => {
     return (
       <div className="mx-auto max-w-4xl py-12 text-center">
         <Shield className="mx-auto h-16 w-16 text-gray-400" />
-        <h2 className="mt-4 text-2xl font-bold text-gray-900">
+        <h2 className="mt-4 text-2xl font-bold text-gray-900 dark:text-gray-100">
           Technicians Only
         </h2>
-        <p className="mt-2 text-gray-600">
+        <p className="mt-2 text-gray-600 dark:text-gray-400">
           Pro features are only available for technicians.
         </p>
         <Button
@@ -123,10 +123,10 @@ const Subscription: React.FC = () => {
     <div className="mx-auto max-w-7xl">
       {/* Header */}
       <div className="mb-8 text-center">
-        <h1 className="text-4xl font-bold text-gray-900">
+        <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100">
           Upgrade Your Visibility
         </h1>
-        <p className="mt-4 text-lg text-gray-600">
+        <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
           Get more customers with Pro features and boosted visibility
         </p>
 
@@ -144,48 +144,48 @@ const Subscription: React.FC = () => {
 
       {/* Benefits Overview */}
       <div className="mb-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-lg border border-gray-200 bg-white p-6 text-center shadow-sm">
+        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 text-center shadow-sm">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
             <TrendingUp className="h-6 w-6 text-blue-600" />
           </div>
-          <h3 className="mt-4 font-semibold text-gray-900">
+          <h3 className="mt-4 font-semibold text-gray-900 dark:text-gray-100">
             Boosted Visibility
           </h3>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
             Appear higher in search results and get more job requests
           </p>
         </div>
 
-        <div className="rounded-lg border border-gray-200 bg-white p-6 text-center shadow-sm">
+        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 text-center shadow-sm">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-purple-100">
             <Star className="h-6 w-6 text-purple-600" />
           </div>
-          <h3 className="mt-4 font-semibold text-gray-900">Enhanced Posts</h3>
-          <p className="mt-2 text-sm text-gray-600">
+          <h3 className="mt-4 font-semibold text-gray-900 dark:text-gray-100">Enhanced Posts</h3>
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
             Your posts get priority placement in the community feed
           </p>
         </div>
 
-        <div className="rounded-lg border border-gray-200 bg-white p-6 text-center shadow-sm">
+        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 text-center shadow-sm">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
             <BarChart3 className="h-6 w-6 text-green-600" />
           </div>
-          <h3 className="mt-4 font-semibold text-gray-900">
+          <h3 className="mt-4 font-semibold text-gray-900 dark:text-gray-100">
             Advanced Analytics
           </h3>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
             Detailed insights into your profile views and customer behavior
           </p>
         </div>
 
-        <div className="rounded-lg border border-gray-200 bg-white p-6 text-center shadow-sm">
+        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 text-center shadow-sm">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-orange-100">
             <Headphones className="h-6 w-6 text-orange-600" />
           </div>
-          <h3 className="mt-4 font-semibold text-gray-900">
+          <h3 className="mt-4 font-semibold text-gray-900 dark:text-gray-100">
             Priority Support
           </h3>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
             Get faster responses from our support team when you need help
           </p>
         </div>
@@ -223,21 +223,21 @@ const Subscription: React.FC = () => {
                 >
                   <Icon className={cn('h-8 w-8', plan.color)} />
                 </div>
-                <h3 className="mt-4 text-2xl font-bold text-gray-900">
+                <h3 className="mt-4 text-2xl font-bold text-gray-900 dark:text-gray-100">
                   {plan.name}
                 </h3>
-                <p className="mt-2 text-sm text-gray-600">{plan.description}</p>
+                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">{plan.description}</p>
               </div>
 
               {/* Price */}
               <div className="mb-6 text-center">
                 <div className="flex items-baseline justify-center">
-                  <span className="text-sm font-medium text-gray-600">KES</span>
-                  <span className="ml-1 text-5xl font-bold text-gray-900">
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">KES</span>
+                  <span className="ml-1 text-5xl font-bold text-gray-900 dark:text-gray-100">
                     {plan.price.toLocaleString()}
                   </span>
                   {plan.price > 0 && (
-                    <span className="ml-2 text-sm text-gray-600">
+                    <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">
                       /{plan.period}
                     </span>
                   )}
@@ -295,45 +295,45 @@ const Subscription: React.FC = () => {
       </div>
 
       {/* FAQ Section */}
-      <div className="mt-16 rounded-lg border border-gray-200 bg-white p-8 shadow-sm">
-        <h2 className="mb-6 text-2xl font-bold text-gray-900">
+      <div className="mt-16 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-8 shadow-sm">
+        <h2 className="mb-6 text-2xl font-bold text-gray-900 dark:text-gray-100">
           Frequently Asked Questions
         </h2>
         <div className="space-y-6">
           <div>
-            <h3 className="font-semibold text-gray-900">
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100">
               How does boosted visibility work?
             </h3>
-            <p className="mt-2 text-sm text-gray-600">
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
               Pro and Premium members appear higher in customer searches. Your
               overall match score is multiplied by 1.25x (Pro) or 1.5x (Premium),
               significantly increasing your chances of being found by customers.
             </p>
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900">
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100">
               What about boosted posts?
             </h3>
-            <p className="mt-2 text-sm text-gray-600">
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
               Your posts in the community feed get higher engagement scores,
               appearing more prominently. Pro posts get a 50% boost, Premium posts
               get a 100% boost in the feed algorithm.
             </p>
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900">
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100">
               Can I cancel anytime?
             </h3>
-            <p className="mt-2 text-sm text-gray-600">
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
               Yes, you can cancel your subscription at any time. You'll continue
               to have access to Pro features until the end of your billing period.
             </p>
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900">
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100">
               Do you offer refunds?
             </h3>
-            <p className="mt-2 text-sm text-gray-600">
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
               We offer a 7-day money-back guarantee if you're not satisfied with
               your Pro or Premium subscription. Contact support for a full refund.
             </p>
@@ -343,44 +343,44 @@ const Subscription: React.FC = () => {
 
       {/* Testimonials */}
       <div className="mt-16">
-        <h2 className="mb-8 text-center text-2xl font-bold text-gray-900">
+        <h2 className="mb-8 text-center text-2xl font-bold text-gray-900 dark:text-gray-100">
           What Pro Technicians Say
         </h2>
         <div className="grid gap-6 md:grid-cols-2">
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm">
             <div className="mb-4 flex items-center">
               {[...Array(5)].map((_, i) => (
                 <Star key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
               ))}
             </div>
-            <p className="text-gray-700">
+            <p className="text-gray-700 dark:text-gray-300">
               "Since upgrading to Pro, I've seen a 3x increase in job requests. The
               boosted visibility really works!"
             </p>
             <div className="mt-4 flex items-center">
               <div className="h-10 w-10 rounded-full bg-gray-200" />
               <div className="ml-3">
-                <p className="font-semibold text-gray-900">John Kamau</p>
-                <p className="text-sm text-gray-600">Electrician, Nairobi</p>
+                <p className="font-semibold text-gray-900 dark:text-gray-100">John Kamau</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Electrician, Nairobi</p>
               </div>
             </div>
           </div>
 
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm">
             <div className="mb-4 flex items-center">
               {[...Array(5)].map((_, i) => (
                 <Star key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
               ))}
             </div>
-            <p className="text-gray-700">
+            <p className="text-gray-700 dark:text-gray-300">
               "The Premium badge gives customers confidence. I'm closing more deals
               than ever before!"
             </p>
             <div className="mt-4 flex items-center">
               <div className="h-10 w-10 rounded-full bg-gray-200" />
               <div className="ml-3">
-                <p className="font-semibold text-gray-900">Mary Wanjiku</p>
-                <p className="text-sm text-gray-600">Plumber, Mombasa</p>
+                <p className="font-semibold text-gray-900 dark:text-gray-100">Mary Wanjiku</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Plumber, Mombasa</p>
               </div>
             </div>
           </div>

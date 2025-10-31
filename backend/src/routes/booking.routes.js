@@ -10,7 +10,11 @@ const {
   addQACheckpoint,
   createDispute,
   resolveDispute,
-  getBookingStats
+  getBookingStats,
+  confirmBookingFee,
+  releaseBookingFee,
+  refundBookingFee,
+  getBookingFeeStatus
 } = require('../controllers/booking.controller');
 const { protect, authorize } = require('../middleware/auth');
 const { validate } = require('../middleware/validation');
@@ -112,6 +116,47 @@ router.put(
     validate
   ],
   resolveDispute
+);
+
+// ===== BOOKING FEE ROUTES =====
+
+// Get booking fee status
+router.get(
+  '/:id/booking-fee',
+  protect,
+  getBookingFeeStatus
+);
+
+// Confirm booking fee payment
+router.post(
+  '/:id/booking-fee/confirm',
+  protect,
+  authorize('customer', 'corporate'),
+  [
+    body('transactionId').isMongoId().withMessage('Valid transaction ID is required'),
+    validate
+  ],
+  confirmBookingFee
+);
+
+// Release booking fee to technician
+router.post(
+  '/:id/booking-fee/release',
+  protect,
+  authorize('admin', 'support'),
+  releaseBookingFee
+);
+
+// Refund booking fee to customer
+router.post(
+  '/:id/booking-fee/refund',
+  protect,
+  authorize('admin', 'support'),
+  [
+    body('reason').notEmpty().withMessage('Refund reason is required'),
+    validate
+  ],
+  refundBookingFee
 );
 
 module.exports = router;

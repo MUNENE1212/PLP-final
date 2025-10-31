@@ -151,6 +151,8 @@ app.use('/api/v1/notifications', require('./routes/notification.routes'));
 app.use('/api/v1/support', require('./routes/support.routes'));
 app.use('/api/v1/matching', require('./routes/matching.routes'));
 app.use('/api/v1/media', require('./routes/media.routes'));
+app.use('/api/v1/payments/mpesa', require('./routes/mpesa.routes'));
+app.use('/api/v1/pricing', require('./routes/pricing.routes'));
 
 // 404 Handler
 app.use((req, res) => {

@@ -17,15 +17,15 @@ const ErrorPage: React.FC<ErrorPageProps> = ({
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900 px-4 py-12">
       <div className="text-center">
         <div className="mb-8">
           <h1 className="text-9xl font-bold text-red-600">{statusCode}</h1>
           <div className="mt-4">
-            <h2 className="text-3xl font-semibold text-gray-900">
+            <h2 className="text-3xl font-semibold text-gray-900 dark:text-gray-100">
               {statusCode === 500 ? 'Server Error' : 'Error'}
             </h2>
-            <p className="mt-2 text-lg text-gray-600">
+            <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">
               {error}
             </p>
           </div>
@@ -50,7 +50,7 @@ const ErrorPage: React.FC<ErrorPageProps> = ({
         </div>
 
         <div className="mt-8">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             If this problem persists, please{' '}
             <Link to="/contact" className="text-primary-600 hover:text-primary-700">
               contact support

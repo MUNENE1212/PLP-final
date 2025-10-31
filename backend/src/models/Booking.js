@@ -185,6 +185,45 @@ const BookingSchema = new Schema({
     paidAt: Date
   },
 
+  // Booking Fee (20% refundable deposit)
+  bookingFee: {
+    required: {
+      type: Boolean,
+      default: true
+    },
+    percentage: {
+      type: Number,
+      default: 20 // 20% of total amount
+    },
+    amount: Number, // Calculated as 20% of pricing.totalAmount
+    status: {
+      type: String,
+      enum: ['pending', 'paid', 'held', 'released', 'refunded'],
+      default: 'pending'
+    },
+    paidAt: Date,
+    releasedAt: Date,
+    refundedAt: Date,
+    heldInEscrow: {
+      type: Boolean,
+      default: false
+    },
+    escrowReleaseCondition: {
+      type: String,
+      enum: ['job_verified', 'support_approved', 'auto_released'],
+      default: 'job_verified'
+    },
+    transactionId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Transaction'
+    },
+    refundTransactionId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Transaction'
+    },
+    notes: String
+  },
+
   // Matching Details
   matchingDetails: {
     requestedAt: Date,
@@ -219,6 +258,68 @@ const BookingSchema = new Schema({
     technicianReview: {
       type: Schema.Types.ObjectId,
       ref: 'Review'
+    }
+  },
+
+  // Completion Request & Verification Workflow
+  completionRequest: {
+    requestedBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User' // Usually technician
+    },
+    requestedAt: Date,
+    status: {
+      type: String,
+      enum: [
+        'pending',           // Waiting for customer response
+        'approved',          // Customer approved completion
+        'rejected',          // Customer rejected (issues found)
+        'escalated',         // Escalated to support for follow-up
+        'auto_approved'      // Auto-approved by support after follow-up
+      ]
+    },
+    customerResponse: {
+      respondedAt: Date,
+      approved: Boolean,
+      feedback: String,
+      issues: String
+    },
+    // Support follow-up if customer doesn't respond
+    supportFollowUp: {
+      initiated: {
+        type: Boolean,
+        default: false
+      },
+      initiatedAt: Date,
+      supportAgent: {
+        type: Schema.Types.ObjectId,
+        ref: 'User'
+      },
+      contactAttempts: [{
+        method: {
+          type: String,
+          enum: ['call', 'sms', 'email', 'in_app']
+        },
+        attemptedAt: Date,
+        reached: Boolean,
+        notes: String
+      }],
+      outcome: {
+        type: String,
+        enum: ['customer_confirmed', 'customer_disputed', 'unreachable', 'auto_completed']
+      },
+      completedBy: {
+        type: Schema.Types.ObjectId,
+        ref: 'User'
+      },
+      completedAt: Date,
+      notes: String
+    },
+    // Auto-escalation after X hours of no response
+    escalationDeadline: Date,
+    autoEscalated: {
+      type: Boolean,
+      default: false
     }
   },
 

@@ -358,7 +358,7 @@ exports.acceptMatch = async (req, res) => {
       });
     }
 
-    const { scheduledDate, scheduledTime, description, estimatedDuration, serviceType } = req.body;
+    const { scheduledDate, scheduledTime, description, estimatedDuration, serviceType, quantity } = req.body;
 
     // Parse the time to calculate end time
     const [hours, minutes] = scheduledTime.split(':');
@@ -368,6 +368,61 @@ exports.acceptMatch = async (req, res) => {
     const durationMinutes = estimatedDuration || 120; // default 2 hours
     const endDate = new Date(startDate.getTime() + durationMinutes * 60000);
     const endTime = `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`;
+
+    // Calculate pricing with technician
+    const pricingService = require('../services/pricing.service');
+    const User = require('../models/User');
+
+    const technician = await User.findById(matching.technician);
+
+    const scheduledDateTime = new Date(scheduledDate);
+    scheduledDateTime.setHours(parseInt(hours), parseInt(minutes), 0);
+
+    const pricingParams = {
+      serviceCategory: matching.serviceCategory,
+      serviceType: serviceType || `${matching.serviceCategory}_general`,
+      urgency: matching.urgency || 'medium',
+      serviceLocation: matching.location,
+      technicianLocation: technician?.location,
+      technicianId: matching.technician,
+      scheduledDateTime: scheduledDateTime.toISOString(),
+      customerId: matching.customer,
+      quantity: quantity || 1
+    };
+
+    console.log('=== MATCH ACCEPTANCE PRICING PARAMS ===');
+    console.log('Service Category:', pricingParams.serviceCategory);
+    console.log('Service Type:', pricingParams.serviceType);
+    console.log('Urgency:', pricingParams.urgency);
+    console.log('Quantity:', pricingParams.quantity);
+    console.log('Scheduled DateTime:', pricingParams.scheduledDateTime);
+    console.log('Customer ID:', pricingParams.customerId);
+    console.log('Technician ID:', pricingParams.technicianId);
+    console.log('========================================');
+
+    const pricingResult = await pricingService.calculatePrice(pricingParams);
+
+    console.log('=== MATCH ACCEPTANCE PRICING RESULT ===');
+    console.log('Pricing Success:', pricingResult.success);
+    console.log('Base Price:', pricingResult.breakdown?.basePrice);
+    console.log('Distance Fee:', pricingResult.breakdown?.distanceFee);
+    console.log('Urgency Multiplier:', pricingResult.breakdown?.urgencyMultiplier);
+    console.log('Time Multiplier:', pricingResult.breakdown?.timeMultiplier);
+    console.log('Technician Multiplier:', pricingResult.breakdown?.technicianMultiplier);
+    console.log('Subtotal:', pricingResult.breakdown?.subtotal);
+    console.log('Discount:', pricingResult.breakdown?.discount);
+    console.log('Total Amount:', pricingResult.breakdown?.totalAmount);
+    console.log('Booking Fee:', pricingResult.breakdown?.bookingFee);
+    console.log('========================================');
+
+    if (!pricingResult.success || !pricingResult.breakdown.bookingFee || pricingResult.breakdown.bookingFee <= 0) {
+      console.error('ERROR: Failed to calculate pricing for match acceptance');
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to calculate booking price. Please try again.',
+        error: pricingResult.error || 'Booking fee not calculated'
+      });
+    }
 
     // Create booking from match
     const booking = new Booking({
@@ -384,17 +439,21 @@ exports.acceptMatch = async (req, res) => {
         endTime: endTime,
         estimatedDuration: durationMinutes
       },
-      pricing: {
-        basePrice: 0,
-        serviceCharge: 0,
-        platformFee: 0,
-        tax: 0,
-        discount: 0,
-        totalAmount: 0, // Required field
-        currency: 'KES'
+      pricing: pricingResult.breakdown,
+      bookingFee: {
+        required: true,
+        percentage: 20,
+        amount: pricingResult.breakdown.bookingFee,
+        status: 'pending'
       },
-      source: 'ai_matching'
+      source: 'ai_matching',
+      status: 'assigned'
     });
+
+    console.log('=== MATCH BOOKING DATA DEBUG ===');
+    console.log('Booking Fee Amount:', booking.bookingFee.amount);
+    console.log('Pricing Total:', booking.pricing.totalAmount);
+    console.log('================================');
 
     await booking.save();
 

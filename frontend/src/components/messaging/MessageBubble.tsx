@@ -101,7 +101,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   if (message.type === 'system') {
     return (
       <div className="flex justify-center mb-4">
-        <div className="px-4 py-2 bg-gray-100 text-gray-600 text-sm rounded-full">
+        <div className="px-4 py-2 bg-gray-100 text-gray-600 dark:text-gray-400 text-sm rounded-full">
           {message.text}
         </div>
       </div>
@@ -213,7 +213,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
               ).map(([emoji, count]) => (
                 <span
                   key={emoji}
-                  className="px-2 py-0.5 bg-white border rounded-full text-xs cursor-pointer hover:bg-gray-50"
+                  className="px-2 py-0.5 bg-white dark:bg-gray-800 border rounded-full text-xs cursor-pointer hover:bg-gray-50 dark:bg-gray-900"
                   onClick={() => onReact?.(emoji)}
                 >
                   {emoji} {count}

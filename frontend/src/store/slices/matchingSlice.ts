@@ -129,6 +129,7 @@ export interface AcceptMatchParams {
   description?: string;
   estimatedDuration?: number;
   serviceType?: string;
+  quantity?: number;
 }
 
 interface MatchingState {

@@ -80,11 +80,11 @@ const SkillsManager: React.FC<SkillsManagerProps> = ({ skills, onChange }) => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="flex items-center text-lg font-semibold text-gray-900">
+          <h3 className="flex items-center text-lg font-semibold text-gray-900 dark:text-gray-100">
             <Wrench className="mr-2 h-5 w-5 text-primary-600" />
             Your Skills
           </h3>
-          <p className="mt-1 text-sm text-gray-600">
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
             Add and manage your professional skills
           </p>
         </div>
@@ -105,11 +105,11 @@ const SkillsManager: React.FC<SkillsManagerProps> = ({ skills, onChange }) => {
       {isAddingSkill && (
         <div className="rounded-lg border-2 border-primary-200 bg-primary-50 p-4">
           <div className="mb-4 flex items-center justify-between">
-            <h4 className="font-semibold text-gray-900">Add New Skill</h4>
+            <h4 className="font-semibold text-gray-900 dark:text-gray-100">Add New Skill</h4>
             <button
               type="button"
               onClick={() => setIsAddingSkill(false)}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-gray-400 hover:text-gray-600 dark:text-gray-400"
             >
               <X className="h-5 w-5" />
             </button>
@@ -118,7 +118,7 @@ const SkillsManager: React.FC<SkillsManagerProps> = ({ skills, onChange }) => {
           <div className="space-y-3">
             {/* Category Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Category
               </label>
               <select
@@ -140,7 +140,7 @@ const SkillsManager: React.FC<SkillsManagerProps> = ({ skills, onChange }) => {
 
             {/* Skill Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Skill Name
               </label>
               <input
@@ -157,7 +157,7 @@ const SkillsManager: React.FC<SkillsManagerProps> = ({ skills, onChange }) => {
 
             {/* Years of Experience */}
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Years of Experience
               </label>
               <input
@@ -208,12 +208,12 @@ const SkillsManager: React.FC<SkillsManagerProps> = ({ skills, onChange }) => {
 
       {/* Skills List */}
       {skills.length === 0 ? (
-        <div className="rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-8 text-center">
+        <div className="rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 dark:bg-gray-900 p-8 text-center">
           <Wrench className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-4 text-sm font-semibold text-gray-900">
+          <h3 className="mt-4 text-sm font-semibold text-gray-900 dark:text-gray-100">
             No skills added yet
           </h3>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
             Start by adding your professional skills and expertise
           </p>
           {!isAddingSkill && (
@@ -236,7 +236,7 @@ const SkillsManager: React.FC<SkillsManagerProps> = ({ skills, onChange }) => {
             return (
               <div
                 key={index}
-                className="group relative rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-all hover:shadow-md"
+                className="group relative rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm transition-all hover:shadow-md"
               >
                 {/* Remove Button */}
                 <button
@@ -251,11 +251,11 @@ const SkillsManager: React.FC<SkillsManagerProps> = ({ skills, onChange }) => {
                 <div className="flex items-start justify-between pr-8">
                   <div className="flex-1">
                     {/* Skill Name */}
-                    <h4 className="font-semibold text-gray-900">{skill.name}</h4>
+                    <h4 className="font-semibold text-gray-900 dark:text-gray-100">{skill.name}</h4>
 
                     {/* Category */}
                     <div className="mt-2 flex items-center space-x-4 text-sm">
-                      <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-gray-700">
+                      <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-gray-700 dark:text-gray-300">
                         {formatCategoryName(skill.category)}
                       </span>
 
@@ -272,7 +272,7 @@ const SkillsManager: React.FC<SkillsManagerProps> = ({ skills, onChange }) => {
                       </span>
 
                       {/* Years of Experience */}
-                      <span className="flex items-center text-gray-600">
+                      <span className="flex items-center text-gray-600 dark:text-gray-400">
                         <TrendingUp className="mr-1 h-3 w-3" />
                         {skill.yearsOfExperience}{' '}
                         {skill.yearsOfExperience === 1 ? 'year' : 'years'}
@@ -302,16 +302,16 @@ const SkillsManager: React.FC<SkillsManagerProps> = ({ skills, onChange }) => {
 
       {/* Skills Summary */}
       {skills.length > 0 && (
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 p-4">
           <div className="flex items-center justify-between text-sm">
-            <span className="font-medium text-gray-700">
+            <span className="font-medium text-gray-700 dark:text-gray-300">
               Total Skills: {skills.length}
             </span>
-            <span className="text-gray-600">
+            <span className="text-gray-600 dark:text-gray-400">
               Categories:{' '}
               {new Set(skills.map((s) => s.category)).size}
             </span>
-            <span className="text-gray-600">
+            <span className="text-gray-600 dark:text-gray-400">
               Avg Experience:{' '}
               {(
                 skills.reduce((sum, s) => sum + s.yearsOfExperience, 0) /

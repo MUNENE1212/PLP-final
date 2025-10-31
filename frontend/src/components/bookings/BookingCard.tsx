@@ -131,24 +131,24 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, userRole }) => {
 
   return (
     <div
-      className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md cursor-pointer"
+      className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 sm:p-6 shadow-sm transition-all hover:shadow-md cursor-pointer"
       onClick={() => navigate(`/bookings/${booking._id}`)}
     >
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <div className="flex items-center space-x-3">
-            <h3 className="text-lg font-semibold text-gray-900">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
               {booking.serviceType}
             </h3>
             {getStatusBadge(booking.status)}
           </div>
-          <p className="mt-1 text-sm text-gray-600">#{booking.bookingNumber}</p>
+          <p className="mt-1 text-xs sm:text-sm text-gray-600 dark:text-gray-400">#{booking.bookingNumber}</p>
         </div>
 
         {booking.pricing && (
-          <div className="text-right">
-            <div className="text-2xl font-bold text-gray-900">
+          <div className="text-left sm:text-right">
+            <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
               {booking.pricing.currency} {booking.pricing.totalAmount.toLocaleString()}
             </div>
             <p className="text-xs text-gray-500">Total Amount</p>
@@ -157,17 +157,17 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, userRole }) => {
       </div>
 
       {/* Description */}
-      <p className="mt-3 line-clamp-2 text-sm text-gray-700">
+      <p className="mt-3 line-clamp-2 text-sm text-gray-700 dark:text-gray-300">
         {booking.description}
       </p>
 
       {/* Details Grid */}
-      <div className="mt-4 grid grid-cols-2 gap-4">
+      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         {/* Date & Time */}
         <div className="flex items-start space-x-2">
           <Calendar className="mt-0.5 h-4 w-4 text-gray-400" />
           <div>
-            <p className="text-sm font-medium text-gray-900">
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
               {formatDate(booking.timeSlot.date)}
             </p>
             <p className="text-xs text-gray-500">
@@ -181,7 +181,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, userRole }) => {
         <div className="flex items-start space-x-2">
           <MapPin className="mt-0.5 h-4 w-4 text-gray-400" />
           <div>
-            <p className="text-sm font-medium text-gray-900">
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
               {booking.serviceLocation.city || 'Service Location'}
             </p>
             <p className="line-clamp-1 text-xs text-gray-500">
@@ -202,7 +202,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, userRole }) => {
           >
             <User className="mt-0.5 h-4 w-4 text-gray-400" />
             <div>
-              <p className="text-sm font-medium text-gray-900 hover:text-primary-600 transition-colors">
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-primary-600 transition-colors">
                 {otherParty.firstName} {otherParty.lastName}
               </p>
               <p className="text-xs text-gray-500">
@@ -216,7 +216,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, userRole }) => {
         <div className="flex items-start space-x-2">
           <AlertCircle className="mt-0.5 h-4 w-4 text-gray-400" />
           <div>
-            <p className="text-sm font-medium text-gray-900 capitalize">
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 capitalize">
               {booking.urgency} Priority
             </p>
             <p className="text-xs text-gray-500">Urgency Level</p>
@@ -225,7 +225,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, userRole }) => {
       </div>
 
       {/* Actions */}
-      <div className="mt-4 flex items-center justify-end space-x-3 border-t border-gray-100 pt-4">
+      <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 border-t border-gray-100 dark:border-gray-700 pt-3 sm:pt-4">
         <Button
           variant="outline"
           size="sm"
@@ -233,6 +233,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, userRole }) => {
             e.stopPropagation();
             navigate(`/bookings/${booking._id}`);
           }}
+          className="w-full sm:w-auto"
         >
           View Details
         </Button>
@@ -247,6 +248,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, userRole }) => {
                 e.stopPropagation();
                 // Handle reject
               }}
+              className="w-full sm:w-auto"
             >
               Decline
             </Button>
@@ -257,6 +259,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, userRole }) => {
                 e.stopPropagation();
                 // Handle accept
               }}
+              className="w-full sm:w-auto"
             >
               Accept
             </Button>
@@ -271,6 +274,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, userRole }) => {
               e.stopPropagation();
               // Handle payment
             }}
+            className="w-full sm:w-auto flex items-center justify-center"
           >
             <DollarSign className="mr-1 h-4 w-4" />
             Pay Now

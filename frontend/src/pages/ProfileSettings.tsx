@@ -299,11 +299,11 @@ const ProfileSettings: React.FC = () => {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="flex items-center text-3xl font-bold text-gray-900">
+            <h1 className="flex items-center text-3xl font-bold text-gray-900 dark:text-gray-100">
               <Settings className="mr-3 h-8 w-8 text-primary-600" />
               Profile Settings
             </h1>
-            <p className="mt-2 text-gray-600">
+            <p className="mt-2 text-gray-600 dark:text-gray-400">
               Manage your personal information and preferences
             </p>
           </div>
@@ -338,8 +338,8 @@ const ProfileSettings: React.FC = () => {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Profile Picture Section */}
-        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 flex items-center text-xl font-semibold text-gray-900">
+        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm">
+          <h2 className="mb-4 flex items-center text-xl font-semibold text-gray-900 dark:text-gray-100">
             <Camera className="mr-2 h-5 w-5 text-primary-600" />
             Profile Picture
           </h2>
@@ -365,11 +365,11 @@ const ProfileSettings: React.FC = () => {
               />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-900">
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                 {user.firstName} {user.lastName}
               </p>
-              <p className="text-sm text-gray-500">{user.email}</p>
-              <p className="mt-2 text-xs text-gray-600">
+              <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
+              <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
                 Click the camera icon to upload a new picture
               </p>
             </div>
@@ -377,8 +377,8 @@ const ProfileSettings: React.FC = () => {
         </div>
 
         {/* Basic Information */}
-        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 flex items-center text-xl font-semibold text-gray-900">
+        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm">
+          <h2 className="mb-4 flex items-center text-xl font-semibold text-gray-900 dark:text-gray-100">
             <User className="mr-2 h-5 w-5 text-primary-600" />
             Basic Information
           </h2>
@@ -386,7 +386,7 @@ const ProfileSettings: React.FC = () => {
             <div>
               <label
                 htmlFor="firstName"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
                 First Name
               </label>
@@ -404,7 +404,7 @@ const ProfileSettings: React.FC = () => {
             <div>
               <label
                 htmlFor="lastName"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
                 Last Name
               </label>
@@ -422,7 +422,7 @@ const ProfileSettings: React.FC = () => {
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
                 Email Address
               </label>
@@ -433,10 +433,10 @@ const ProfileSettings: React.FC = () => {
                   id="email"
                   value={user.email}
                   disabled
-                  className="w-full rounded-lg border border-gray-300 bg-gray-50 py-2 pl-10 pr-4 text-gray-500"
+                  className="w-full rounded-lg border border-gray-300 bg-gray-50 dark:bg-gray-900 py-2 pl-10 pr-4 text-gray-500 dark:text-gray-400"
                 />
               </div>
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 Email cannot be changed
               </p>
             </div>
@@ -444,7 +444,7 @@ const ProfileSettings: React.FC = () => {
             <div>
               <label
                 htmlFor="phoneNumber"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
                 Phone Number
               </label>
@@ -464,7 +464,7 @@ const ProfileSettings: React.FC = () => {
             <div className="sm:col-span-2">
               <label
                 htmlFor="bio"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
                 Bio
               </label>
@@ -477,7 +477,7 @@ const ProfileSettings: React.FC = () => {
                 className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20"
                 placeholder="Tell us about yourself..."
               />
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 Brief description for your profile
               </p>
             </div>
@@ -485,12 +485,12 @@ const ProfileSettings: React.FC = () => {
         </div>
 
         {/* Location Information */}
-        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 flex items-center text-xl font-semibold text-gray-900">
+        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm">
+          <h2 className="mb-4 flex items-center text-xl font-semibold text-gray-900 dark:text-gray-100">
             <MapPin className="mr-2 h-5 w-5 text-primary-600" />
             Location Information
           </h2>
-          <p className="mb-4 text-sm text-gray-600">
+          <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
             Location coordinates are used to match you with nearby customers/technicians.
             Enter your address and click "Get Coordinates from Address" or use your current location.
           </p>
@@ -499,7 +499,7 @@ const ProfileSettings: React.FC = () => {
             <div className="sm:col-span-2">
               <label
                 htmlFor="location.address"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
                 Address
               </label>
@@ -517,7 +517,7 @@ const ProfileSettings: React.FC = () => {
             <div>
               <label
                 htmlFor="location.city"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
                 City <span className="text-red-500">*</span>
               </label>
@@ -536,7 +536,7 @@ const ProfileSettings: React.FC = () => {
             <div>
               <label
                 htmlFor="location.county"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
                 County
               </label>
@@ -554,7 +554,7 @@ const ProfileSettings: React.FC = () => {
             <div>
               <label
                 htmlFor="location.country"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
                 Country
               </label>
@@ -571,11 +571,11 @@ const ProfileSettings: React.FC = () => {
 
             {/* Coordinates Display */}
             <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Coordinates <span className="text-red-500">*</span>
               </label>
               <div className="flex items-center gap-2 mb-2">
-                <div className="flex-1 rounded-lg border border-gray-300 bg-gray-50 px-4 py-2 text-sm text-gray-700">
+                <div className="flex-1 rounded-lg border border-gray-300 bg-gray-50 dark:bg-gray-900 px-4 py-2 text-sm text-gray-700 dark:text-gray-300">
                   <span className="font-medium">Longitude:</span> {formData.location.coordinates[0].toFixed(6)}
                   {' | '}
                   <span className="font-medium">Latitude:</span> {formData.location.coordinates[1].toFixed(6)}
@@ -630,7 +630,7 @@ const ProfileSettings: React.FC = () => {
                   )}
                 </Button>
               </div>
-              <p className="mt-2 text-xs text-gray-500">
+              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                 Coordinates are required for location-based matching. Click one of the buttons above to set them.
               </p>
             </div>
@@ -641,22 +641,22 @@ const ProfileSettings: React.FC = () => {
         {user.role === 'technician' && (
           <>
             {/* Availability Toggle */}
-            <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="mb-4 flex items-center text-xl font-semibold text-gray-900">
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm">
+              <h2 className="mb-4 flex items-center text-xl font-semibold text-gray-900 dark:text-gray-100">
                 <CheckCircle className="mr-2 h-5 w-5 text-primary-600" />
                 Availability Status
               </h2>
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                     Currently{' '}
                     {isAvailable ? (
                       <span className="text-green-600">Available</span>
                     ) : (
-                      <span className="text-gray-600">Unavailable</span>
+                      <span className="text-gray-600 dark:text-gray-400">Unavailable</span>
                     )}
                   </p>
-                  <p className="mt-1 text-sm text-gray-600">
+                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
                     Toggle your availability to let customers know if you're
                     accepting new jobs
                   </p>
@@ -681,7 +681,7 @@ const ProfileSettings: React.FC = () => {
             </div>
 
             {/* Skills Management */}
-            <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm">
               <SkillsManager
                 skills={formData.skills || []}
                 onChange={handleSkillsChange}
@@ -691,7 +691,7 @@ const ProfileSettings: React.FC = () => {
         )}
 
         {/* Form Actions */}
-        <div className="flex items-center justify-end space-x-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+        <div className="flex items-center justify-end space-x-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 p-4">
           <Button type="button" variant="outline" onClick={handleCancel}>
             Cancel
           </Button>

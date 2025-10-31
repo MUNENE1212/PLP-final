@@ -78,8 +78,7 @@ const PostSchema = new Schema({
   author: {
     type: Schema.Types.ObjectId,
     ref: 'User',
-    required: true,
-    index: true
+    required: true
   },
 
   // Post Type
@@ -95,8 +94,7 @@ const PostSchema = new Schema({
       'achievement'    // Milestone/achievement
     ],
     default: 'text',
-    required: true,
-    index: true
+    required: true
   },
 
   // Content
@@ -149,8 +147,7 @@ const PostSchema = new Schema({
   }],
   likesCount: {
     type: Number,
-    default: 0,
-    index: true
+    default: 0
   },
   comments: [CommentSchema],
   commentsCount: {
@@ -204,16 +201,14 @@ const PostSchema = new Schema({
   visibility: {
     type: String,
     enum: ['public', 'followers', 'private'],
-    default: 'public',
-    index: true
+    default: 'public'
   },
 
   // Status
   status: {
     type: String,
     enum: ['published', 'draft', 'archived', 'removed'],
-    default: 'published',
-    index: true
+    default: 'published'
   },
 
   // Moderation
@@ -263,8 +258,7 @@ const PostSchema = new Schema({
   // Engagement Score (for feed algorithm)
   engagementScore: {
     type: Number,
-    default: 0,
-    index: true
+    default: 0
   },
 
   // Pinned (for user profile)

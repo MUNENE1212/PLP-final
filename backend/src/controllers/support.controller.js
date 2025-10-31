@@ -784,3 +784,144 @@ exports.updateAvailability = async (req, res) => {
     });
   }
 };
+
+/**
+ * @desc    Create/Get support conversation
+ * @route   POST /api/v1/support/conversation
+ * @access  Private
+ */
+exports.createSupportConversation = async (req, res) => {
+  try {
+    const { ticketId, message } = req.body;
+
+    // Check if ticket exists
+    let ticket;
+    if (ticketId) {
+      ticket = await SupportTicket.findById(ticketId);
+
+      if (!ticket) {
+        return res.status(404).json({
+          success: false,
+          message: 'Support ticket not found'
+        });
+      }
+
+      // Check if user has access to this ticket
+      const hasAccess =
+        ticket.customer.toString() === req.user.id ||
+        ticket.assignedTo?.toString() === req.user.id ||
+        req.user.role === 'admin' ||
+        req.user.role === 'support';
+
+      if (!hasAccess) {
+        return res.status(403).json({
+          success: false,
+          message: 'Not authorized to access this ticket'
+        });
+      }
+
+      // Check if conversation already exists for this ticket
+      if (ticket.relatedConversation) {
+        const conversation = await Conversation.findById(ticket.relatedConversation)
+          .populate('participants.user', 'firstName lastName profilePicture role')
+          .populate('lastMessage');
+
+        return res.status(200).json({
+          success: true,
+          message: 'Conversation already exists',
+          conversation
+        });
+      }
+    }
+
+    // Find an available support agent
+    let supportAgent;
+    if (req.user.role !== 'support' && req.user.role !== 'admin') {
+      const supportUsers = await User.find({
+        role: 'support',
+        'supportInfo.availability.status': 'available'
+      }).limit(5);
+
+      // Simple round-robin assignment - find agent with least workload
+      if (supportUsers.length > 0) {
+        const workloads = await Promise.all(
+          supportUsers.map(async (agent) => ({
+            agent: agent._id,
+            workload: await SupportTicket.getAgentWorkload(agent._id)
+          }))
+        );
+
+        workloads.sort((a, b) => a.workload - b.workload);
+        supportAgent = workloads[0].agent;
+      } else {
+        // No available agents, find any support user
+        const anySupport = await User.findOne({ role: 'support' });
+        if (anySupport) {
+          supportAgent = anySupport._id;
+        }
+      }
+    }
+
+    // Create conversation participants
+    const participantIds = supportAgent
+      ? [req.user.id, supportAgent]
+      : [req.user.id];
+
+    const participantDocs = participantIds.map(userId => ({
+      user: userId,
+      role: userId.toString() === req.user.id ? 'member' : 'admin',
+      joinedAt: new Date(),
+      unreadCount: 0,
+      isMuted: false,
+      isPinned: false
+    }));
+
+    // Create support conversation
+    const conversation = await Conversation.create({
+      type: 'support',
+      participants: participantDocs,
+      name: ticketId ? `Support - ${ticket.subject}` : 'Support Chat',
+      createdBy: req.user.id
+    });
+
+    // Link conversation to ticket if exists
+    if (ticket) {
+      ticket.relatedConversation = conversation._id;
+
+      // Auto-assign ticket to support agent
+      if (supportAgent && !ticket.assignedTo) {
+        ticket.assignToAgent(supportAgent, req.user.id);
+      }
+
+      await ticket.save();
+    }
+
+    await conversation.populate('participants.user', 'firstName lastName profilePicture role');
+
+    // If initial message provided, create it
+    if (message) {
+      const Message = require('../models/Message');
+      await Message.create({
+        conversation: conversation._id,
+        sender: req.user.id,
+        type: 'text',
+        text: message,
+        status: 'sent'
+      });
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Support conversation created successfully',
+      conversation,
+      assignedAgent: supportAgent
+    });
+  } catch (error) {
+    console.error('Create support conversation error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error creating support conversation',
+      error: error.message
+    });
+  }
+};

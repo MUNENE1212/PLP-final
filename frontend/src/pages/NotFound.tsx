@@ -5,15 +5,15 @@ import Button from '@/components/ui/Button';
 
 const NotFound: React.FC = () => {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900 px-4 py-12">
       <div className="text-center">
         <div className="mb-8">
           <h1 className="text-9xl font-bold text-primary-600">404</h1>
           <div className="mt-4">
-            <h2 className="text-3xl font-semibold text-gray-900">
+            <h2 className="text-3xl font-semibold text-gray-900 dark:text-gray-100">
               Page Not Found
             </h2>
-            <p className="mt-2 text-lg text-gray-600">
+            <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">
               Sorry, we couldn't find the page you're looking for.
             </p>
           </div>
@@ -38,7 +38,7 @@ const NotFound: React.FC = () => {
         </div>
 
         <div className="mt-8">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             Need help?{' '}
             <Link to="/contact" className="text-primary-600 hover:text-primary-700">
               Contact support

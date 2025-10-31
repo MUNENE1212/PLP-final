@@ -43,8 +43,7 @@ const ConversationSchema = new Schema({
   type: {
     type: String,
     enum: ['direct', 'group', 'booking', 'support'],
-    required: true,
-    index: true
+    required: true
   },
 
   // Participants
@@ -70,8 +69,7 @@ const ConversationSchema = new Schema({
   // Booking-related conversation
   booking: {
     type: Schema.Types.ObjectId,
-    ref: 'Booking',
-    index: true
+    ref: 'Booking'
   },
 
   // Last Message
@@ -81,16 +79,14 @@ const ConversationSchema = new Schema({
   },
   lastMessageAt: {
     type: Date,
-    default: Date.now,
-    index: true
+    default: Date.now
   },
 
   // Status
   status: {
     type: String,
     enum: ['active', 'archived', 'deleted'],
-    default: 'active',
-    index: true
+    default: 'active'
   },
 
   // Creator (for group chats)

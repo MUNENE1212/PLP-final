@@ -2,6 +2,8 @@ const Booking = require('../models/Booking');
 const User = require('../models/User');
 const Transaction = require('../models/Transaction');
 const Conversation = require('../models/Conversation');
+const SupportTicket = require('../models/SupportTicket');
+const pricingService = require('../services/pricing.service');
 
 /**
  * @desc    Create a new booking
@@ -11,6 +13,7 @@ const Conversation = require('../models/Conversation');
 exports.createBooking = async (req, res) => {
   try {
     const {
+      serviceCategory,
       serviceType,
       description,
       scheduledDate,
@@ -18,8 +21,8 @@ exports.createBooking = async (req, res) => {
       technician,
       preferredTechnician,
       urgency,
-      estimatedDuration,
-      materials
+      timeSlot,
+      quantity
     } = req.body;
 
     // Validate customer role
@@ -34,23 +37,79 @@ exports.createBooking = async (req, res) => {
     const bookingCount = await Booking.countDocuments();
     const bookingNumber = `BKG-${Date.now()}-${(bookingCount + 1).toString().padStart(5, '0')}`;
 
+    // Get customer data
+    const customer = await User.findById(req.user.id);
+
+    // Calculate pricing estimate (without specific technician initially)
+    const pricingResult = await pricingService.getEstimate({
+      serviceCategory,
+      serviceType,
+      urgency: urgency || 'medium',
+      serviceLocation,
+      customerLocation: customer.location || serviceLocation,
+      scheduledDateTime: scheduledDate,
+      customerId: req.user.id,
+      quantity: quantity || 1
+    });
+
+    if (!pricingResult.success) {
+      return res.status(400).json({
+        success: false,
+        message: pricingResult.error
+      });
+    }
+
+    // Debug: Log pricing result
+    console.log('=== PRICING RESULT DEBUG ===');
+    console.log('Pricing Success:', pricingResult.success);
+    console.log('Total Amount:', pricingResult.breakdown.totalAmount);
+    console.log('Booking Fee from Pricing:', pricingResult.breakdown.bookingFee);
+    console.log('Currency:', pricingResult.breakdown.currency);
+    console.log('===========================');
+
+    // Validate booking fee is calculated
+    if (!pricingResult.breakdown.bookingFee || pricingResult.breakdown.bookingFee <= 0) {
+      console.error('ERROR: Booking fee not calculated in pricing!');
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to calculate booking fee. Please try again.',
+        error: 'Booking fee amount is missing or zero'
+      });
+    }
+
     // Create booking data
     const bookingData = {
       bookingNumber,
       customer: req.user.id,
+      serviceCategory,
       serviceType,
       description,
-      scheduledDate,
       serviceLocation: {
         type: 'Point',
         coordinates: serviceLocation.coordinates,
         address: serviceLocation.address
       },
+      timeSlot: timeSlot || {
+        date: scheduledDate,
+        startTime: new Date(scheduledDate).toTimeString().slice(0, 5),
+        endTime: new Date(new Date(scheduledDate).getTime() + 2 * 60 * 60 * 1000).toTimeString().slice(0, 5)
+      },
       status: 'pending',
-      urgency: urgency || 'normal',
-      estimatedDuration,
-      materials: materials || []
+      urgency: urgency || 'medium',
+      pricing: pricingResult.breakdown,
+      bookingFee: {
+        required: true,
+        percentage: 20,
+        amount: pricingResult.breakdown.bookingFee,
+        status: 'pending'
+      }
     };
+
+    console.log('=== BOOKING DATA DEBUG ===');
+    console.log('Booking Fee being set:', bookingData.bookingFee);
+    console.log('Amount value:', bookingData.bookingFee.amount);
+    console.log('Amount type:', typeof bookingData.bookingFee.amount);
+    console.log('=========================');
 
     // If specific technician requested
     if (technician) {
@@ -61,8 +120,27 @@ exports.createBooking = async (req, res) => {
           message: 'Invalid technician'
         });
       }
+
+      // Recalculate with specific technician
+      const techPricingResult = await pricingService.calculatePrice({
+        serviceCategory,
+        serviceType,
+        urgency: urgency || 'medium',
+        serviceLocation,
+        technicianLocation: tech.location,
+        technicianId: technician,
+        scheduledDateTime: scheduledDate,
+        customerId: req.user.id,
+        quantity: quantity || 1
+      });
+
+      if (techPricingResult.success) {
+        bookingData.pricing = techPricingResult.breakdown;
+        bookingData.bookingFee.amount = techPricingResult.breakdown.bookingFee;
+      }
+
       bookingData.technician = technician;
-      bookingData.status = 'awaiting_acceptance';
+      bookingData.status = 'assigned';
     } else if (preferredTechnician) {
       bookingData.preferredTechnician = preferredTechnician;
     }
@@ -72,16 +150,32 @@ exports.createBooking = async (req, res) => {
     // Populate data for response
     await booking.populate([
       { path: 'customer', select: 'firstName lastName phoneNumber profilePicture' },
-      { path: 'technician', select: 'firstName lastName phoneNumber profilePicture rating skills' }
+      { path: 'technician', select: 'firstName lastName phoneNumber profilePicture rating experience skills' }
     ]);
+
+    // Debug: Log booking fee details
+    console.log('=== BOOKING CREATED DEBUG ===');
+    console.log('Booking Number:', booking.bookingNumber);
+    console.log('Booking Fee Object:', booking.bookingFee);
+    console.log('Booking Fee Amount:', booking.bookingFee?.amount);
+    console.log('Booking Fee Status:', booking.bookingFee?.status);
+    console.log('Pricing Total:', booking.pricing?.totalAmount);
+    console.log('============================');
 
     // TODO: Send notification to technician if assigned
     // TODO: Trigger AI matching if no technician assigned
 
     res.status(201).json({
       success: true,
-      message: 'Booking created successfully',
-      booking
+      message: 'Booking created successfully. Please pay the booking fee to proceed with matching.',
+      booking,
+      nextSteps: {
+        action: 'pay_booking_fee',
+        amount: booking.bookingFee?.amount || 0,
+        currency: booking.pricing?.currency || 'KES',
+        description: '20% refundable booking deposit required before technician matching',
+        endpoint: `/api/v1/bookings/${booking._id}/booking-fee/confirm`
+      }
     });
   } catch (error) {
     console.error('Create booking error:', error);
@@ -660,6 +754,699 @@ exports.getBookingStats = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching booking statistics'
+    });
+  }
+};
+
+/**
+ * @desc    Technician requests completion confirmation from customer
+ * @route   POST /api/v1/bookings/:id/request-completion
+ * @access  Private (Technician)
+ */
+exports.requestCompletion = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id);
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Check if user is the assigned technician
+    if (booking.technician.toString() !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Only the assigned technician can request completion'
+      });
+    }
+
+    // Check if booking is in correct status
+    if (booking.status !== 'in_progress') {
+      return res.status(400).json({
+        success: false,
+        message: 'Can only request completion for jobs in progress'
+      });
+    }
+
+    // Create completion request
+    booking.completionRequest = {
+      requestedBy: req.user.id,
+      requestedAt: new Date(),
+      status: 'pending',
+      escalationDeadline: new Date(Date.now() + 48 * 60 * 60 * 1000) // 48 hours
+    };
+
+    booking.status = 'completed';
+    booking.actualEndTime = new Date();
+    booking.actualDuration = Math.round((booking.actualEndTime - booking.actualStartTime) / 60000);
+
+    await booking.save();
+
+    await booking.populate([
+      { path: 'customer', select: 'firstName lastName email phoneNumber' },
+      { path: 'technician', select: 'firstName lastName' }
+    ]);
+
+    // TODO: Send notification to customer
+    // TODO: Send email/SMS to customer
+
+    res.status(200).json({
+      success: true,
+      message: 'Completion request sent to customer',
+      booking
+    });
+  } catch (error) {
+    console.error('Request completion error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error requesting completion'
+    });
+  }
+};
+
+/**
+ * @desc    Customer responds to completion request
+ * @route   POST /api/v1/bookings/:id/respond-completion
+ * @access  Private (Customer)
+ */
+exports.respondToCompletion = async (req, res) => {
+  try {
+    const { approved, feedback, issues } = req.body;
+
+    const booking = await Booking.findById(req.params.id);
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Check if user is the customer
+    if (booking.customer.toString() !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Only the customer can respond to completion request'
+      });
+    }
+
+    // Check if there's a pending completion request
+    if (!booking.completionRequest || booking.completionRequest.status !== 'pending') {
+      return res.status(400).json({
+        success: false,
+        message: 'No pending completion request found'
+      });
+    }
+
+    // Update completion request with customer response
+    booking.completionRequest.customerResponse = {
+      respondedAt: new Date(),
+      approved,
+      feedback,
+      issues
+    };
+
+    if (approved) {
+      booking.completionRequest.status = 'approved';
+      booking.status = 'verified';
+    } else {
+      booking.completionRequest.status = 'rejected';
+      booking.status = 'in_progress'; // Back to in progress
+
+      // Create a support ticket for the issues
+      const SupportTicket = require('../models/SupportTicket');
+      await SupportTicket.create({
+        customer: booking.customer,
+        subject: `Job Completion Dispute - ${booking.bookingNumber}`,
+        description: `Customer has rejected job completion. Issues reported: ${issues}`,
+        category: 'complaint',
+        priority: 'high',
+        relatedBooking: booking._id,
+        source: 'system'
+      });
+    }
+
+    await booking.save();
+
+    await booking.populate([
+      { path: 'customer', select: 'firstName lastName email phoneNumber' },
+      { path: 'technician', select: 'firstName lastName email phoneNumber' }
+    ]);
+
+    // TODO: Send notification to technician
+    // TODO: If rejected, notify support team
+
+    res.status(200).json({
+      success: true,
+      message: approved ? 'Job completion confirmed' : 'Completion rejected - support has been notified',
+      booking
+    });
+  } catch (error) {
+    console.error('Respond to completion error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error responding to completion request'
+    });
+  }
+};
+
+/**
+ * @desc    Support agent initiates follow-up for unresponsive customer
+ * @route   POST /api/v1/bookings/:id/initiate-followup
+ * @access  Private (Support/Admin)
+ */
+exports.initiateFollowUp = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id);
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Check if there's a pending completion request
+    if (!booking.completionRequest || booking.completionRequest.status !== 'pending') {
+      return res.status(400).json({
+        success: false,
+        message: 'No pending completion request found'
+      });
+    }
+
+    // Initialize support follow-up
+    booking.completionRequest.status = 'escalated';
+    booking.completionRequest.autoEscalated = true;
+    booking.completionRequest.supportFollowUp = {
+      initiated: true,
+      initiatedAt: new Date(),
+      supportAgent: req.user.id,
+      contactAttempts: []
+    };
+
+    await booking.save();
+
+    await booking.populate([
+      { path: 'customer', select: 'firstName lastName email phoneNumber' },
+      { path: 'technician', select: 'firstName lastName' },
+      { path: 'completionRequest.supportFollowUp.supportAgent', select: 'firstName lastName' }
+    ]);
+
+    res.status(200).json({
+      success: true,
+      message: 'Follow-up initiated successfully',
+      booking
+    });
+  } catch (error) {
+    console.error('Initiate follow-up error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error initiating follow-up'
+    });
+  }
+};
+
+/**
+ * @desc    Support agent logs contact attempt
+ * @route   POST /api/v1/bookings/:id/log-contact
+ * @access  Private (Support/Admin)
+ */
+exports.logContactAttempt = async (req, res) => {
+  try {
+    const { method, reached, notes } = req.body;
+
+    const booking = await Booking.findById(req.params.id);
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Check if support follow-up is initiated
+    if (!booking.completionRequest?.supportFollowUp?.initiated) {
+      return res.status(400).json({
+        success: false,
+        message: 'Support follow-up not initiated'
+      });
+    }
+
+    // Log contact attempt
+    booking.completionRequest.supportFollowUp.contactAttempts.push({
+      method,
+      attemptedAt: new Date(),
+      reached,
+      notes
+    });
+
+    await booking.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Contact attempt logged',
+      contactAttempts: booking.completionRequest.supportFollowUp.contactAttempts
+    });
+  } catch (error) {
+    console.error('Log contact attempt error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error logging contact attempt'
+    });
+  }
+};
+
+/**
+ * @desc    Support agent completes job after follow-up
+ * @route   POST /api/v1/bookings/:id/complete-by-support
+ * @access  Private (Support/Admin)
+ */
+exports.completeBySupport = async (req, res) => {
+  try {
+    const { outcome, notes } = req.body;
+
+    const booking = await Booking.findById(req.params.id);
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Check if support follow-up is initiated
+    if (!booking.completionRequest?.supportFollowUp?.initiated) {
+      return res.status(400).json({
+        success: false,
+        message: 'Support follow-up not initiated'
+      });
+    }
+
+    // Complete the job
+    booking.completionRequest.supportFollowUp.outcome = outcome;
+    booking.completionRequest.supportFollowUp.completedBy = req.user.id;
+    booking.completionRequest.supportFollowUp.completedAt = new Date();
+    booking.completionRequest.supportFollowUp.notes = notes;
+
+    if (outcome === 'customer_confirmed' || outcome === 'unreachable' || outcome === 'auto_completed') {
+      booking.completionRequest.status = 'auto_approved';
+      booking.status = 'verified';
+    } else if (outcome === 'customer_disputed') {
+      booking.status = 'disputed';
+    }
+
+    await booking.save();
+
+    await booking.populate([
+      { path: 'customer', select: 'firstName lastName' },
+      { path: 'technician', select: 'firstName lastName' },
+      { path: 'completionRequest.supportFollowUp.completedBy', select: 'firstName lastName' }
+    ]);
+
+    res.status(200).json({
+      success: true,
+      message: 'Job completion processed by support',
+      booking
+    });
+  } catch (error) {
+    console.error('Complete by support error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error completing job'
+    });
+  }
+};
+
+/**
+ * @desc    Get bookings pending completion response
+ * @route   GET /api/v1/bookings/pending-completion
+ * @access  Private (Support/Admin)
+ */
+exports.getPendingCompletions = async (req, res) => {
+  try {
+    const { page = 1, limit = 20 } = req.query;
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const bookings = await Booking.find({
+      'completionRequest.status': 'pending',
+      'completionRequest.escalationDeadline': { $lte: new Date() },
+      'completionRequest.autoEscalated': false
+    })
+      .populate('customer', 'firstName lastName email phoneNumber')
+      .populate('technician', 'firstName lastName')
+      .populate('completionRequest.requestedBy', 'firstName lastName')
+      .sort({ 'completionRequest.requestedAt': 1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const total = await Booking.countDocuments({
+      'completionRequest.status': 'pending',
+      'completionRequest.escalationDeadline': { $lte: new Date() },
+      'completionRequest.autoEscalated': false
+    });
+
+    res.status(200).json({
+      success: true,
+      count: bookings.length,
+      total,
+      page: parseInt(page),
+      pages: Math.ceil(total / parseInt(limit)),
+      bookings
+    });
+  } catch (error) {
+    console.error('Get pending completions error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching pending completions'
+    });
+  }
+};
+
+/**
+ * @desc    Confirm booking fee payment (20% refundable deposit)
+ * @route   POST /api/v1/bookings/:id/booking-fee/confirm
+ * @access  Private (Customer)
+ */
+exports.confirmBookingFee = async (req, res) => {
+  try {
+    const { transactionId, paymentMethod } = req.body;
+
+    const booking = await Booking.findById(req.params.id);
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Verify customer owns this booking
+    if (booking.customer.toString() !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to confirm booking fee for this booking'
+      });
+    }
+
+    // Check if booking fee already paid
+    if (booking.bookingFee.status === 'paid' || booking.bookingFee.status === 'held') {
+      return res.status(400).json({
+        success: false,
+        message: 'Booking fee already paid'
+      });
+    }
+
+    // Verify transaction exists and matches booking fee amount
+    const transaction = await Transaction.findById(transactionId);
+    if (!transaction) {
+      return res.status(404).json({
+        success: false,
+        message: 'Transaction not found'
+      });
+    }
+
+    if (transaction.amount !== booking.bookingFee.amount) {
+      return res.status(400).json({
+        success: false,
+        message: `Transaction amount (${transaction.amount}) does not match booking fee (${booking.bookingFee.amount})`
+      });
+    }
+
+    if (transaction.status !== 'completed') {
+      return res.status(400).json({
+        success: false,
+        message: 'Transaction must be completed before confirming booking fee'
+      });
+    }
+
+    // Update booking fee status
+    booking.bookingFee.status = 'held';
+    booking.bookingFee.paidAt = new Date();
+    booking.bookingFee.heldInEscrow = true;
+    booking.bookingFee.transactionId = transactionId;
+
+    // Update booking status to allow matching
+    if (booking.status === 'pending') {
+      booking.status = 'matching';
+      booking.statusHistory.push({
+        status: 'matching',
+        changedBy: req.user.id,
+        changedAt: new Date(),
+        reason: 'Booking fee confirmed, ready for technician matching'
+      });
+    }
+
+    await booking.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Booking fee confirmed and held in escrow',
+      booking: {
+        id: booking._id,
+        bookingNumber: booking.bookingNumber,
+        status: booking.status,
+        bookingFee: booking.bookingFee
+      }
+    });
+
+  } catch (error) {
+    console.error('Confirm booking fee error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error confirming booking fee',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Release booking fee to technician after job completion
+ * @route   POST /api/v1/bookings/:id/booking-fee/release
+ * @access  Private (System/Support)
+ */
+exports.releaseBookingFee = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id)
+      .populate('technician', 'firstName lastName');
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Only support or system can release booking fee
+    if (req.user.role !== 'support' && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to release booking fee'
+      });
+    }
+
+    // Check if booking fee is held in escrow
+    if (booking.bookingFee.status !== 'held') {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot release booking fee with status: ${booking.bookingFee.status}`
+      });
+    }
+
+    // Check if job is verified
+    if (booking.status !== 'verified') {
+      return res.status(400).json({
+        success: false,
+        message: 'Job must be verified before releasing booking fee'
+      });
+    }
+
+    // Create transaction for booking fee release
+    const releaseTransaction = await Transaction.create({
+      type: 'booking_fee_release',
+      amount: booking.bookingFee.amount,
+      currency: booking.pricing.currency,
+      sender: booking.customer,
+      recipient: booking.technician._id,
+      booking: booking._id,
+      status: 'completed',
+      method: 'escrow_release',
+      description: `Booking fee release for ${booking.bookingNumber}`,
+      metadata: {
+        originalTransactionId: booking.bookingFee.transactionId,
+        releasedBy: req.user.id,
+        releaseCondition: booking.bookingFee.escrowReleaseCondition
+      }
+    });
+
+    // Update booking fee status
+    booking.bookingFee.status = 'released';
+    booking.bookingFee.releasedAt = new Date();
+    booking.bookingFee.heldInEscrow = false;
+
+    await booking.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Booking fee released to technician',
+      booking: {
+        id: booking._id,
+        bookingNumber: booking.bookingNumber,
+        bookingFee: booking.bookingFee
+      },
+      transaction: releaseTransaction
+    });
+
+  } catch (error) {
+    console.error('Release booking fee error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error releasing booking fee',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Refund booking fee (if booking cancelled before completion)
+ * @route   POST /api/v1/bookings/:id/booking-fee/refund
+ * @access  Private (Support/Admin)
+ */
+exports.refundBookingFee = async (req, res) => {
+  try {
+    const { reason } = req.body;
+
+    const booking = await Booking.findById(req.params.id)
+      .populate('customer', 'firstName lastName');
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Only support or admin can refund booking fee
+    if (req.user.role !== 'support' && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to refund booking fee'
+      });
+    }
+
+    // Check if booking fee is held
+    if (booking.bookingFee.status !== 'held') {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot refund booking fee with status: ${booking.bookingFee.status}`
+      });
+    }
+
+    // Verify booking is cancelled or disputed
+    if (!['cancelled', 'disputed', 'rejected'].includes(booking.status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Booking must be cancelled, disputed, or rejected to refund booking fee'
+      });
+    }
+
+    // Create refund transaction
+    const refundTransaction = await Transaction.create({
+      type: 'booking_fee_refund',
+      amount: booking.bookingFee.amount,
+      currency: booking.pricing.currency,
+      sender: 'system',
+      recipient: booking.customer._id,
+      booking: booking._id,
+      status: 'completed',
+      method: 'escrow_refund',
+      description: `Booking fee refund for ${booking.bookingNumber}`,
+      metadata: {
+        originalTransactionId: booking.bookingFee.transactionId,
+        refundedBy: req.user.id,
+        refundReason: reason || 'Booking cancelled',
+        bookingStatus: booking.status
+      }
+    });
+
+    // Update booking fee status
+    booking.bookingFee.status = 'refunded';
+    booking.bookingFee.refundedAt = new Date();
+    booking.bookingFee.refundTransactionId = refundTransaction._id;
+    booking.bookingFee.heldInEscrow = false;
+    booking.bookingFee.notes = reason || 'Booking cancelled';
+
+    await booking.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Booking fee refunded to customer',
+      booking: {
+        id: booking._id,
+        bookingNumber: booking.bookingNumber,
+        bookingFee: booking.bookingFee
+      },
+      transaction: refundTransaction
+    });
+
+  } catch (error) {
+    console.error('Refund booking fee error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error refunding booking fee',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Get booking fee status
+ * @route   GET /api/v1/bookings/:id/booking-fee
+ * @access  Private
+ */
+exports.getBookingFeeStatus = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id)
+      .select('bookingNumber bookingFee pricing customer technician status')
+      .populate('bookingFee.transactionId', 'amount status method createdAt')
+      .populate('bookingFee.refundTransactionId', 'amount status method createdAt');
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Verify user is customer, technician, or support
+    const isAuthorized =
+      booking.customer.toString() === req.user.id ||
+      (booking.technician && booking.technician.toString() === req.user.id) ||
+      ['support', 'admin'].includes(req.user.role);
+
+    if (!isAuthorized) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to view booking fee status'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      bookingFee: booking.bookingFee,
+      bookingStatus: booking.status,
+      totalAmount: booking.pricing.totalAmount,
+      remainingAmount: booking.pricing.totalAmount - booking.bookingFee.amount
+    });
+
+  } catch (error) {
+    console.error('Get booking fee status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching booking fee status',
+      error: error.message
     });
   }
 };

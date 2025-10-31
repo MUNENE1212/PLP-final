@@ -38,11 +38,11 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-gray-100 dark:bg-gray-900 px-3 sm:px-4">
       <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-center text-3xl font-bold">Welcome Back</CardTitle>
-          <CardDescription className="text-center">
+        <CardHeader className="space-y-1 px-4 sm:px-6">
+          <CardTitle className="text-center text-2xl sm:text-3xl font-bold">Welcome Back</CardTitle>
+          <CardDescription className="text-center text-sm sm:text-base">
             Enter your credentials to access your account
           </CardDescription>
         </CardHeader>
@@ -75,7 +75,7 @@ const Login: React.FC = () => {
             <div className="flex items-center justify-between">
               <label className="flex items-center">
                 <input type="checkbox" className="mr-2 h-4 w-4 rounded border-gray-300" />
-                <span className="text-sm text-gray-600">Remember me</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">Remember me</span>
               </label>
               <Link
                 to="/forgot-password"
@@ -95,7 +95,7 @@ const Login: React.FC = () => {
               Sign In
             </Button>
 
-            <div className="text-center text-sm text-gray-600">
+            <div className="text-center text-sm text-gray-600 dark:text-gray-400">
               Don't have an account?{' '}
               <Link
                 to="/register"

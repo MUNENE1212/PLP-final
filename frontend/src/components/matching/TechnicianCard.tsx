@@ -72,76 +72,76 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
   ];
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white shadow-sm transition-all hover:shadow-md">
+    <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm transition-all hover:shadow-md">
       {/* Header */}
-      <div className="p-6">
-        <div className="flex items-start justify-between">
-          <div className="flex space-x-4">
+      <div className="p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div className="flex space-x-3 sm:space-x-4 flex-1">
             {/* Profile Picture */}
-            <div className="relative cursor-pointer" onClick={handleProfileClick}>
+            <div className="relative cursor-pointer flex-shrink-0" onClick={handleProfileClick}>
               <img
                 src={getProfilePicture()}
                 alt={match.technician.firstName}
-                className="h-20 w-20 rounded-full object-cover ring-4 ring-gray-100 hover:ring-primary-500 transition-all"
+                className="h-16 w-16 sm:h-20 sm:w-20 rounded-full object-cover ring-4 ring-gray-100 hover:ring-primary-500 transition-all"
                 title={`View ${match.technician.firstName}'s profile`}
               />
               {match.technician.availability?.status === 'available' && (
-                <div className="absolute bottom-0 right-0 h-5 w-5 rounded-full border-2 border-white bg-green-500" />
+                <div className="absolute bottom-0 right-0 h-4 w-4 sm:h-5 sm:w-5 rounded-full border-2 border-white bg-green-500" />
               )}
             </div>
 
             {/* Info */}
-            <div className="flex-1">
-              <div className="flex items-center space-x-3">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center space-x-2">
                 <h3
-                  className="text-xl font-bold text-gray-900 cursor-pointer hover:text-primary-600 transition-colors"
+                  className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100 cursor-pointer hover:text-primary-600 transition-colors truncate"
                   onClick={handleProfileClick}
                   title={`View ${match.technician.firstName}'s profile`}
                 >
                   {match.technician.firstName} {match.technician.lastName}
                 </h3>
                 {match.scores.overall >= 85 && (
-                  <Sparkles className="h-5 w-5 text-yellow-500" />
+                  <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500 flex-shrink-0" />
                 )}
               </div>
 
-              <div className="mt-1 flex items-center space-x-4 text-sm text-gray-600">
+              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                 <div className="flex items-center space-x-1">
-                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                  <Star className="h-3 w-3 sm:h-4 sm:w-4 fill-yellow-400 text-yellow-400" />
                   <span className="font-medium">
                     {formatRating(match.technician.rating)}
                   </span>
                 </div>
                 <div className="flex items-center space-x-1">
-                  <MapPin className="h-4 w-4" />
-                  <span>{match.distance.toFixed(1)} km away</span>
+                  <MapPin className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span>{match.distance.toFixed(1)} km</span>
                 </div>
                 {match.technician.yearsOfExperience && (
                   <div className="flex items-center space-x-1">
-                    <Award className="h-4 w-4" />
-                    <span>{match.technician.yearsOfExperience} yrs exp</span>
+                    <Award className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span>{match.technician.yearsOfExperience} yrs</span>
                   </div>
                 )}
                 {match.technician.hourlyRate && (
                   <div className="flex items-center space-x-1">
-                    <DollarSign className="h-4 w-4" />
-                    <span>KES {match.technician.hourlyRate}/hr</span>
+                    <DollarSign className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span className="whitespace-nowrap">KES {match.technician.hourlyRate}/hr</span>
                   </div>
                 )}
               </div>
 
               {/* Skills */}
-              <div className="mt-2 flex flex-wrap gap-2">
+              <div className="mt-2 flex flex-wrap gap-1.5 sm:gap-2">
                 {match.technician.skills.slice(0, 3).map((skill, index) => (
                   <span
                     key={index}
-                    className="inline-flex items-center rounded-full bg-primary-50 px-3 py-1 text-xs font-medium text-primary-700"
+                    className="inline-flex items-center rounded-full bg-primary-50 px-2 sm:px-3 py-0.5 sm:py-1 text-xs font-medium text-primary-700"
                   >
                     {skill.category.replace('_', ' ')} - {skill.proficiency}
                   </span>
                 ))}
                 {match.technician.skills.length > 3 && (
-                  <span className="inline-flex items-center rounded-full bg-gray-50 px-3 py-1 text-xs font-medium text-gray-600">
+                  <span className="inline-flex items-center rounded-full bg-gray-50 dark:bg-gray-900 px-2 sm:px-3 py-0.5 sm:py-1 text-xs font-medium text-gray-600 dark:text-gray-400">
                     +{match.technician.skills.length - 3} more
                   </span>
                 )}
@@ -150,18 +150,18 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
           </div>
 
           {/* Match Quality Badge */}
-          <div className="flex flex-col items-end">
+          <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2">
             <div
               className={cn(
-                'rounded-full border px-4 py-2 text-sm font-semibold',
+                'rounded-full border px-3 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm font-semibold whitespace-nowrap',
                 matchQuality.color
               )}
             >
               {matchQuality.label}
             </div>
-            <div className="mt-2 text-3xl font-bold text-gray-900">
+            <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
               {match.scores.overall}
-              <span className="text-lg text-gray-500">/100</span>
+              <span className="text-base sm:text-lg text-gray-500">/100</span>
             </div>
           </div>
         </div>
@@ -194,17 +194,17 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
 
         {/* Detailed Scores */}
         {showScores && (
-          <div className="mt-4 grid grid-cols-2 gap-3 border-t border-gray-200 pt-4 sm:grid-cols-3">
+          <div className="mt-4 grid grid-cols-2 gap-3 border-t border-gray-200 dark:border-gray-700 pt-4 sm:grid-cols-3">
             {scoreItems.map((item, index) => {
               const Icon = item.icon;
               const percentage = item.value;
               return (
-                <div key={index} className="rounded-lg bg-gray-50 p-3">
+                <div key={index} className="rounded-lg bg-gray-50 dark:bg-gray-900 p-3">
                   <div className="flex items-center justify-between">
                     <Icon className={cn('h-4 w-4', item.color)} />
-                    <span className="text-lg font-bold text-gray-900">{percentage}</span>
+                    <span className="text-lg font-bold text-gray-900 dark:text-gray-100">{percentage}</span>
                   </div>
-                  <div className="mt-1 text-xs text-gray-600">{item.label}</div>
+                  <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">{item.label}</div>
                   <div className="mt-2 h-1.5 w-full rounded-full bg-gray-200">
                     <div
                       className={cn('h-1.5 rounded-full', {
@@ -224,22 +224,23 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
       </div>
 
       {/* Actions */}
-      <div className="flex items-center justify-end space-x-3 border-t border-gray-100 bg-gray-50 px-6 py-4">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 border-t border-gray-100 bg-gray-50 dark:bg-gray-900 px-4 sm:px-6 py-3 sm:py-4">
         <Button
           variant="outline"
           size="sm"
           onClick={() => onReject(match._id)}
-          className="flex items-center space-x-2"
+          className="flex items-center justify-center space-x-2 w-full sm:w-auto"
         >
           <XCircle className="h-4 w-4" />
-          <span>Not Interested</span>
+          <span className="hidden sm:inline">Not Interested</span>
+          <span className="sm:hidden">Reject</span>
         </Button>
 
         <Button
           variant="outline"
           size="sm"
           onClick={() => onViewProfile(match.technician._id)}
-          className="flex items-center space-x-2"
+          className="flex items-center justify-center space-x-2 w-full sm:w-auto"
         >
           <Eye className="h-4 w-4" />
           <span>View Profile</span>
@@ -249,7 +250,7 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
           variant="primary"
           size="sm"
           onClick={() => onAccept(match._id)}
-          className="flex items-center space-x-2"
+          className="flex items-center justify-center space-x-2 w-full sm:w-auto"
         >
           <CheckCircle className="h-4 w-4" />
           <span>Book Now</span>

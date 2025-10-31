@@ -37,8 +37,7 @@ const MatchingInteractionSchema = new Schema({
   // Conversation/session tracking
   sessionId: {
     type: String,
-    required: true,
-    index: true
+    required: true
   },
 
   // Input from user

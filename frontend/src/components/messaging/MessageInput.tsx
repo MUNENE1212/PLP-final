@@ -61,7 +61,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
   };
 
   return (
-    <div className="border-t bg-white p-4">
+    <div className="border-t bg-white dark:bg-gray-800 p-4">
       <div className="flex items-end gap-2">
         {/* Emoji/Attachment buttons */}
         <div className="flex gap-1">
