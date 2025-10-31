@@ -1,6 +1,6 @@
 import React from 'react';
 import { DollarSign, Shield, RefreshCw, CheckCircle, AlertCircle, Clock } from 'lucide-react';
-import Card from '@/components/ui/Card';
+import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { BookingFeeStatus } from '@/services/bookingFee.service';
 

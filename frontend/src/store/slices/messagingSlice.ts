@@ -38,7 +38,7 @@ const initialState: MessagingState = {
 // Async thunks
 export const fetchConversations = createAsyncThunk(
   'messaging/fetchConversations',
-  async (filters?: { status?: string; page?: number; limit?: number }, { rejectWithValue }) => {
+  async (filters: { status?: string; page?: number; limit?: number } = {}, { rejectWithValue }) => {
     try {
       const params = new URLSearchParams();
       if (filters?.status) params.append('status', filters.status);

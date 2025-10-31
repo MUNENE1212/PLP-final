@@ -1,4 +1,4 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertCircle, RefreshCw, Home } from 'lucide-react';
 import Button from './ui/Button';
 
@@ -77,7 +77,7 @@ class ErrorBoundary extends Component<Props, State> {
                     We're sorry, but something unexpected happened. Please try refreshing the page or go back to the home page.
                   </p>
 
-                  {process.env.NODE_ENV === 'development' && this.state.error && (
+                  {import.meta.env.DEV && this.state.error && (
                     <details className="mt-4">
                       <summary className="cursor-pointer text-sm font-medium text-gray-700 dark:text-gray-300">
                         Error Details (Development Only)

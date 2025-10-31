@@ -3,6 +3,7 @@ import axios from '@/lib/axios';
 
 // Types
 export interface Location {
+  type?: string; // GeoJSON type, e.g., 'Point'
   coordinates: [number, number]; // [longitude, latitude]
   address: string;
 }

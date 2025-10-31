@@ -124,7 +124,7 @@ const CreateBooking: React.FC = () => {
               urgency: formData.urgency,
               serviceLocation: {
                 type: 'Point',
-                coordinates: coordinates,
+                coordinates: coordinates as [number, number],
               },
               technicianLocation: locationState.technician.location,
               technicianId: locationState.technician._id,
@@ -153,7 +153,7 @@ const CreateBooking: React.FC = () => {
               urgency: formData.urgency as any,
               serviceLocation: {
                 type: 'Point',
-                coordinates: coordinates,
+                coordinates: coordinates as [number, number],
               },
               scheduledDateTime: scheduledDateTime,
               quantity: formData.quantity || 1,
