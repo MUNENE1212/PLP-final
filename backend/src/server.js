@@ -98,8 +98,8 @@ app.use('/api/', limiter);
 
 // ===== ROUTES =====
 
-// Health Check
-app.get('/health', async (req, res) => {
+// Health Check (both /health and /api/v1/health for Render compatibility)
+const healthCheckHandler = async (req, res) => {
   const { checkDatabaseHealth } = require('./config/db');
   const dbHealth = await checkDatabaseHealth();
 
@@ -110,7 +110,10 @@ app.get('/health', async (req, res) => {
     environment: process.env.NODE_ENV,
     database: dbHealth
   });
-});
+};
+
+app.get('/health', healthCheckHandler);
+app.get('/api/v1/health', healthCheckHandler);
 
 // API Info
 app.get('/', (req, res) => {
