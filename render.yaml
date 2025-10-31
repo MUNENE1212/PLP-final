@@ -7,7 +7,7 @@ services:
     name: ementech-backend
     env: node
     region: oregon
-    plan: starter
+    plan: free
     buildCommand: cd backend && npm install
     startCommand: cd backend && npm start
     envVars:
@@ -57,7 +57,7 @@ services:
   - type: web
     name: ementech-frontend
     env: static
-    plan: starter
+    plan: free
     buildCommand: cd frontend && npm install && npm run build
     staticPublishPath: ./frontend/dist
     envVars:
@@ -83,7 +83,7 @@ services:
   - type: redis
     name: ementech-redis
     region: oregon
-    plan: starter
+    plan: free
     maxmemoryPolicy: allkeys-lru
     ipAllowList: []
 
