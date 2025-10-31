@@ -18,6 +18,7 @@ import MatchingPreferences from './pages/MatchingPreferences';
 import ProfileSettings from './pages/ProfileSettings';
 import Messages from './pages/Messages';
 import Support from './pages/Support';
+import WhatsAppSupport from './pages/WhatsAppSupport';
 import NotFound from './pages/NotFound';
 import { useAppSelector } from './store/hooks';
 import { useSocket } from './hooks/useSocket';
@@ -70,6 +71,9 @@ const App: React.FC = () => {
             <Route index element={isAuthenticated ? <Navigate to="/dashboard" /> : <Home />} />
             <Route path="login" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Login />} />
             <Route path="register" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Register />} />
+
+            {/* Public WhatsApp Support (no login required) */}
+            <Route path="whatsapp-support" element={<WhatsAppSupport />} />
 
             {/* Protected Routes */}
             <Route element={<ProtectedRoute />}>
