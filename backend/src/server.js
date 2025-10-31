@@ -33,6 +33,8 @@ const corsOptions = {
   origin: function (origin, callback) {
     const whitelist = [
       process.env.CLIENT_WEB_URL,
+      process.env.CORS_ORIGIN, // For Render deployment
+      'https://ementech-frontend.onrender.com', // Frontend deployed URL
       'http://localhost:3000',
       'http://localhost:3001',
       'http://localhost:5000', // Backend server (for Swagger UI)
@@ -41,7 +43,7 @@ const corsOptions = {
       'http://127.0.0.1:3000',
       'http://127.0.0.1:5000',
       'http://127.0.0.1:5173',
-    ];
+    ].filter(Boolean); // Remove undefined values
 
     // In development, allow requests with no origin (like Postman, Swagger UI, mobile apps)
     if (process.env.NODE_ENV === 'development') {
