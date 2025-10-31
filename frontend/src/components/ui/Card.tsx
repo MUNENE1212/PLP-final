@@ -1,14 +1,14 @@
 import React from 'react';
 import { clsx } from 'clsx';
 
-interface CardProps {
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   className?: string;
 }
 
-export const Card: React.FC<CardProps> = ({ children, className }) => {
+export const Card: React.FC<CardProps> = ({ children, className, ...props }) => {
   return (
-    <div className={clsx('rounded-lg border bg-gray dark:bg-gray-800 dark:border-gray-700 shadow-sm transition-colors duration-200', className)}>
+    <div className={clsx('rounded-lg border bg-gray dark:bg-gray-800 dark:border-gray-700 shadow-sm transition-colors duration-200', className)} {...props}>
       {children}
     </div>
   );

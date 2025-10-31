@@ -37,7 +37,7 @@ const UserProfile: React.FC = () => {
   useEffect(() => {
     // Check if current user is following this profile
     if (currentUser && currentProfile) {
-      const following = currentUser.following || [];
+      const following = (currentUser as any).following || [];
       setIsFollowing(following.includes(currentProfile._id));
     }
   }, [currentUser, currentProfile]);

@@ -69,23 +69,27 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   };
 
   const getPostTypeColor = () => {
-    const colors = {
+    const colors: Record<string, string> = {
       text: 'text-gray-600',
       question: 'text-purple-600',
       tip: 'text-yellow-600',
       portfolio: 'text-green-600',
       achievement: 'text-blue-600',
+      image: 'text-blue-600',
+      video: 'text-red-600',
     };
     return colors[post.type] || colors.text;
   };
 
   const getPostTypeIcon = () => {
-    const icons = {
+    const icons: Record<string, string> = {
       text: '📝',
       question: '❓',
       tip: '💡',
       portfolio: '🎨',
       achievement: '🏆',
+      image: '🖼️',
+      video: '🎥',
     };
     return icons[post.type] || icons.text;
   };

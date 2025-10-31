@@ -213,7 +213,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation }) => {
 
               const showAvatar = index === 0 ||
                 (typeof messages[index - 1].sender === 'object' && typeof message.sender === 'object'
-                  ? messages[index - 1].sender._id !== message.sender._id
+                  ? (messages[index - 1].sender as any)._id !== (message.sender as any)._id
                   : messages[index - 1].sender !== message.sender);
 
               return (
