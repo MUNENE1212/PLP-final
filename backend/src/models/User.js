@@ -106,7 +106,7 @@ const UserSchema = new Schema({
     type: String,
     required: [true, 'Phone number is required'],
     unique: true,
-    match: [/^(\+254|0)[17]\d{8}$/, 'Please enter a valid Kenyan phone number']
+    match: [/^\+?\d{7,15}$/, 'Please enter a valid phone number']
   },
   password: {
     type: String,

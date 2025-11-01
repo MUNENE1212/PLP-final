@@ -73,24 +73,30 @@ class MpesaService {
   }
 
   /**
-   * Format phone number to 254XXXXXXXXX
+   * Format phone number to international format (primarily for Kenyan numbers)
    */
   formatPhoneNumber(phoneNumber) {
     // Remove spaces, dashes, and plus signs
     let formatted = phoneNumber.replace(/[\s\-\+]/g, '');
 
-    // If starts with 0, replace with 254
+    // If starts with 0, replace with 254 (Kenyan format)
     if (formatted.startsWith('0')) {
       formatted = '254' + formatted.substring(1);
     }
 
-    // If doesn't start with 254, add it
+    // If doesn't start with 254, assume it's international or needs 254 prefix
+    // For now, we'll assume most users are Kenyan, but this can be extended
     if (!formatted.startsWith('254')) {
-      formatted = '254' + formatted;
+      // If it's a valid international number, keep as is
+      // Otherwise, assume Kenyan and add 254
+      if (formatted.length === 9) {
+        formatted = '254' + formatted;
+      }
+      // For other lengths, we'll trust the input but ensure it's numeric
     }
 
-    // Validate length (should be 12 digits: 254XXXXXXXXX)
-    if (formatted.length !== 12) {
+    // Basic validation - should be between 10-15 digits for international
+    if (formatted.length < 10 || formatted.length > 15) {
       throw new Error('Invalid phone number format');
     }
 

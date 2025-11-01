@@ -10,14 +10,16 @@ exports.formatPhoneNumber = (phoneNumber) => {
   // Remove any non-digit characters
   let cleaned = phoneNumber.replace(/\D/g, '');
 
-  // Handle Kenyan numbers
+  // Handle international numbers - if it doesn't start with country code, assume Kenyan
   if (cleaned.startsWith('0')) {
     cleaned = '254' + cleaned.slice(1);
   } else if (cleaned.startsWith('254')) {
     // Already in correct format
-  } else if (cleaned.startsWith('+254')) {
-    cleaned = cleaned.slice(1);
+  } else if (cleaned.length === 9) {
+    // Assume Kenyan number without prefix
+    cleaned = '254' + cleaned;
   }
+  // For other international numbers, keep as is
 
   return `+${cleaned}`;
 };
@@ -170,10 +172,10 @@ exports.isValidEmail = (email) => {
 };
 
 /**
- * Validate Kenyan phone number
+ * Validate international phone number
  */
-exports.isValidKenyanPhone = (phoneNumber) => {
-  const phoneRegex = /^(\+254|254|0)[17]\d{8}$/;
+exports.isValidPhoneNumber = (phoneNumber) => {
+  const phoneRegex = /^\+?\d{7,15}$/;
   return phoneRegex.test(phoneNumber);
 };
 
