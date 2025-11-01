@@ -12,6 +12,7 @@ import {
   Wrench,
   MessageCircle
 } from 'lucide-react';
+import ThemeToggle from '../common/ThemeToggle';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -86,8 +87,10 @@ const Footer = () => {
               </div>
             </div>
 
-            {/* Social Links */}
-            <div className="flex space-x-4 mt-6">
+            {/* Theme Toggle & Social Links */}
+            <div className="flex items-center space-x-4 mt-6">
+              <ThemeToggle />
+              <div className="h-8 w-px bg-gray-700" />
               {socialLinks.map((social) => {
                 const Icon = social.icon;
                 return (

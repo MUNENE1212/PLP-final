@@ -345,7 +345,7 @@ const MatchingPreferences: React.FC = () => {
                         },
                       }))
                     }
-                    className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-4 py-2 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
                   >
                     <option value="budget">Budget - Most affordable options</option>
                     <option value="moderate">Moderate - Balance of price and quality</option>
@@ -376,7 +376,7 @@ const MatchingPreferences: React.FC = () => {
                           },
                         }))
                       }
-                      className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-4 py-2 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
                     >
                       <option value="immediate">Immediate - Within 5 minutes</option>
                       <option value="within_hour">Within an hour</option>
@@ -400,7 +400,7 @@ const MatchingPreferences: React.FC = () => {
                           },
                         }))
                       }
-                      className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-4 py-2 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
                     >
                       <option value="low">Low - Within a week</option>
                       <option value="medium">Medium - Within 2-3 days</option>
@@ -594,7 +594,7 @@ const MatchingPreferences: React.FC = () => {
                           },
                         }))
                       }
-                      className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-4 py-2 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
                     >
                       <option value="in_app_chat">In-App Chat</option>
                       <option value="phone">Phone Call</option>
@@ -659,7 +659,7 @@ const MatchingPreferences: React.FC = () => {
                           },
                         }))
                       }
-                      className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-4 py-2 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
                       disabled={!formData.communication.notifyOnMatch}
                     >
                       <option value="instant">Instant - As soon as matches are found</option>
@@ -823,7 +823,7 @@ const MatchingPreferences: React.FC = () => {
                       },
                     }))
                   }
-                  className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-4 py-2 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={!formData.ai.enableAIRecommendations}
                 >
                   <option value="minimal">Minimal - Basic recommendations</option>
