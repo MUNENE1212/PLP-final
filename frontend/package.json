@@ -1,9 +1,9 @@
 {
-  "name": "baitech-frontend",
+  "name": "ementech-frontend",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "BaiTech - AI-Powered Technician & Community Platform Frontend",
+  "description": "EmEnTech - Emergency Maintenance & Engineering Platform Frontend",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

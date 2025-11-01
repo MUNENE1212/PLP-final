@@ -60,7 +60,7 @@ export const register = createAsyncThunk(
       }
       localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
 
-      toast.success('Registration successful! Welcome to BaiTech.');
+      toast.success('Registration successful! Welcome to EmEnTech.');
       return response.data;
     } catch (error: any) {
       const message = error.response?.data?.message || 'Registration failed. Please try again.';

@@ -19,6 +19,13 @@ import ProfileSettings from './pages/ProfileSettings';
 import Messages from './pages/Messages';
 import Support from './pages/Support';
 import WhatsAppSupport from './pages/WhatsAppSupport';
+import About from './pages/About';
+import Careers from './pages/Careers';
+import Donate from './pages/Donate';
+import HowItWorks from './pages/HowItWorks';
+import FAQ from './pages/FAQ';
+import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
 import NotFound from './pages/NotFound';
 import { useAppSelector } from './store/hooks';
 import { useSocket } from './hooks/useSocket';
@@ -72,7 +79,14 @@ const App: React.FC = () => {
             <Route path="login" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Login />} />
             <Route path="register" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Register />} />
 
-            {/* Public WhatsApp Support (no login required) */}
+            {/* Public Pages (no login required) */}
+            <Route path="about" element={<About />} />
+            <Route path="careers" element={<Careers />} />
+            <Route path="donate" element={<Donate />} />
+            <Route path="how-it-works" element={<HowItWorks />} />
+            <Route path="faq" element={<FAQ />} />
+            <Route path="terms" element={<Terms />} />
+            <Route path="privacy" element={<Privacy />} />
             <Route path="whatsapp-support" element={<WhatsAppSupport />} />
 
             {/* Protected Routes */}

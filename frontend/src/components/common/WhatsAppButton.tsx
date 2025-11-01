@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { MessageCircle, X, Send, Phone, Calendar, Wrench } from 'lucide-react';
 import Button from '../ui/Button';
 
-// WhatsApp business number - update with actual number
-const WHATSAPP_NUMBER = '254700000000'; // Format: country code + number (no + or spaces)
+// WhatsApp business number
+const WHATSAPP_NUMBER = '254799954672'; // Format: country code + number (no + or spaces)
 
 interface QuickAction {
   icon: typeof Phone;

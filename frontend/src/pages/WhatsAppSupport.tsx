@@ -3,7 +3,7 @@ import { MessageCircle, Send, Clock, CheckCircle, Wrench, Calendar, Phone, Messa
 import Button from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 
-const WHATSAPP_NUMBER = '254700000000';
+const WHATSAPP_NUMBER = '254799954672';
 
 interface BookingDetails {
   serviceType: string;

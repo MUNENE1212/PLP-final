@@ -1,7 +1,7 @@
 {
-  "name": "baitech-backend",
+  "name": "ementech-backend",
   "version": "1.0.0",
-  "description": "AI-Powered Technician & Community Platform - Backend API",
+  "description": "EmEnTech - Emergency Maintenance & Engineering Platform - Backend API",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
@@ -20,7 +20,7 @@
     "social",
     "marketplace"
   ],
-  "author": "BaiTech Team",
+  "author": "EmEnTech Team",
   "license": "MIT",
   "dependencies": {
     "africastalking": "^0.6.2",

@@ -36,7 +36,7 @@ export const geocodeAddress = async (
       `https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1`,
       {
         headers: {
-          'User-Agent': 'BaiTech-App', // Required by Nominatim
+          'User-Agent': 'EmEnTech-App', // Required by Nominatim
         },
       }
     );
@@ -77,7 +77,7 @@ export const reverseGeocode = async (
       `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
       {
         headers: {
-          'User-Agent': 'BaiTech-App',
+          'User-Agent': 'EmEnTech-App',
         },
       }
     );

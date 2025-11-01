@@ -38,7 +38,7 @@ const Home: React.FC = () => {
               <span className="block text-primary-600 dark:text-primary-400">Technicians Instantly</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-gray-600 dark:text-gray-400">
-              BaiTech uses AI to match you with the best technicians in your area.
+              EmEnTech uses AI to match you with the best technicians in your area.
               Get quality service from verified professionals.
             </p>
             <div className="mt-10 flex justify-center gap-4">
@@ -61,7 +61,7 @@ const Home: React.FC = () => {
       <div className="bg-gray-50 dark:bg-gray-900 dark:bg-gray-800 py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Why Choose BaiTech?</h2>
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Why Choose EmEnTech?</h2>
             <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
               Everything you need to find and book skilled technicians
             </p>
@@ -96,7 +96,7 @@ const Home: React.FC = () => {
             Ready to get started?
           </h2>
           <p className="mt-4 text-lg text-primary-100 dark:text-primary-200">
-            Join thousands of customers and technicians on BaiTech
+            Join thousands of customers and technicians on EmEnTech
           </p>
           <div className="mt-8">
             <Link to="/register">
