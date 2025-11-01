@@ -213,6 +213,9 @@ exports.getUploadConfig = async (req, res) => {
       data: {
         provider: 'google-drive',
         configured: isConfigured,
+        folderId: googleDriveService.folderId || 'NOT_SET',
+        initialized: googleDriveService.initialized,
+        hasCredentials: !!process.env.GOOGLE_CREDENTIALS_JSON || !!process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH,
         maxFileSize: '10MB',
         allowedTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/mov', 'video/avi'],
       },
