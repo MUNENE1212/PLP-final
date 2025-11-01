@@ -120,5 +120,14 @@ data/
 # SSL certificates
 *.pem
 
+# Google Drive Service Account Credentials
+google-credentials.json
+**/google-credentials.json
+service-account*.json
+
+# Firebase Service Account Credentials
+firebase-service-account.json
+**/firebase-service-account.json
+
 # Local development
 .local

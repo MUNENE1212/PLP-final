@@ -14,7 +14,7 @@ const registerSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
   lastName: z.string().min(2, 'Last name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
-  phoneNumber: z.string().regex(/^(\+254|0)[17]\d{8}$/, 'Phone number must be in format +254712345678 or 0712345678'),
+  phoneNumber: z.string().regex(/^\+?\d{7,15}$/, 'Please enter a valid phone number'),
   password: z
     .string()
     .min(8, 'Password must be at least 8 characters')
@@ -101,9 +101,9 @@ const Register: React.FC = () => {
             <Input
               label="Phone Number"
               type="tel"
-              placeholder="+254712345678"
+              placeholder="+1234567890"
               error={errors.phoneNumber?.message}
-              helperText="Format: +254712345678 or 0712345678"
+              helperText="Enter your phone number with country code (e.g., +1234567890)"
               {...register('phoneNumber')}
             />
 

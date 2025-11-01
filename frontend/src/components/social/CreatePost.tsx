@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Image, Video, Smile, Send, X } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { createPost } from '@/store/slices/postSlice';
 import Button from '../ui/Button';
 import { cn } from '@/lib/utils';
+import axios from '@/lib/axios';
+import toast from 'react-hot-toast';
 
 const CreatePost: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -13,6 +15,9 @@ const CreatePost: React.FC = () => {
   const [caption, setCaption] = useState('');
   const [type, setType] = useState<'text' | 'question' | 'tip' | 'portfolio'>('text');
   const [showTypeSelector, setShowTypeSelector] = useState(false);
+  const [selectedMedia, setSelectedMedia] = useState<Array<{ url: string; type: 'image' | 'video'; fileId?: string }>>([]);
+  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const postTypes = [
     { value: 'text', label: 'Update', icon: '📝', color: 'bg-blue-50 text-blue-600' },
@@ -21,14 +26,62 @@ const CreatePost: React.FC = () => {
     { value: 'portfolio', label: 'Portfolio', icon: '🎨', color: 'bg-green-50 text-green-600' },
   ];
 
+  const handleMediaSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploadingMedia(true);
+    try {
+      const formData = new FormData();
+
+      // Add all selected files
+      Array.from(files).forEach(file => {
+        formData.append('files', file);
+      });
+
+      const response = await axios.post('/upload/post-media', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (response.data.success) {
+        const uploadedMedia = response.data.data.media.map((m: any) => ({
+          url: m.url,
+          type: m.type,
+          fileId: m.fileId,
+        }));
+
+        setSelectedMedia(prev => [...prev, ...uploadedMedia]);
+        toast.success(`${uploadedMedia.length} file(s) uploaded successfully!`);
+      }
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      toast.error(error.response?.data?.message || 'Failed to upload media');
+    } finally {
+      setIsUploadingMedia(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleRemoveMedia = (index: number) => {
+    setSelectedMedia(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!caption.trim()) return;
+    if (!caption.trim() && selectedMedia.length === 0) {
+      toast.error('Please add some text or media to your post');
+      return;
+    }
 
     const result = await dispatch(createPost({
       caption,
       type,
+      media: selectedMedia,
       visibility: 'public'
     }));
 
@@ -36,6 +89,7 @@ const CreatePost: React.FC = () => {
       setCaption('');
       setType('text');
       setShowTypeSelector(false);
+      setSelectedMedia([]);
     }
   };
 
@@ -64,6 +118,16 @@ const CreatePost: React.FC = () => {
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="mt-4">
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*,video/*"
+          multiple
+          onChange={handleMediaSelect}
+          className="hidden"
+        />
+
         {/* Post Type Selector */}
         {showTypeSelector && (
           <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -121,6 +185,35 @@ const CreatePost: React.FC = () => {
           {caption.length}/2000
         </div>
 
+        {/* Selected media preview */}
+        {selectedMedia.length > 0 && (
+          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+            {selectedMedia.map((media, index) => (
+              <div key={index} className="relative group">
+                {media.type === 'image' ? (
+                  <img
+                    src={media.url}
+                    alt={`Upload ${index + 1}`}
+                    className="h-24 w-full object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+                  />
+                ) : (
+                  <video
+                    src={media.url}
+                    className="h-24 w-full object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+                  />
+                )}
+                <button
+                  type="button"
+                  onClick={() => handleRemoveMedia(index)}
+                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Actions */}
         <div className="mt-4 flex items-center justify-between">
           <div className="flex space-x-2">
@@ -135,22 +228,13 @@ const CreatePost: React.FC = () => {
 
             <button
               type="button"
-              className="flex items-center space-x-1 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors hover:bg-gray-50 dark:bg-gray-900"
-              disabled
-              title="Coming soon"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploadingMedia}
+              className="flex items-center space-x-1 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Add photo or video"
             >
               <Image className="h-4 w-4" />
-              <span className="hidden sm:inline">Photo</span>
-            </button>
-
-            <button
-              type="button"
-              className="flex items-center space-x-1 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors hover:bg-gray-50 dark:bg-gray-900"
-              disabled
-              title="Coming soon"
-            >
-              <Video className="h-4 w-4" />
-              <span className="hidden sm:inline">Video</span>
+              <span className="hidden sm:inline">{isUploadingMedia ? 'Uploading...' : 'Photo/Video'}</span>
             </button>
 
             <button
@@ -167,7 +251,7 @@ const CreatePost: React.FC = () => {
             type="submit"
             variant="primary"
             size="sm"
-            disabled={!caption.trim() || isCreating}
+            disabled={(!caption.trim() && selectedMedia.length === 0) || isCreating || isUploadingMedia}
             isLoading={isCreating}
             className="flex items-center space-x-2"
           >

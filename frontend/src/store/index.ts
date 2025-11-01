@@ -5,6 +5,7 @@ import matchingReducer from './slices/matchingSlice';
 import bookingReducer from './slices/bookingSlice';
 import messagingReducer from './slices/messagingSlice';
 import userReducer from './slices/userSlice';
+import dashboardReducer from './slices/dashboardSlice';
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
     bookings: bookingReducer,
     messaging: messagingReducer,
     user: userReducer,
+    dashboard: dashboardReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

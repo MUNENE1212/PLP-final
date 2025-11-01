@@ -4,10 +4,22 @@ npm-debug.log
 yarn-error.log
 package-lock.json
 
-# Environment files
+# Environment files - NEVER include these in Docker images
+.env
+.env*
+*.env
 .env.local
 .env.development
 .env.test
+.env.production
+
+# Service Account Credentials - CRITICAL: Never include in images
+google-credentials.json
+*credentials.json
+service-account*.json
+firebase-service-account.json
+*.pem
+*.key
 
 # Git
 .git

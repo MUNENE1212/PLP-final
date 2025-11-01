@@ -30,18 +30,35 @@ class GoogleDriveService {
     if (this.initialized) return;
 
     try {
-      // Check if service account key exists
-      const keyPath = process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH ||
-                     path.join(__dirname, '../../google-credentials.json');
+      let credentials;
 
-      if (!fs.existsSync(keyPath)) {
-        console.warn('Google Drive: Service account key file not found. Uploads will be disabled.');
-        return;
+      // Check if credentials are provided as JSON env variable (for Render/Cloud deployment)
+      if (process.env.GOOGLE_CREDENTIALS_JSON) {
+        console.log('Loading Google Drive credentials from environment variable...');
+        try {
+          credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
+        } catch (parseError) {
+          console.error('Failed to parse GOOGLE_CREDENTIALS_JSON:', parseError.message);
+          console.warn('Google Drive: Invalid credentials JSON. Uploads will be disabled.');
+          return;
+        }
+      } else {
+        // Check if service account key file exists (for local development)
+        const keyPath = process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH ||
+                       path.join(__dirname, '../../google-credentials.json');
+
+        if (!fs.existsSync(keyPath)) {
+          console.warn('Google Drive: Service account key file not found and GOOGLE_CREDENTIALS_JSON not set. Uploads will be disabled.');
+          return;
+        }
+
+        console.log('Loading Google Drive credentials from file...');
+        credentials = require(keyPath);
       }
 
-      // Load service account credentials
+      // Create auth client
       const auth = new google.auth.GoogleAuth({
-        keyFile: keyPath,
+        credentials,
         scopes: ['https://www.googleapis.com/auth/drive.file'],
       });
 

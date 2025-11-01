@@ -485,7 +485,7 @@ exports.getFollowing = async (req, res) => {
 };
 
 /**
- * @desc    Upload profile picture
+ * @desc    Upload profile picture (Legacy - use /upload/profile-picture instead)
  * @route   POST /api/v1/users/:id/profile-picture
  * @access  Private
  */
@@ -506,7 +506,7 @@ exports.uploadProfilePicture = async (req, res) => {
       });
     }
 
-    // Upload to Cloudinary
+    // Upload to Cloudinary (legacy)
     const result = await mediaService.uploadProfilePicture(req.file);
 
     // Update user profile picture

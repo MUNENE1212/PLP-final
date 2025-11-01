@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button';
 import Loading from '@/components/ui/Loading';
 import Alert from '@/components/ui/Alert';
 import SkillsManager from '@/components/profile/SkillsManager';
+import ImageUpload from '@/components/upload/ImageUpload';
 import {
   User,
   Settings,
@@ -66,8 +67,7 @@ const ProfileSettings: React.FC = () => {
   });
 
   const [isAvailable, setIsAvailable] = useState<boolean>(false);
-  const [imagePreview, setImagePreview] = useState<string>('');
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [profilePictureUrl, setProfilePictureUrl] = useState<string>('');
   const [hasChanges, setHasChanges] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isGeocodingLocation, setIsGeocodingLocation] = useState(false);
@@ -90,10 +90,7 @@ const ProfileSettings: React.FC = () => {
         skills: user.skills || [],
       });
       setIsAvailable(user.availability?.isAvailable || false);
-      setImagePreview(
-        user.profilePicture ||
-          `https://ui-avatars.com/api/?name=${user.firstName}+${user.lastName}&background=random`
-      );
+      setProfilePictureUrl(user.profilePicture || '');
     }
   }, [user]);
 
@@ -127,17 +124,10 @@ const ProfileSettings: React.FC = () => {
     setHasChanges(true);
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-      setHasChanges(true);
-    }
+  const handleProfilePictureUpload = (url: string, fileId: string) => {
+    setProfilePictureUrl(url);
+    setHasChanges(true);
+    toast.success('Profile picture uploaded! Click Save to update your profile.');
   };
 
   const handleAvailabilityToggle = async () => {
@@ -254,11 +244,9 @@ const ProfileSettings: React.FC = () => {
         updates.skills = formData.skills;
       }
 
-      // If there's a new profile picture, we would upload it here
-      // For now, we'll skip the actual upload implementation
-      if (selectedFile) {
-        // TODO: Implement image upload to backend
-        // updates.profilePicture = uploadedImageUrl;
+      // Include profile picture if it was updated
+      if (profilePictureUrl && profilePictureUrl !== user.profilePicture) {
+        updates.profilePicture = profilePictureUrl;
       }
 
       const result = await dispatch(updateProfile(updates));
@@ -343,36 +331,30 @@ const ProfileSettings: React.FC = () => {
             <Camera className="mr-2 h-5 w-5 text-primary-600" />
             Profile Picture
           </h2>
-          <div className="flex items-center space-x-6">
-            <div className="relative">
+          <div className="space-y-4">
+            <div className="flex items-center space-x-4">
               <img
-                src={imagePreview}
+                src={profilePictureUrl || user.profilePicture || `https://ui-avatars.com/api/?name=${user.firstName}+${user.lastName}&background=random`}
                 alt="Profile"
-                className="h-24 w-24 rounded-full object-cover ring-4 ring-gray-100"
+                className="h-20 w-20 rounded-full object-cover ring-4 ring-gray-100 dark:ring-gray-700"
               />
-              <label
-                htmlFor="profile-picture"
-                className="absolute bottom-0 right-0 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-primary-600 text-white transition-colors hover:bg-primary-700"
-              >
-                <Camera className="h-4 w-4" />
-              </label>
-              <input
-                id="profile-picture"
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="hidden"
-              />
+              <div>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  {user.firstName} {user.lastName}
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
+                <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                  Upload a new picture below (max 10MB)
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                {user.firstName} {user.lastName}
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
-              <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
-                Click the camera icon to upload a new picture
-              </p>
-            </div>
+            <ImageUpload
+              onUploadComplete={handleProfilePictureUpload}
+              currentImage={profilePictureUrl || user.profilePicture}
+              uploadType="profile-picture"
+              buttonText="Upload New Profile Picture"
+              maxSizeMB={10}
+            />
           </div>
         </div>
 

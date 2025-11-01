@@ -1,42 +1,66 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppSelector } from '@/store/hooks';
+import { useAppSelector, useAppDispatch } from '@/store/hooks';
+import { fetchDashboardStats, fetchRecentActivity } from '@/store/slices/dashboardSlice';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { User, Calendar, MessageSquare, Star } from 'lucide-react';
+import { User, Calendar, MessageSquare, Star, RefreshCw } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
 import Feed from '@/components/social/Feed';
+import Loading from '@/components/ui/Loading';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
+  const { stats, recentActivity, isLoading } = useAppSelector((state) => state.dashboard);
 
-  const stats = [
+  // Fetch dashboard data on mount
+  useEffect(() => {
+    dispatch(fetchDashboardStats());
+    dispatch(fetchRecentActivity(10));
+  }, [dispatch]);
+
+  // Format stats for display
+  const displayStats = [
     {
       name: 'Total Bookings',
-      value: '12',
+      value: stats?.totalBookings?.toString() || '0',
       icon: Calendar,
-      change: '+4 from last month',
-      changeType: 'positive',
+      change: stats?.completedBookings
+        ? `${stats.completedBookings} completed`
+        : 'No bookings yet',
+      changeType: stats?.completedBookings ? 'positive' : 'neutral',
     },
     {
       name: 'Active Bookings',
-      value: '3',
+      value: stats?.activeBookings?.toString() || '0',
       icon: User,
-      change: '2 pending acceptance',
+      change: stats?.pendingBookings
+        ? `${stats.pendingBookings} pending`
+        : 'No pending bookings',
       changeType: 'neutral',
     },
     {
       name: 'Messages',
-      value: '8',
+      value: stats?.unreadMessages?.toString() || '0',
       icon: MessageSquare,
-      change: '5 unread',
-      changeType: 'neutral',
+      change: stats?.unreadMessages
+        ? `${stats.unreadMessages} unread`
+        : 'All caught up',
+      changeType: stats?.unreadMessages ? 'neutral' : 'positive',
     },
     {
-      name: 'Average Rating',
-      value: '4.8',
+      name: user?.role === 'customer' ? 'Total Spent' : 'Total Earnings',
+      value: stats?.totalEarnings
+        ? `KSh ${stats.totalEarnings.toLocaleString()}`
+        : stats?.totalSpent
+        ? `KSh ${stats.totalSpent.toLocaleString()}`
+        : 'KSh 0',
       icon: Star,
-      change: '+0.2 from last month',
-      changeType: 'positive',
+      change: stats?.averageRating
+        ? `${stats.averageRating.toFixed(1)} avg rating`
+        : 'No ratings yet',
+      changeType: stats?.averageRating && stats.averageRating >= 4 ? 'positive' : 'neutral',
     },
   ];
 
@@ -63,25 +87,31 @@ const Dashboard: React.FC = () => {
         <div className="space-y-4 sm:space-y-6 lg:col-span-4">
           {/* Stats Grid */}
           <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-1 lg:space-y-0">
-            {stats.map((stat) => {
-              const Icon = stat.icon;
-              return (
-                <Card key={stat.name}>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">{stat.name}</CardTitle>
-                    <Icon className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold dark:text-gray-100">{stat.value}</div>
-                    <p className={`text-xs ${
-                      stat.changeType === 'positive' ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-400'
-                    }`}>
-                      {stat.change}
-                    </p>
-                  </CardContent>
-                </Card>
-              );
-            })}
+            {isLoading && !stats ? (
+              <div className="col-span-2 lg:col-span-1 flex justify-center py-8">
+                <Loading size="md" text="Loading stats..." />
+              </div>
+            ) : (
+              displayStats.map((stat) => {
+                const Icon = stat.icon;
+                return (
+                  <Card key={stat.name}>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">{stat.name}</CardTitle>
+                      <Icon className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold dark:text-gray-100">{stat.value}</div>
+                      <p className={`text-xs ${
+                        stat.changeType === 'positive' ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-400'
+                      }`}>
+                        {stat.change}
+                      </p>
+                    </CardContent>
+                  </Card>
+                );
+              })
+            )}
           </div>
 
           {/* Quick Actions */}
@@ -140,46 +170,58 @@ const Dashboard: React.FC = () => {
 
           {/* Recent Activity */}
           <div>
-            <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3">Recent Activity</h2>
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
+                Recent Activity
+              </h2>
+              <button
+                onClick={() => dispatch(fetchRecentActivity(10))}
+                disabled={isLoading}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 disabled:opacity-50"
+                title="Refresh activity"
+              >
+                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
             <Card>
               <CardContent className="pt-4">
-                <div className="space-y-4">
-                  <div className="flex items-start">
-                    <div className="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0">
-                      <Calendar className="h-4 w-4 text-primary-600" />
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        New booking request
-                      </p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">2 hours ago</p>
-                    </div>
+                {isLoading && recentActivity.length === 0 ? (
+                  <div className="flex justify-center py-8">
+                    <Loading size="sm" text="Loading activity..." />
                   </div>
+                ) : recentActivity.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      No recent activity
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {recentActivity.slice(0, 5).map((activity) => {
+                      const iconConfig = getActivityIcon(activity.type, activity.status);
+                      const Icon = iconConfig.icon;
 
-                  <div className="flex items-start">
-                    <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                      <Star className="h-4 w-4 text-green-600" />
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        5-star review received
-                      </p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">1 day ago</p>
-                    </div>
+                      return (
+                        <div key={activity._id} className="flex items-start">
+                          <div className={`h-8 w-8 rounded-full ${iconConfig.bg} flex items-center justify-center flex-shrink-0`}>
+                            <Icon className={`h-4 w-4 ${iconConfig.color}`} />
+                          </div>
+                          <div className="ml-3 flex-1">
+                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                              {activity.title}
+                            </p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                              {activity.description}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                              {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-
-                  <div className="flex items-start">
-                    <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                      <MessageSquare className="h-4 w-4 text-blue-600" />
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        New message
-                      </p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">2 days ago</p>
-                    </div>
-                  </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -187,6 +229,33 @@ const Dashboard: React.FC = () => {
       </div>
     </div>
   );
+};
+
+// Helper function to get icon configuration based on activity type and status
+const getActivityIcon = (type: string, status?: string) => {
+  if (type === 'booking') {
+    if (status === 'completed') {
+      return { icon: Calendar, bg: 'bg-green-100 dark:bg-green-900/30', color: 'text-green-600 dark:text-green-400' };
+    }
+    if (status === 'cancelled' || status === 'disputed') {
+      return { icon: Calendar, bg: 'bg-red-100 dark:bg-red-900/30', color: 'text-red-600 dark:text-red-400' };
+    }
+    return { icon: Calendar, bg: 'bg-primary-100 dark:bg-primary-900/30', color: 'text-primary-600 dark:text-primary-400' };
+  }
+
+  if (type === 'message') {
+    return { icon: MessageSquare, bg: 'bg-blue-100 dark:bg-blue-900/30', color: 'text-blue-600 dark:text-blue-400' };
+  }
+
+  if (type === 'review') {
+    return { icon: Star, bg: 'bg-yellow-100 dark:bg-yellow-900/30', color: 'text-yellow-600 dark:text-yellow-400' };
+  }
+
+  if (type === 'payment') {
+    return { icon: Star, bg: 'bg-green-100 dark:bg-green-900/30', color: 'text-green-600 dark:text-green-400' };
+  }
+
+  return { icon: User, bg: 'bg-gray-100 dark:bg-gray-700', color: 'text-gray-600 dark:text-gray-400' };
 };
 
 export default Dashboard;
