@@ -44,22 +44,28 @@ class GoogleDriveService {
         }
       } else {
         // Check if service account key file exists (for local development)
-        const keyPath = process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH ||
+        let keyPath = process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH ||
                        path.join(__dirname, '../../google-credentials.json');
+
+        // Resolve relative paths relative to project root (where package.json is)
+        if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH) {
+          keyPath = path.resolve(process.cwd(), process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH);
+        }
 
         if (!fs.existsSync(keyPath)) {
           console.warn('Google Drive: Service account key file not found and GOOGLE_CREDENTIALS_JSON not set. Uploads will be disabled.');
+          console.warn('Looked for credentials at:', keyPath);
           return;
         }
 
-        console.log('Loading Google Drive credentials from file...');
+        console.log('Loading Google Drive credentials from file:', keyPath);
         credentials = require(keyPath);
       }
 
       // Create auth client
       const auth = new google.auth.GoogleAuth({
         credentials,
-        scopes: ['https://www.googleapis.com/auth/drive.file'],
+        scopes: ['https://www.googleapis.com/auth/drive'], // Full drive access needed for shared folders
       });
 
       // Create Drive API client
@@ -96,9 +102,15 @@ class GoogleDriveService {
 
       // Create subfolder if needed
       let targetFolderId = this.folderId;
+      console.log('🔍 [DEBUG] this.folderId =', this.folderId);
+      console.log('🔍 [DEBUG] Requested subfolder =', folder);
+
       if (folder && folder !== 'uploads') {
         targetFolderId = await this.createOrGetFolder(folder, this.folderId);
+        console.log('🔍 [DEBUG] Created/Got subfolder ID =', targetFolderId);
       }
+
+      console.log('🔍 [DEBUG] Final targetFolderId =', targetFolderId);
 
       // Generate unique filename
       const timestamp = Date.now();

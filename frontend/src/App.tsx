@@ -30,6 +30,7 @@ import NotFound from './pages/NotFound';
 import { useAppSelector } from './store/hooks';
 import { useSocket } from './hooks/useSocket';
 import { ThemeProvider } from './contexts/ThemeContext';
+import ScrollToTop from './components/common/ScrollToTop';
 
 const App: React.FC = () => {
   const { isAuthenticated } = useAppSelector((state) => state.auth);
@@ -46,6 +47,7 @@ const App: React.FC = () => {
             v7_relativeSplatPath: true,
           }}
         >
+          <ScrollToTop />
           <Toaster
             position="top-right"
             toastOptions={{

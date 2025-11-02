@@ -1,4 +1,4 @@
-const googleDriveService = require('../services/googleDrive.service');
+const cloudinaryService = require('../services/cloudinary.service');
 const multer = require('multer');
 const User = require('../models/User');
 const Post = require('../models/Post');
@@ -39,14 +39,24 @@ exports.uploadProfilePicture = async (req, res) => {
       });
     }
 
-    // Upload to Google Drive
+    // Upload to Cloudinary
     const fileData = {
       buffer: req.file.buffer,
       originalname: req.file.originalname,
       mimetype: req.file.mimetype,
     };
 
-    const uploadResult = await googleDriveService.uploadFile(fileData, 'profile-pictures');
+    // Upload with optimizations
+    const uploadResult = await cloudinaryService.uploadOptimizedImage(
+      fileData,
+      'profile-pictures',
+      {
+        transformation: [
+          { width: 500, height: 500, crop: 'fill', gravity: 'face' },
+          { quality: 'auto' }
+        ]
+      }
+    );
 
     // Update user profile picture
     const user = await User.findByIdAndUpdate(
@@ -60,7 +70,7 @@ exports.uploadProfilePicture = async (req, res) => {
       message: 'Profile picture uploaded successfully',
       data: {
         url: uploadResult.url,
-        fileId: uploadResult.fileId,
+        publicId: uploadResult.publicId,
         user: user,
       },
     });
@@ -85,23 +95,25 @@ exports.uploadPostMedia = async (req, res) => {
       });
     }
 
-    // Upload all files to Google Drive
+    // Upload all files to Cloudinary
     const fileDataArray = req.files.map(file => ({
       buffer: file.buffer,
       originalname: file.originalname,
       mimetype: file.mimetype,
     }));
 
-    const uploadResults = await googleDriveService.uploadMultipleFiles(
+    const uploadResults = await cloudinaryService.uploadMultipleFiles(
       fileDataArray,
-      'post-media'
+      'posts'
     );
 
     // Format results
     const mediaUrls = uploadResults.map(result => ({
       url: result.url,
-      fileId: result.fileId,
-      type: result.mimeType.startsWith('video/') ? 'video' : 'image',
+      publicId: result.publicId,
+      type: result.resourceType === 'video' ? 'video' : 'image',
+      width: result.width,
+      height: result.height,
     }));
 
     res.status(200).json({
@@ -135,22 +147,22 @@ exports.uploadBookingPhotos = async (req, res) => {
 
     const { bookingId } = req.params;
 
-    // Upload files to Google Drive
+    // Upload files to Cloudinary
     const fileDataArray = req.files.map(file => ({
       buffer: file.buffer,
       originalname: file.originalname,
       mimetype: file.mimetype,
     }));
 
-    const uploadResults = await googleDriveService.uploadMultipleFiles(
+    const uploadResults = await cloudinaryService.uploadMultipleFiles(
       fileDataArray,
-      `bookings/${bookingId}`
+      'bookings'
     );
 
     // Format results
     const photos = uploadResults.map(result => ({
       url: result.url,
-      fileId: result.fileId,
+      publicId: result.publicId,
       uploadedAt: new Date(),
       uploadedBy: req.user.id,
     }));
@@ -173,20 +185,21 @@ exports.uploadBookingPhotos = async (req, res) => {
 };
 
 /**
- * Delete file from Google Drive
+ * Delete file from Cloudinary
  */
 exports.deleteFile = async (req, res) => {
   try {
-    const { fileId } = req.params;
+    const { publicId } = req.params;
+    const { resourceType = 'image' } = req.query;
 
-    if (!fileId) {
+    if (!publicId) {
       return res.status(400).json({
         success: false,
-        message: 'File ID is required',
+        message: 'Public ID is required',
       });
     }
 
-    await googleDriveService.deleteFile(fileId);
+    await cloudinaryService.deleteFile(publicId, resourceType);
 
     res.status(200).json({
       success: true,
@@ -206,16 +219,17 @@ exports.deleteFile = async (req, res) => {
  */
 exports.getUploadConfig = async (req, res) => {
   try {
-    const isConfigured = googleDriveService.isConfigured();
+    const isConfigured = cloudinaryService.isConfigured();
 
     res.status(200).json({
       success: true,
       data: {
-        provider: 'google-drive',
+        provider: 'cloudinary',
         configured: isConfigured,
-        folderId: googleDriveService.folderId || 'NOT_SET',
-        initialized: googleDriveService.initialized,
-        hasCredentials: !!process.env.GOOGLE_CREDENTIALS_JSON || !!process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH,
+        cloudName: process.env.CLOUDINARY_CLOUD_NAME || 'NOT_SET',
+        hasCredentials: !!(process.env.CLOUDINARY_CLOUD_NAME &&
+                           process.env.CLOUDINARY_API_KEY &&
+                           process.env.CLOUDINARY_API_SECRET),
         maxFileSize: '10MB',
         allowedTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/mov', 'video/avi'],
       },

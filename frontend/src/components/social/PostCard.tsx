@@ -34,6 +34,12 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const [commentText, setCommentText] = useState('');
   const [showMenu, setShowMenu] = useState(false);
 
+  // Early return if post author is not populated
+  if (!post.author || typeof post.author !== 'object' || !post.author._id) {
+    console.error('Post author is not properly populated:', post);
+    return null;
+  }
+
   const isOwnPost = user?._id === post.author._id;
 
   const handleLike = async () => {
@@ -65,7 +71,8 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   };
 
   const getProfilePicture = (author: any) => {
-    return author.profilePicture || `https://ui-avatars.com/api/?name=${author.firstName}+${author.lastName}&background=random`;
+    if (!author) return 'https://ui-avatars.com/api/?name=User&background=random';
+    return author.profilePicture || `https://ui-avatars.com/api/?name=${author.firstName || 'User'}+${author.lastName || ''}&background=random`;
   };
 
   const getPostTypeColor = () => {

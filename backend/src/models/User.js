@@ -126,7 +126,7 @@ const UserSchema = new Schema({
   // Profile Information
   profilePicture: {
     type: String,
-    default: 'https://res.cloudinary.com/default-avatar.png'
+    default: null
   },
   bio: {
     type: String,

@@ -89,12 +89,14 @@ const FindTechnicians: React.FC = () => {
   };
 
   return (
-    <div className="mx-auto max-w-7xl">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       {/* Header */}
       <div className="mb-6 sm:mb-8">
-        <h1 className="flex items-center text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
-          <Sparkles className="mr-2 sm:mr-3 h-6 w-6 sm:h-8 sm:w-8 text-primary-600" />
-          Find the Perfect Technician
+        <h1 className="flex flex-col sm:flex-row sm:items-center text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 gap-2">
+          <div className="flex items-center">
+            <Sparkles className="mr-2 h-6 w-6 sm:h-8 sm:w-8 text-primary-600 flex-shrink-0" />
+            <span>Find the Perfect Technician</span>
+          </div>
         </h1>
         <p className="mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">
           Our AI-powered matching system finds the best technicians based on skills, location, ratings,
@@ -135,60 +137,60 @@ const FindTechnicians: React.FC = () => {
               </div>
             </div>
           ) : !hasSearched ? (
-            <div className="flex min-h-[400px] items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 dark:bg-gray-900">
+            <div className="flex min-h-[300px] sm:min-h-[400px] items-center justify-center rounded-lg border border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 p-6">
               <div className="text-center">
-                <Users className="mx-auto h-16 w-16 text-gray-400" />
-                <h3 className="mt-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
+                <Users className="mx-auto h-12 w-12 sm:h-16 sm:w-16 text-gray-400" />
+                <h3 className="mt-4 text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
                   Start Your Search
                 </h3>
-                <p className="mt-2 max-w-md text-sm text-gray-600 dark:text-gray-400">
+                <p className="mt-2 max-w-md mx-auto text-xs sm:text-sm text-gray-600 dark:text-gray-400 px-4">
                   Fill in the search criteria on the left to find technicians matched to your needs.
                   Our AI will rank them based on multiple factors.
                 </p>
               </div>
             </div>
           ) : matches.length === 0 ? (
-            <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-12">
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 sm:p-12">
               <div className="text-center">
-                <AlertCircle className="mx-auto h-16 w-16 text-gray-400" />
-                <h3 className="mt-4 text-lg font-semibold text-gray-900 dark:text-gray-100">No Matches Found</h3>
-                <p className="mt-2 max-w-md text-sm text-gray-600 dark:text-gray-400">
+                <AlertCircle className="mx-auto h-12 w-12 sm:h-16 sm:w-16 text-gray-400" />
+                <h3 className="mt-4 text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">No Matches Found</h3>
+                <p className="mt-2 max-w-md mx-auto text-xs sm:text-sm text-gray-600 dark:text-gray-400 px-4">
                   We couldn't find any technicians matching your criteria. Try:
                 </p>
-                <ul className="mt-4 space-y-2 text-left text-sm text-gray-600 dark:text-gray-400">
-                  <li className="flex items-start">
-                    <span className="mr-2">•</span>
+                <ul className="mt-4 space-y-2 text-left text-xs sm:text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+                  <li className="flex items-start gap-2">
+                    <span className="flex-shrink-0">•</span>
                     <span>Increasing your maximum distance</span>
                   </li>
-                  <li className="flex items-start">
-                    <span className="mr-2">•</span>
+                  <li className="flex items-start gap-2">
+                    <span className="flex-shrink-0">•</span>
                     <span>Adjusting your budget range</span>
                   </li>
-                  <li className="flex items-start">
-                    <span className="mr-2">•</span>
+                  <li className="flex items-start gap-2">
+                    <span className="flex-shrink-0">•</span>
                     <span>Lowering urgency requirements</span>
                   </li>
-                  <li className="flex items-start">
-                    <span className="mr-2">•</span>
+                  <li className="flex items-start gap-2">
+                    <span className="flex-shrink-0">•</span>
                     <span>Being more flexible with dates</span>
                   </li>
                 </ul>
               </div>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Results Header */}
-              <div className="rounded-lg border border-primary-200 bg-primary-50 p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-lg font-semibold text-primary-900">
+              <div className="rounded-lg border border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/20 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-base sm:text-lg font-semibold text-primary-900 dark:text-primary-100">
                       {matches.length} Technician{matches.length > 1 ? 's' : ''} Found
                     </h2>
-                    <p className="text-sm text-primary-700">
+                    <p className="text-xs sm:text-sm text-primary-700 dark:text-primary-300">
                       Sorted by match quality - best matches first
                     </p>
                   </div>
-                  <Sparkles className="h-8 w-8 text-primary-600" />
+                  <Sparkles className="h-6 w-6 sm:h-8 sm:w-8 text-primary-600 dark:text-primary-400 flex-shrink-0" />
                 </div>
               </div>
 
@@ -204,23 +206,23 @@ const FindTechnicians: React.FC = () => {
               ))}
 
               {/* Tips */}
-              <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-                <h3 className="mb-2 text-sm font-semibold text-blue-900">Tips for choosing:</h3>
-                <ul className="space-y-1 text-sm text-blue-800">
-                  <li className="flex items-start">
-                    <span className="mr-2">💡</span>
+              <div className="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 p-4">
+                <h3 className="mb-3 text-sm sm:text-base font-semibold text-blue-900 dark:text-blue-100">Tips for choosing:</h3>
+                <ul className="space-y-2 text-xs sm:text-sm text-blue-800 dark:text-blue-200">
+                  <li className="flex items-start gap-2">
+                    <span className="flex-shrink-0 text-base">💡</span>
                     <span>
                       Matches with 90+ scores are excellent fits for your requirements
                     </span>
                   </li>
-                  <li className="flex items-start">
-                    <span className="mr-2">⭐</span>
+                  <li className="flex items-start gap-2">
+                    <span className="flex-shrink-0 text-base">⭐</span>
                     <span>
                       Check the detailed scores to see exactly why each technician was matched
                     </span>
                   </li>
-                  <li className="flex items-start">
-                    <span className="mr-2">📍</span>
+                  <li className="flex items-start gap-2">
+                    <span className="flex-shrink-0 text-base">📍</span>
                     <span>Closer technicians may arrive faster and have lower travel costs</span>
                   </li>
                 </ul>

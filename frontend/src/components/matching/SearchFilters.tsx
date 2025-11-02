@@ -134,10 +134,10 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, isSearching = f
   };
 
   return (
-    <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-indigo-50 dark:bg-gray-800 p-6 shadow-sm">
-      <div className="mb-6 flex items-center space-x-2">
-        <Search className="h-6 w-6 text-primary-600" />
-        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Find a Technician</h2>
+    <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-indigo-50 dark:bg-gray-800 p-4 sm:p-6 shadow-sm">
+      <div className="mb-4 sm:mb-6 flex items-center space-x-2">
+        <Search className="h-5 w-5 sm:h-6 sm:w-6 text-primary-600 flex-shrink-0" />
+        <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">Find a Technician</h2>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
@@ -149,7 +149,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, isSearching = f
           <select
             value={serviceCategory}
             onChange={(e) => setServiceCategory(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20 text-gray-700 dark:text-gray-200 bg-indigo-100 dark:bg-gray-700"
+            className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 sm:px-4 py-2.5 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20 text-gray-700 dark:text-gray-200 bg-indigo-100 dark:bg-gray-700 text-sm"
             required
           >
             <option value="">Select a service...</option>
@@ -168,7 +168,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, isSearching = f
             Location *
           </label>
           <div className="space-y-2">
-            <div className="flex space-x-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type="text"
                 value={address}
@@ -176,22 +176,28 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, isSearching = f
                   setAddress(e.target.value);
                   setUseCurrentLocation(false);
                 }}
-                placeholder="Enter your city or area (e.g., Juja, Nairobi)"
-                className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20 bg-indigo-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200"
+                placeholder="Enter your city or area"
+                className="flex-1 rounded-lg border border-gray-300 px-3 sm:px-4 py-2.5 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20 bg-indigo-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm"
               />
               <Button
                 type="button"
                 variant="outline"
+                size="sm"
                 onClick={handleGeocodeAddress}
                 disabled={isGeocodingAddress || !address.trim()}
-                className="whitespace-nowrap"
+                className="whitespace-nowrap w-full sm:w-auto"
               >
                 {isGeocodingAddress ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <span className="hidden sm:inline">Finding...</span>
                   </>
                 ) : (
-                  'Find Location'
+                  <>
+                    <MapPin className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Find Location</span>
+                    <span className="sm:hidden">Find</span>
+                  </>
                 )}
               </Button>
             </div>
@@ -228,16 +234,16 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, isSearching = f
             <Zap className="mr-1 inline h-4 w-4" />
             How urgent is this?
           </label>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {urgencyLevels.map((level) => (
               <button
                 key={level.value}
                 type="button"
                 onClick={() => setUrgency(level.value)}
-                className={`rounded-lg border-2 px-4 py-2.5 text-sm font-medium transition-all ${
+                className={`rounded-lg border-2 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium transition-all text-left sm:text-center ${
                   urgency === level.value
-                    ? 'border-primary-500 bg-primary-50 text-primary-700'
-                    : 'border-gray-200 bg-indigo-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:border-gray-300'
+                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                    : 'border-gray-200 dark:border-gray-600 bg-indigo-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:border-gray-300 dark:hover:border-gray-500'
                 }`}
               >
                 {level.label}
@@ -252,8 +258,8 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, isSearching = f
             <DollarSign className="mr-1 inline h-4 w-4" />
             Budget (Optional)
           </label>
-          <div className="relative ">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 ">KES</span>
+          <div className="relative">
+            <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 text-sm">KES</span>
             <input
               type="number"
               value={budget}
@@ -261,10 +267,10 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, isSearching = f
               placeholder="0"
               min="0"
               step="100"
-              className="w-full rounded-lg border border-gray-300 py-2.5 pl-16 pr-4 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20 bg-indigo-100 dark:bg-gray-700"
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-600 py-2.5 pl-14 sm:pl-16 pr-3 sm:pr-4 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20 bg-indigo-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm"
             />
           </div>
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
             Enter your maximum budget to help us find technicians within your price range
           </p>
         </div>
@@ -280,7 +286,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, isSearching = f
             value={preferredDate}
             onChange={(e) => setPreferredDate(e.target.value)}
             min={new Date().toISOString().split('T')[0]}
-            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20 bg-indigo-100 dark:bg-gray-700"
+            className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 sm:px-4 py-2.5 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20 bg-indigo-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm"
           />
         </div>
 
@@ -295,9 +301,9 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, isSearching = f
             placeholder="Describe the work you need done..."
             rows={3}
             maxLength={500}
-            className="w-full resize-none rounded-lg border border-gray-300 px-4 py-2.5 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20 bg-indigo-100 dark:bg-gray-700"
+            className="w-full resize-none rounded-lg border border-gray-300 dark:border-gray-600 px-3 sm:px-4 py-2.5 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20 bg-indigo-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm"
           />
-          <p className="mt-1 text-xs text-gray-500">{description.length}/500 characters</p>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{description.length}/500 characters</p>
         </div>
 
         {/* Submit Button */}

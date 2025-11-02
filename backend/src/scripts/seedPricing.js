@@ -13,148 +13,56 @@ const pricingConfigData = {
   currency: 'KES',
 
   // Base service prices - Each category has a general service that can be used as fallback
-  // IMPORTANT: 'general' service type MUST exist for each category as fallback
   servicePrices: [
-    // ========================================
-    // PLUMBING SERVICES
-    // ========================================
-    { serviceCategory: 'plumbing', serviceType: 'general', basePrice: 2000, priceUnit: 'fixed', estimatedDuration: 2, description: 'General plumbing service (fallback)', isActive: true },
-    { serviceCategory: 'plumbing', serviceType: 'pipe_installation', basePrice: 3000, priceUnit: 'fixed', estimatedDuration: 3, description: 'Pipe installation and fitting', isActive: true },
-    { serviceCategory: 'plumbing', serviceType: 'pipe_repair', basePrice: 1800, priceUnit: 'fixed', estimatedDuration: 2, description: 'Pipe repair or patching', isActive: true },
-    { serviceCategory: 'plumbing', serviceType: 'leak_repair', basePrice: 1500, priceUnit: 'fixed', estimatedDuration: 2, description: 'Leak detection and repair', isActive: true },
-    { serviceCategory: 'plumbing', serviceType: 'drain_cleaning', basePrice: 2500, priceUnit: 'fixed', estimatedDuration: 2.5, description: 'Drain unblocking and cleaning', isActive: true },
-    { serviceCategory: 'plumbing', serviceType: 'toilet_repair', basePrice: 1500, priceUnit: 'fixed', estimatedDuration: 1.5, description: 'Toilet repair or replacement', isActive: true },
-    { serviceCategory: 'plumbing', serviceType: 'toilet_installation', basePrice: 3500, priceUnit: 'fixed', estimatedDuration: 3, description: 'New toilet installation', isActive: true },
-    { serviceCategory: 'plumbing', serviceType: 'sink_installation', basePrice: 2500, priceUnit: 'fixed', estimatedDuration: 2, description: 'Kitchen/bathroom sink installation', isActive: true },
-    { serviceCategory: 'plumbing', serviceType: 'faucet_repair', basePrice: 1000, priceUnit: 'fixed', estimatedDuration: 1, description: 'Tap/faucet repair or replacement', isActive: true },
-    { serviceCategory: 'plumbing', serviceType: 'water_heater_installation', basePrice: 5000, priceUnit: 'fixed', estimatedDuration: 4, description: 'Water heater installation', isActive: true },
-    { serviceCategory: 'plumbing', serviceType: 'water_heater_repair', basePrice: 2500, priceUnit: 'fixed', estimatedDuration: 2, description: 'Water heater repair and maintenance', isActive: true },
-    { serviceCategory: 'plumbing', serviceType: 'sewer_line_repair', basePrice: 4000, priceUnit: 'fixed', estimatedDuration: 4, description: 'Sewer line repair or replacement', isActive: true },
-    { serviceCategory: 'plumbing', serviceType: 'water_pump_installation', basePrice: 6000, priceUnit: 'fixed', estimatedDuration: 5, description: 'Water pump installation', isActive: true },
-    { serviceCategory: 'plumbing', serviceType: 'water_pump_repair', basePrice: 3000, priceUnit: 'fixed', estimatedDuration: 3, description: 'Water pump repair and servicing', isActive: true },
-    { serviceCategory: 'plumbing', serviceType: 'bathroom_renovation', basePrice: 800, priceUnit: 'per_sqm', estimatedDuration: 16, description: 'Full bathroom plumbing renovation', isActive: true },
-    { serviceCategory: 'plumbing', serviceType: 'kitchen_plumbing', basePrice: 700, priceUnit: 'per_sqm', estimatedDuration: 12, description: 'Kitchen plumbing installation', isActive: true },
+    // PLUMBING - General services
+    { serviceCategory: 'plumbing', serviceType: 'general', basePrice: 2000, priceUnit: 'fixed', estimatedDuration: 2, description: 'General plumbing service', isActive: true },
+    { serviceCategory: 'plumbing', serviceType: 'pipe_installation', basePrice: 3000, priceUnit: 'fixed', estimatedDuration: 3, description: 'Pipe installation', isActive: true },
+    { serviceCategory: 'plumbing', serviceType: 'leak_repair', basePrice: 1500, priceUnit: 'fixed', estimatedDuration: 2, description: 'Leak repair', isActive: true },
 
-    // ========================================
-    // ELECTRICAL SERVICES
-    // ========================================
-    { serviceCategory: 'electrical', serviceType: 'general', basePrice: 2500, priceUnit: 'fixed', estimatedDuration: 2, description: 'General electrical service (fallback)', isActive: true },
-    { serviceCategory: 'electrical', serviceType: 'wiring_installation', basePrice: 4000, priceUnit: 'fixed', estimatedDuration: 4, description: 'Complete electrical wiring', isActive: true },
-    { serviceCategory: 'electrical', serviceType: 'rewiring', basePrice: 5000, priceUnit: 'fixed', estimatedDuration: 6, description: 'House rewiring service', isActive: true },
-    { serviceCategory: 'electrical', serviceType: 'socket_installation', basePrice: 800, priceUnit: 'per_unit', estimatedDuration: 0.5, description: 'Power socket installation', isActive: true },
-    { serviceCategory: 'electrical', serviceType: 'switch_installation', basePrice: 600, priceUnit: 'per_unit', estimatedDuration: 0.3, description: 'Light switch installation', isActive: true },
-    { serviceCategory: 'electrical', serviceType: 'light_fixture_installation', basePrice: 1200, priceUnit: 'per_unit', estimatedDuration: 1, description: 'Light fixture and chandelier installation', isActive: true },
-    { serviceCategory: 'electrical', serviceType: 'ceiling_fan_installation', basePrice: 1500, priceUnit: 'per_unit', estimatedDuration: 1.5, description: 'Ceiling fan installation', isActive: true },
-    { serviceCategory: 'electrical', serviceType: 'circuit_breaker_repair', basePrice: 2000, priceUnit: 'fixed', estimatedDuration: 2, description: 'Circuit breaker repair/replacement', isActive: true },
-    { serviceCategory: 'electrical', serviceType: 'electrical_panel_upgrade', basePrice: 8000, priceUnit: 'fixed', estimatedDuration: 6, description: 'Main electrical panel upgrade', isActive: true },
-    { serviceCategory: 'electrical', serviceType: 'fault_finding', basePrice: 1500, priceUnit: 'per_hour', estimatedDuration: 2, description: 'Electrical fault detection and diagnosis', isActive: true },
-    { serviceCategory: 'electrical', serviceType: 'security_lights', basePrice: 2000, priceUnit: 'per_unit', estimatedDuration: 2, description: 'Outdoor security lighting installation', isActive: true },
-    { serviceCategory: 'electrical', serviceType: 'doorbell_installation', basePrice: 1000, priceUnit: 'fixed', estimatedDuration: 1, description: 'Doorbell and intercom installation', isActive: true },
-    { serviceCategory: 'electrical', serviceType: 'cctv_installation', basePrice: 3000, priceUnit: 'per_unit', estimatedDuration: 3, description: 'CCTV camera installation', isActive: true },
-    { serviceCategory: 'electrical', serviceType: 'generator_installation', basePrice: 10000, priceUnit: 'fixed', estimatedDuration: 8, description: 'Generator installation and setup', isActive: true },
-    { serviceCategory: 'electrical', serviceType: 'solar_installation', basePrice: 15000, priceUnit: 'fixed', estimatedDuration: 12, description: 'Solar panel system installation', isActive: true },
-    { serviceCategory: 'electrical', serviceType: 'appliance_installation', basePrice: 1500, priceUnit: 'per_unit', estimatedDuration: 1.5, description: 'Electrical appliance installation', isActive: true },
+    // ELECTRICAL - General services
+    { serviceCategory: 'electrical', serviceType: 'general', basePrice: 2500, priceUnit: 'fixed', estimatedDuration: 2, description: 'General electrical service', isActive: true },
+    { serviceCategory: 'electrical', serviceType: 'wiring', basePrice: 4000, priceUnit: 'fixed', estimatedDuration: 4, description: 'Electrical wiring', isActive: true },
+    { serviceCategory: 'electrical', serviceType: 'socket_installation', basePrice: 800, priceUnit: 'per_unit', estimatedDuration: 0.5, description: 'Socket installation', isActive: true },
 
-    // ========================================
-    // CARPENTRY SERVICES
-    // ========================================
-    { serviceCategory: 'carpentry', serviceType: 'general', basePrice: 2000, priceUnit: 'fixed', estimatedDuration: 2.5, description: 'General carpentry service (fallback)', isActive: true },
-    { serviceCategory: 'carpentry', serviceType: 'furniture_assembly', basePrice: 2500, priceUnit: 'fixed', estimatedDuration: 3, description: 'Furniture assembly and installation', isActive: true },
-    { serviceCategory: 'carpentry', serviceType: 'custom_furniture', basePrice: 5000, priceUnit: 'fixed', estimatedDuration: 16, description: 'Custom furniture making', isActive: true },
-    { serviceCategory: 'carpentry', serviceType: 'door_installation', basePrice: 3000, priceUnit: 'per_unit', estimatedDuration: 4, description: 'Door installation and hanging', isActive: true },
-    { serviceCategory: 'carpentry', serviceType: 'door_repair', basePrice: 1500, priceUnit: 'fixed', estimatedDuration: 2, description: 'Door repair and adjustment', isActive: true },
-    { serviceCategory: 'carpentry', serviceType: 'window_installation', basePrice: 2500, priceUnit: 'per_unit', estimatedDuration: 3, description: 'Window frame installation', isActive: true },
-    { serviceCategory: 'carpentry', serviceType: 'cabinet_installation', basePrice: 4000, priceUnit: 'fixed', estimatedDuration: 6, description: 'Kitchen/bathroom cabinet installation', isActive: true },
-    { serviceCategory: 'carpentry', serviceType: 'shelving', basePrice: 1500, priceUnit: 'per_unit', estimatedDuration: 2, description: 'Wall shelving installation', isActive: true },
-    { serviceCategory: 'carpentry', serviceType: 'wardrobe_installation', basePrice: 6000, priceUnit: 'fixed', estimatedDuration: 8, description: 'Built-in wardrobe installation', isActive: true },
-    { serviceCategory: 'carpentry', serviceType: 'flooring_installation', basePrice: 800, priceUnit: 'per_sqm', estimatedDuration: 8, description: 'Wooden flooring installation', isActive: true },
-    { serviceCategory: 'carpentry', serviceType: 'decking', basePrice: 1000, priceUnit: 'per_sqm', estimatedDuration: 10, description: 'Outdoor decking construction', isActive: true },
-    { serviceCategory: 'carpentry', serviceType: 'staircase_repair', basePrice: 4000, priceUnit: 'fixed', estimatedDuration: 6, description: 'Staircase repair and maintenance', isActive: true },
-    { serviceCategory: 'carpentry', serviceType: 'ceiling_installation', basePrice: 600, priceUnit: 'per_sqm', estimatedDuration: 8, description: 'Wooden ceiling installation', isActive: true },
-    { serviceCategory: 'carpentry', serviceType: 'partition_walls', basePrice: 700, priceUnit: 'per_sqm', estimatedDuration: 6, description: 'Wooden partition wall construction', isActive: true },
+    // CARPENTRY - General services
+    { serviceCategory: 'carpentry', serviceType: 'general', basePrice: 2000, priceUnit: 'fixed', estimatedDuration: 2.5, description: 'General carpentry service', isActive: true },
+    { serviceCategory: 'carpentry', serviceType: 'furniture_assembly', basePrice: 2500, priceUnit: 'fixed', estimatedDuration: 3, description: 'Furniture assembly', isActive: true },
+    { serviceCategory: 'carpentry', serviceType: 'door_installation', basePrice: 3000, priceUnit: 'per_unit', estimatedDuration: 4, description: 'Door installation', isActive: true },
 
-    // ========================================
-    // MASONRY SERVICES
-    // ========================================
-    { serviceCategory: 'masonry', serviceType: 'general', basePrice: 3000, priceUnit: 'fixed', estimatedDuration: 4, description: 'General masonry service (fallback)', isActive: true },
-    { serviceCategory: 'masonry', serviceType: 'bricklaying', basePrice: 800, priceUnit: 'per_sqm', estimatedDuration: 8, description: 'Brick wall construction', isActive: true },
-    { serviceCategory: 'masonry', serviceType: 'block_laying', basePrice: 700, priceUnit: 'per_sqm', estimatedDuration: 7, description: 'Concrete block wall construction', isActive: true },
-    { serviceCategory: 'masonry', serviceType: 'plastering', basePrice: 600, priceUnit: 'per_sqm', estimatedDuration: 6, description: 'Wall plastering service', isActive: true },
-    { serviceCategory: 'masonry', serviceType: 'tiling', basePrice: 1000, priceUnit: 'per_sqm', estimatedDuration: 6, description: 'Floor and wall tiling', isActive: true },
-    { serviceCategory: 'masonry', serviceType: 'concrete_works', basePrice: 900, priceUnit: 'per_sqm', estimatedDuration: 8, description: 'Concrete slab and foundation work', isActive: true },
-    { serviceCategory: 'masonry', serviceType: 'stone_work', basePrice: 1200, priceUnit: 'per_sqm', estimatedDuration: 10, description: 'Natural stone installation', isActive: true },
-    { serviceCategory: 'masonry', serviceType: 'paving', basePrice: 800, priceUnit: 'per_sqm', estimatedDuration: 6, description: 'Paving and walkway construction', isActive: true },
-    { serviceCategory: 'masonry', serviceType: 'fence_construction', basePrice: 1500, priceUnit: 'per_unit', estimatedDuration: 8, description: 'Masonry fence construction (per meter)', isActive: true },
-    { serviceCategory: 'masonry', serviceType: 'chimney_repair', basePrice: 5000, priceUnit: 'fixed', estimatedDuration: 8, description: 'Chimney repair and maintenance', isActive: true },
-    { serviceCategory: 'masonry', serviceType: 'waterproofing', basePrice: 700, priceUnit: 'per_sqm', estimatedDuration: 4, description: 'Wall and floor waterproofing', isActive: true },
-    { serviceCategory: 'masonry', serviceType: 'crack_repair', basePrice: 2000, priceUnit: 'fixed', estimatedDuration: 3, description: 'Wall crack repair and sealing', isActive: true },
+    // MASONRY - General services
+    { serviceCategory: 'masonry', serviceType: 'general', basePrice: 3000, priceUnit: 'fixed', estimatedDuration: 4, description: 'General masonry service', isActive: true },
+    { serviceCategory: 'masonry', serviceType: 'bricklaying', basePrice: 800, priceUnit: 'per_sqm', estimatedDuration: 8, description: 'Bricklaying', isActive: true },
+    { serviceCategory: 'masonry', serviceType: 'plastering', basePrice: 600, priceUnit: 'per_sqm', estimatedDuration: 6, description: 'Plastering', isActive: true },
+    { serviceCategory: 'masonry', serviceType: 'tiling', basePrice: 1000, priceUnit: 'per_sqm', estimatedDuration: 6, description: 'Tiling', isActive: true },
 
-    // ========================================
-    // PAINTING SERVICES
-    // ========================================
-    { serviceCategory: 'painting', serviceType: 'general', basePrice: 2500, priceUnit: 'fixed', estimatedDuration: 4, description: 'General painting service (fallback)', isActive: true },
-    { serviceCategory: 'painting', serviceType: 'interior_painting', basePrice: 500, priceUnit: 'per_sqm', estimatedDuration: 8, description: 'Interior wall painting', isActive: true },
-    { serviceCategory: 'painting', serviceType: 'exterior_painting', basePrice: 600, priceUnit: 'per_sqm', estimatedDuration: 8, description: 'Exterior wall painting', isActive: true },
-    { serviceCategory: 'painting', serviceType: 'ceiling_painting', basePrice: 450, priceUnit: 'per_sqm', estimatedDuration: 6, description: 'Ceiling painting', isActive: true },
-    { serviceCategory: 'painting', serviceType: 'door_window_painting', basePrice: 800, priceUnit: 'per_unit', estimatedDuration: 2, description: 'Door and window frame painting', isActive: true },
-    { serviceCategory: 'painting', serviceType: 'fence_painting', basePrice: 400, priceUnit: 'per_sqm', estimatedDuration: 4, description: 'Fence and gate painting', isActive: true },
-    { serviceCategory: 'painting', serviceType: 'roof_painting', basePrice: 550, priceUnit: 'per_sqm', estimatedDuration: 6, description: 'Roof painting and coating', isActive: true },
-    { serviceCategory: 'painting', serviceType: 'textured_painting', basePrice: 700, priceUnit: 'per_sqm', estimatedDuration: 10, description: 'Textured or decorative painting', isActive: true },
-    { serviceCategory: 'painting', serviceType: 'wallpaper_installation', basePrice: 800, priceUnit: 'per_sqm', estimatedDuration: 6, description: 'Wallpaper installation', isActive: true },
-    { serviceCategory: 'painting', serviceType: 'paint_removal', basePrice: 400, priceUnit: 'per_sqm', estimatedDuration: 4, description: 'Old paint removal and preparation', isActive: true },
-    { serviceCategory: 'painting', serviceType: 'spray_painting', basePrice: 600, priceUnit: 'per_sqm', estimatedDuration: 5, description: 'Professional spray painting', isActive: true },
+    // PAINTING - General services
+    { serviceCategory: 'painting', serviceType: 'general', basePrice: 2500, priceUnit: 'fixed', estimatedDuration: 4, description: 'General painting service', isActive: true },
+    { serviceCategory: 'painting', serviceType: 'interior_painting', basePrice: 500, priceUnit: 'per_sqm', estimatedDuration: 8, description: 'Interior painting', isActive: true },
+    { serviceCategory: 'painting', serviceType: 'exterior_painting', basePrice: 600, priceUnit: 'per_sqm', estimatedDuration: 8, description: 'Exterior painting', isActive: true },
 
-    // ========================================
-    // HVAC SERVICES
-    // ========================================
-    { serviceCategory: 'hvac', serviceType: 'general', basePrice: 3000, priceUnit: 'fixed', estimatedDuration: 2.5, description: 'General HVAC service (fallback)', isActive: true },
-    { serviceCategory: 'hvac', serviceType: 'ac_installation', basePrice: 6000, priceUnit: 'per_unit', estimatedDuration: 4, description: 'Air conditioner installation', isActive: true },
-    { serviceCategory: 'hvac', serviceType: 'ac_repair', basePrice: 2500, priceUnit: 'fixed', estimatedDuration: 2, description: 'Air conditioner repair', isActive: true },
-    { serviceCategory: 'hvac', serviceType: 'ac_servicing', basePrice: 1500, priceUnit: 'per_unit', estimatedDuration: 1.5, description: 'AC cleaning and maintenance', isActive: true },
-    { serviceCategory: 'hvac', serviceType: 'ac_gas_refill', basePrice: 3500, priceUnit: 'per_unit', estimatedDuration: 1.5, description: 'AC refrigerant gas refill', isActive: true },
-    { serviceCategory: 'hvac', serviceType: 'ventilation_installation', basePrice: 4000, priceUnit: 'fixed', estimatedDuration: 4, description: 'Ventilation system installation', isActive: true },
-    { serviceCategory: 'hvac', serviceType: 'exhaust_fan_installation', basePrice: 1500, priceUnit: 'per_unit', estimatedDuration: 2, description: 'Exhaust fan installation', isActive: true },
-    { serviceCategory: 'hvac', serviceType: 'duct_cleaning', basePrice: 3000, priceUnit: 'fixed', estimatedDuration: 3, description: 'HVAC duct cleaning service', isActive: true },
-    { serviceCategory: 'hvac', serviceType: 'central_ac_installation', basePrice: 25000, priceUnit: 'fixed', estimatedDuration: 16, description: 'Central air conditioning installation', isActive: true },
-    { serviceCategory: 'hvac', serviceType: 'thermostat_installation', basePrice: 1000, priceUnit: 'per_unit', estimatedDuration: 1, description: 'Thermostat installation and setup', isActive: true },
+    // HVAC - General services
+    { serviceCategory: 'hvac', serviceType: 'general', basePrice: 3000, priceUnit: 'fixed', estimatedDuration: 2.5, description: 'General HVAC service', isActive: true },
+    { serviceCategory: 'hvac', serviceType: 'ac_installation', basePrice: 6000, priceUnit: 'per_unit', estimatedDuration: 4, description: 'AC installation', isActive: true },
+    { serviceCategory: 'hvac', serviceType: 'ac_repair', basePrice: 2500, priceUnit: 'fixed', estimatedDuration: 2, description: 'AC repair', isActive: true },
 
-    // ========================================
-    // WELDING SERVICES
-    // ========================================
-    { serviceCategory: 'welding', serviceType: 'general', basePrice: 3500, priceUnit: 'fixed', estimatedDuration: 3, description: 'General welding service (fallback)', isActive: true },
-    { serviceCategory: 'welding', serviceType: 'gate_fabrication', basePrice: 8000, priceUnit: 'fixed', estimatedDuration: 8, description: 'Custom gate fabrication', isActive: true },
-    { serviceCategory: 'welding', serviceType: 'gate_repair', basePrice: 2500, priceUnit: 'fixed', estimatedDuration: 3, description: 'Gate repair and welding', isActive: true },
-    { serviceCategory: 'welding', serviceType: 'metal_repair', basePrice: 2000, priceUnit: 'fixed', estimatedDuration: 2, description: 'General metal repair welding', isActive: true },
-    { serviceCategory: 'welding', serviceType: 'window_grills', basePrice: 5000, priceUnit: 'fixed', estimatedDuration: 6, description: 'Window grill fabrication and installation', isActive: true },
-    { serviceCategory: 'welding', serviceType: 'burglar_bars', basePrice: 4000, priceUnit: 'fixed', estimatedDuration: 5, description: 'Burglar bar installation', isActive: true },
-    { serviceCategory: 'welding', serviceType: 'metal_staircase', basePrice: 15000, priceUnit: 'fixed', estimatedDuration: 16, description: 'Metal staircase fabrication', isActive: true },
-    { serviceCategory: 'welding', serviceType: 'balcony_railing', basePrice: 6000, priceUnit: 'fixed', estimatedDuration: 6, description: 'Balcony railing fabrication', isActive: true },
-    { serviceCategory: 'welding', serviceType: 'metal_shed', basePrice: 12000, priceUnit: 'fixed', estimatedDuration: 12, description: 'Metal storage shed fabrication', isActive: true },
-    { serviceCategory: 'welding', serviceType: 'metal_roofing', basePrice: 1200, priceUnit: 'per_sqm', estimatedDuration: 8, description: 'Metal roof installation', isActive: true },
-    { serviceCategory: 'welding', serviceType: 'water_tank_stand', basePrice: 5000, priceUnit: 'fixed', estimatedDuration: 6, description: 'Water tank metal stand fabrication', isActive: true },
+    // WELDING - General services
+    { serviceCategory: 'welding', serviceType: 'general', basePrice: 3500, priceUnit: 'fixed', estimatedDuration: 3, description: 'General welding service', isActive: true },
+    { serviceCategory: 'welding', serviceType: 'gate_fabrication', basePrice: 8000, priceUnit: 'fixed', estimatedDuration: 8, description: 'Gate fabrication', isActive: true },
+    { serviceCategory: 'welding', serviceType: 'metal_repair', basePrice: 2000, priceUnit: 'fixed', estimatedDuration: 2, description: 'Metal repair', isActive: true },
 
-    // ========================================
-    // OTHER SERVICES (Handyman, Consultation, etc.)
-    // ========================================
-    { serviceCategory: 'other', serviceType: 'general', basePrice: 1500, priceUnit: 'per_hour', estimatedDuration: 1, description: 'General service (fallback)', isActive: true },
-    { serviceCategory: 'other', serviceType: 'handyman', basePrice: 1500, priceUnit: 'per_hour', estimatedDuration: 1, description: 'General handyman service', isActive: true },
-    { serviceCategory: 'other', serviceType: 'consultation', basePrice: 1000, priceUnit: 'per_hour', estimatedDuration: 1, description: 'Technical consultation and assessment', isActive: true },
-    { serviceCategory: 'other', serviceType: 'inspection', basePrice: 2000, priceUnit: 'fixed', estimatedDuration: 2, description: 'Property inspection service', isActive: true },
-    { serviceCategory: 'other', serviceType: 'maintenance_contract', basePrice: 5000, priceUnit: 'fixed', estimatedDuration: 4, description: 'Monthly maintenance service', isActive: true },
-    { serviceCategory: 'other', serviceType: 'emergency_service', basePrice: 3000, priceUnit: 'per_hour', estimatedDuration: 1, description: 'Emergency call-out service', isActive: true },
-    { serviceCategory: 'other', serviceType: 'locksmith', basePrice: 2000, priceUnit: 'fixed', estimatedDuration: 1.5, description: 'Lock installation and repair', isActive: true },
-    { serviceCategory: 'other', serviceType: 'cleaning', basePrice: 1000, priceUnit: 'per_hour', estimatedDuration: 2, description: 'Post-construction cleaning', isActive: true },
-    { serviceCategory: 'other', serviceType: 'landscaping', basePrice: 2000, priceUnit: 'per_hour', estimatedDuration: 4, description: 'Garden and landscaping service', isActive: true }
+    // OTHER - Flexible services
+    { serviceCategory: 'other', serviceType: 'general', basePrice: 1500, priceUnit: 'per_hour', estimatedDuration: 1, description: 'General service', isActive: true },
+    { serviceCategory: 'other', serviceType: 'handyman', basePrice: 1500, priceUnit: 'per_hour', estimatedDuration: 1, description: 'Handyman service', isActive: true },
+    { serviceCategory: 'other', serviceType: 'consultation', basePrice: 1000, priceUnit: 'per_hour', estimatedDuration: 1, description: 'Technical consultation', isActive: true }
   ],
 
   // Distance pricing with tiers
   distancePricing: {
     enabled: true,
     tiers: [
-      { minDistance: 0, maxDistance: 5, pricePerKm: 0, flatFee: 0 },       // Free within 5km
-      { minDistance: 5, maxDistance: 15, pricePerKm: 10, flatFee: 50 },    // 50 KES flat + 10/km
-      { minDistance: 15, maxDistance: 30, pricePerKm: 15, flatFee: 150 },  // 150 KES flat + 15/km
-      { minDistance: 30, maxDistance: 50, pricePerKm: 20, flatFee: 300 }   // 300 KES flat + 20/km
+      { minDistance: 0, maxDistance: 5, pricePerKm: 0, flatFee: 0 },
+      { minDistance: 5, maxDistance: 20, pricePerKm: 50, flatFee: 0 },
+      { minDistance: 20, maxDistance: 50, pricePerKm: 80, flatFee: 0 }
     ],
     maxServiceDistance: 50
   },
@@ -235,6 +143,7 @@ const seedPricing = async () => {
 
     console.log('🌱 Starting pricing configuration seeding...\n');
 
+    
     // Check if pricing config already exists
     const existingConfig = await PricingConfig.findOne({ isActive: true });
 
@@ -255,7 +164,7 @@ const seedPricing = async () => {
     console.log(`Name: ${pricingConfig.name}`);
     console.log(`Currency: ${pricingConfig.currency}`);
     console.log(`Version: ${pricingConfig.version}`);
-    console.log(`Service Prices: ${pricingConfig.servicePrices.length} services configured (EXPANDED CATALOG)`);
+    console.log(`Service Prices: ${pricingConfig.servicePrices.length} services configured`);
     console.log(`Urgency Levels: ${pricingConfig.urgencyMultipliers.length} levels`);
     console.log(`Time Schedules: ${pricingConfig.timePricing.schedules.length} schedules`);
     console.log(`Technician Tiers: ${pricingConfig.technicianTiers.tiers.length} tiers`);
@@ -287,11 +196,7 @@ const seedPricing = async () => {
 
     console.log('\n==========================================\n');
     console.log('🎉 Pricing seeding completed successfully!');
-    console.log('   ✨ COMPREHENSIVE SERVICE CATALOG LOADED');
-    console.log('   📦 Total Services: ' + pricingConfig.servicePrices.length);
-    console.log('   🔄 Fallback mechanism enabled: Each category has a "general" service type');
-    console.log('   ➕ New service types can be added dynamically via API');
-    console.log('   💡 Any unlisted service will use category "general" pricing as fallback\n');
+    console.log('   New service types can be added dynamically via API\n');
 
     process.exit(0);
   } catch (error) {
