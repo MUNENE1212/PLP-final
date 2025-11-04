@@ -13,7 +13,8 @@ const {
   getPortfolio,
   updateAvailability,
   addFCMToken,
-  removeFCMToken
+  removeFCMToken,
+  searchUsersForMentions
 } = require('../controllers/user.controller');
 const { protect, authorize, optionalAuth } = require('../middleware/auth');
 const { validate } = require('../middleware/validation');
@@ -23,6 +24,7 @@ const router = express.Router();
 // Public routes
 router.get('/', optionalAuth, getUsers);
 router.get('/nearby-technicians', getNearbyTechnicians);
+router.get('/search/mentions', protect, searchUsersForMentions);
 router.get('/:id', getUser);
 router.get('/:id/followers', getFollowers);
 router.get('/:id/following', getFollowing);

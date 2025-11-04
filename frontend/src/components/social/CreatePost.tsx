@@ -6,6 +6,7 @@ import Button from '../ui/Button';
 import { cn } from '@/lib/utils';
 import axios from '@/lib/axios';
 import toast from 'react-hot-toast';
+import MentionTextarea from '../common/MentionTextarea';
 
 const CreatePost: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -170,20 +171,15 @@ const CreatePost: React.FC = () => {
           </div>
         )}
 
-        {/* Textarea */}
-        <textarea
+        {/* Textarea with @mention support */}
+        <MentionTextarea
           value={caption}
-          onChange={(e) => setCaption(e.target.value)}
-          placeholder={`What's on your mind, ${user?.firstName}?`}
+          onChange={setCaption}
+          placeholder={`What's on your mind, ${user?.firstName}? Use @ to mention someone`}
           className="w-full resize-none rounded-lg border border-gray-200 dark:border-gray-700 p-3 text-sm placeholder-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20 bg-indigo-100 dark:bg-gray-900 dark:text-gray-100"
           rows={3}
           maxLength={2000}
         />
-
-        {/* Character count */}
-        <div className="mt-2 text-right text-xs text-gray-400">
-          {caption.length}/2000
-        </div>
 
         {/* Selected media preview */}
         {selectedMedia.length > 0 && (

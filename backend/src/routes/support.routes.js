@@ -14,7 +14,12 @@ const {
   rateTicket,
   getStats,
   getDashboard,
-  updateAvailability
+  getDashboardStats,
+  updateAvailability,
+  createSupportConversation,
+  createCustomerAccount,
+  createBookingForCustomer,
+  searchTechnicians
 } = require('../controllers/support.controller');
 const { protect, authorize } = require('../middleware/auth');
 const { validate } = require('../middleware/validation');
@@ -23,6 +28,7 @@ const router = express.Router();
 
 // Support agent routes
 router.get('/dashboard', protect, authorize('support', 'admin'), getDashboard);
+router.get('/dashboard-stats', protect, authorize('support', 'admin'), getDashboardStats);
 router.get('/stats', protect, authorize('support', 'admin'), getStats);
 router.put('/availability', protect, authorize('support'), updateAvailability);
 
@@ -162,6 +168,55 @@ router.post(
     validate
   ],
   rateTicket
+);
+
+// Support conversation
+router.post(
+  '/conversation',
+  protect,
+  [
+    body('ticketId').optional().isMongoId().withMessage('Valid ticket ID is required'),
+    body('message').optional().trim(),
+    validate
+  ],
+  createSupportConversation
+);
+
+// WhatsApp Support - Customer Account Creation
+router.post(
+  '/create-customer',
+  protect,
+  authorize('support', 'admin'),
+  [
+    body('firstName').trim().notEmpty().withMessage('First name is required'),
+    body('lastName').trim().notEmpty().withMessage('Last name is required'),
+    body('phoneNumber').trim().notEmpty().withMessage('Phone number is required'),
+    body('email').optional().isEmail().withMessage('Valid email is required'),
+    validate
+  ],
+  createCustomerAccount
+);
+
+// WhatsApp Support - Create Booking/Match
+router.post(
+  '/create-booking',
+  protect,
+  authorize('support', 'admin'),
+  [
+    body('customerId').isMongoId().withMessage('Valid customer ID is required'),
+    body('technicianId').isMongoId().withMessage('Valid technician ID is required'),
+    body('description').trim().notEmpty().withMessage('Description is required'),
+    validate
+  ],
+  createBookingForCustomer
+);
+
+// Search technicians for matching
+router.get(
+  '/search-technicians',
+  protect,
+  authorize('support', 'admin'),
+  searchTechnicians
 );
 
 module.exports = router;

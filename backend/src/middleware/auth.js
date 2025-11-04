@@ -43,6 +43,9 @@ exports.protect = async (req, res, next) => {
         });
       }
 
+      // Ensure both req.user.id and req.user._id are available for consistency
+      req.user.id = req.user._id;
+
       next();
     } catch (err) {
       return res.status(401).json({
@@ -98,6 +101,11 @@ exports.optionalAuth = async (req, res, next) => {
       try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         req.user = await User.findById(decoded.id).select('-password');
+
+        // Ensure both req.user.id and req.user._id are available for consistency
+        if (req.user) {
+          req.user.id = req.user._id;
+        }
       } catch (err) {
         // Invalid token - continue without user
         req.user = null;

@@ -27,6 +27,11 @@ import FAQ from './pages/FAQ';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
 import NotFound from './pages/NotFound';
+import AdminDashboard from './pages/AdminDashboard';
+import UserManagement from './pages/UserManagement';
+import SystemSettings from './pages/SystemSettings';
+import ReportsPage from './pages/ReportsPage';
+import SupportDashboard from './pages/SupportDashboard';
 import { useAppSelector } from './store/hooks';
 import { useSocket } from './hooks/useSocket';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -104,6 +109,15 @@ const App: React.FC = () => {
               <Route path="support" element={<Support />} />
               <Route path="preferences" element={<MatchingPreferences />} />
               <Route path="settings" element={<ProfileSettings />} />
+
+              {/* Admin Routes */}
+              <Route path="admin" element={<AdminDashboard />} />
+              <Route path="admin/users" element={<UserManagement />} />
+              <Route path="admin/settings" element={<SystemSettings />} />
+              <Route path="admin/reports" element={<ReportsPage />} />
+
+              {/* Support Routes */}
+              <Route path="support-dashboard" element={<SupportDashboard />} />
             </Route>
 
             {/* 404 Page */}

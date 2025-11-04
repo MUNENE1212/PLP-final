@@ -139,8 +139,10 @@ exports.createBooking = async (req, res) => {
         bookingData.bookingFee.amount = techPricingResult.breakdown.bookingFee;
       }
 
-      bookingData.technician = technician;
-      bookingData.status = 'assigned';
+      // Store preferred technician but DON'T assign until payment is verified
+      // Assignment will happen after confirmBookingFee is called
+      bookingData.preferredTechnician = technician;
+      // Status remains 'pending' until payment is confirmed
     } else if (preferredTechnician) {
       bookingData.preferredTechnician = preferredTechnician;
     }
@@ -236,13 +238,50 @@ exports.getBookings = async (req, res) => {
 
     const total = await Booking.countDocuments(query);
 
+    // Hide contact information for bookings without verified payment
+    const isAdminOrSupport = req.user.role === 'admin' || req.user.role === 'support';
+    const safeBookings = bookings.map(booking => {
+      const bookingObj = booking.toObject();
+      const paymentVerified = ['held', 'paid', 'released'].includes(bookingObj.bookingFee?.status);
+
+      if (!paymentVerified && !isAdminOrSupport) {
+        // Hide customer contact info from technician
+        if (bookingObj.customer && req.user.role === 'technician') {
+          bookingObj.customer = {
+            _id: bookingObj.customer._id,
+            firstName: bookingObj.customer.firstName,
+            lastName: bookingObj.customer.lastName,
+            profilePicture: bookingObj.customer.profilePicture,
+            phoneNumber: '[Hidden]'
+          };
+        }
+
+        // Hide technician contact info from customer
+        if (bookingObj.technician && (req.user.role === 'customer' || req.user.role === 'corporate')) {
+          bookingObj.technician = {
+            _id: bookingObj.technician._id,
+            firstName: bookingObj.technician.firstName,
+            lastName: bookingObj.technician.lastName,
+            profilePicture: bookingObj.technician.profilePicture,
+            rating: bookingObj.technician.rating,
+            skills: bookingObj.technician.skills,
+            phoneNumber: '[Hidden]'
+          };
+        }
+
+        bookingObj.contactsHidden = true;
+      }
+
+      return bookingObj;
+    });
+
     res.status(200).json({
       success: true,
-      count: bookings.length,
+      count: safeBookings.length,
       total,
       page: parseInt(page),
       pages: Math.ceil(total / parseInt(limit)),
-      bookings
+      bookings: safeBookings
     });
   } catch (error) {
     console.error('Get bookings error:', error);
@@ -277,9 +316,10 @@ exports.getBooking = async (req, res) => {
 
     // Check authorization
     const isAuthorized =
-      booking.customer._id.toString() === req.user.id ||
-      booking.technician?._id.toString() === req.user.id ||
-      req.user.role === 'admin';
+      booking.customer?._id?.toString() === req.user.id ||
+      booking.technician?._id?.toString() === req.user.id ||
+      req.user.role === 'admin' ||
+      req.user.role === 'support';
 
     if (!isAuthorized) {
       return res.status(403).json({
@@ -288,10 +328,54 @@ exports.getBooking = async (req, res) => {
       });
     }
 
+    // Hide contact information until payment is verified
+    // Payment must be confirmed (held/paid/released) for contacts to be visible
+    const paymentVerified = ['held', 'paid', 'released'].includes(booking.bookingFee?.status);
+    const isAdminOrSupport = req.user.role === 'admin' || req.user.role === 'support';
+
+    // Create a safe version of the booking with potentially hidden contact info
+    const safeBooking = booking.toObject();
+
+    if (!paymentVerified && !isAdminOrSupport) {
+      // Hide customer contact info from technician
+      if (safeBooking.customer && req.user.id === booking.technician?._id?.toString()) {
+        safeBooking.customer = {
+          _id: safeBooking.customer._id,
+          firstName: safeBooking.customer.firstName,
+          lastName: safeBooking.customer.lastName,
+          profilePicture: safeBooking.customer.profilePicture,
+          // Hide sensitive info
+          email: '[Hidden until payment verified]',
+          phoneNumber: '[Hidden until payment verified]',
+          location: { type: 'Point', coordinates: [0, 0], address: '[Hidden until payment verified]' }
+        };
+      }
+
+      // Hide technician contact info from customer
+      if (safeBooking.technician && req.user.id === booking.customer?._id?.toString()) {
+        safeBooking.technician = {
+          _id: safeBooking.technician._id,
+          firstName: safeBooking.technician.firstName,
+          lastName: safeBooking.technician.lastName,
+          profilePicture: safeBooking.technician.profilePicture,
+          rating: safeBooking.technician.rating,
+          skills: safeBooking.technician.skills,
+          // Hide sensitive info
+          email: '[Hidden until payment verified]',
+          phoneNumber: '[Hidden until payment verified]',
+          location: { type: 'Point', coordinates: [0, 0], address: '[Hidden until payment verified]' }
+        };
+      }
+
+      // Add warning message
+      safeBooking.contactsHidden = true;
+      safeBooking.contactsHiddenReason = 'Payment verification required. Complete payment to view contact information.';
+    }
+
     console.log('Returning booking successfully');
     res.status(200).json({
       success: true,
-      booking
+      booking: safeBooking
     });
   } catch (error) {
     console.error('Get booking error:', error);
@@ -327,9 +411,10 @@ exports.updateBookingStatus = async (req, res) => {
 
     // Check authorization and validate state transition
     const canUpdate =
-      (req.user.role === 'technician' && booking.technician?._id.toString() === req.user.id) ||
-      (req.user.role === 'customer' && booking.customer._id.toString() === req.user.id) ||
-      req.user.role === 'admin';
+      (req.user.role === 'technician' && booking.technician?._id?.toString() === req.user.id) ||
+      (req.user.role === 'customer' && booking.customer?._id?.toString() === req.user.id) ||
+      req.user.role === 'admin' ||
+      req.user.role === 'support';
 
     if (!canUpdate) {
       return res.status(403).json({
@@ -1190,13 +1275,31 @@ exports.confirmBookingFee = async (req, res) => {
 
     // Update booking status to allow matching
     if (booking.status === 'pending') {
-      booking.status = 'matching';
-      booking.statusHistory.push({
-        status: 'matching',
-        changedBy: req.user.id,
-        changedAt: new Date(),
-        reason: 'Booking fee confirmed, ready for technician matching'
-      });
+      // If there's a preferred technician, assign them now that payment is confirmed
+      if (booking.preferredTechnician) {
+        booking.technician = booking.preferredTechnician;
+        booking.status = 'assigned';
+        booking.statusHistory.push({
+          status: 'assigned',
+          changedBy: req.user.id,
+          changedAt: new Date(),
+          reason: 'Payment verified, preferred technician assigned'
+        });
+
+        // TODO: Send notification to assigned technician
+        // TODO: Create conversation between customer and technician
+      } else {
+        // No preferred technician, move to matching status
+        booking.status = 'matching';
+        booking.statusHistory.push({
+          status: 'matching',
+          changedBy: req.user.id,
+          changedAt: new Date(),
+          reason: 'Booking fee confirmed, ready for technician matching'
+        });
+
+        // TODO: Trigger AI matching algorithm
+      }
     }
 
     await booking.save();
@@ -1268,8 +1371,8 @@ exports.releaseBookingFee = async (req, res) => {
       type: 'booking_fee_release',
       amount: booking.bookingFee.amount,
       currency: booking.pricing.currency,
-      sender: booking.customer,
-      recipient: booking.technician._id,
+      sender: booking.customer?._id,
+      recipient: booking.technician?._id,
       booking: booking._id,
       status: 'completed',
       method: 'escrow_release',
@@ -1358,7 +1461,7 @@ exports.refundBookingFee = async (req, res) => {
       amount: booking.bookingFee.amount,
       currency: booking.pricing.currency,
       sender: 'system',
-      recipient: booking.customer._id,
+      recipient: booking.customer?._id,
       booking: booking._id,
       status: 'completed',
       method: 'escrow_refund',

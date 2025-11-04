@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Message, User } from '@/types';
 import { format, formatDistanceToNow } from 'date-fns';
 import { useAppSelector } from '@/store/hooks';
+import { getRoleStyles, UserRole } from '@/utils/roleColors';
+import { cn } from '@/lib/utils';
 
 interface MessageBubbleProps {
   message: Message;
@@ -88,6 +90,9 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
 
   const quickReactions = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 
+  // Get role-based styling for sender
+  const roleStyles = sender?.role ? getRoleStyles(sender.role as UserRole) : null;
+
   if (message.isDeleted) {
     return (
       <div className={`flex mb-4 ${isOwn ? 'justify-end' : 'justify-start'}`}>
@@ -124,11 +129,17 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             <img
               src={sender.profilePicture}
               alt={getSenderName()}
-              className="w-8 h-8 rounded-full object-cover hover:ring-2 hover:ring-primary-500 transition-all"
+              className={cn(
+                "w-8 h-8 rounded-full object-cover transition-all ring-2",
+                roleStyles ? `${roleStyles.ring.replace('ring-', 'ring-')}/30 hover:${roleStyles.ring}` : 'ring-gray-200 hover:ring-primary-500'
+              )}
               title={`View ${getSenderName()}'s profile`}
             />
           ) : (
-            <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold hover:ring-2 hover:ring-primary-500 transition-all">
+            <div className={cn(
+              "w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all ring-2",
+              roleStyles ? `${roleStyles.bgDark} ${roleStyles.text} ${roleStyles.ring.replace('ring-', 'ring-')}/30 hover:${roleStyles.ring}` : 'bg-primary text-white ring-gray-200 hover:ring-primary-500'
+            )}>
               {sender.firstName?.[0]}{sender.lastName?.[0]}
             </div>
           )}
@@ -138,13 +149,20 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
       <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'} max-w-[70%]`}>
         {/* Sender name for group chats */}
         {!isOwn && sender && (
-          <span
-            className="text-xs text-gray-500 mb-1 px-1 cursor-pointer hover:text-primary-600 transition-colors"
-            onClick={handleAvatarClick}
-            title={`View ${getSenderName()}'s profile`}
-          >
-            {getSenderName()}
-          </span>
+          <div className="flex items-center gap-1.5 mb-1 px-1">
+            <span
+              className="text-xs text-gray-500 dark:text-gray-400 cursor-pointer hover:text-primary-600 transition-colors"
+              onClick={handleAvatarClick}
+              title={`View ${getSenderName()}'s profile`}
+            >
+              {getSenderName()}
+            </span>
+            {roleStyles && (
+              <span className={cn("text-[10px]", roleStyles.badge)}>
+                {roleStyles.emoji}
+              </span>
+            )}
+          </div>
         )}
 
         {/* Message bubble */}

@@ -227,7 +227,7 @@ export interface Message {
 }
 
 export interface ParticipantSettings {
-  user: string;
+  user: string | User;
   role: 'admin' | 'member';
   joinedAt: string;
   leftAt?: string;

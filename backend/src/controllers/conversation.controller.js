@@ -84,7 +84,13 @@ exports.getConversations = async (req, res) => {
 
     const conversations = await Conversation.find(query)
       .populate('participants.user', 'firstName lastName profilePicture role')
-      .populate('lastMessage')
+      .populate({
+        path: 'lastMessage',
+        populate: {
+          path: 'sender',
+          select: 'firstName lastName profilePicture'
+        }
+      })
       .sort({ lastMessageAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));

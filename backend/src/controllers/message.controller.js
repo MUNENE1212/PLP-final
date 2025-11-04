@@ -19,7 +19,9 @@ exports.sendMessage = async (req, res) => {
       });
     }
 
-    const isParticipant = conv.participants.includes(req.user.id);
+    const isParticipant = conv.participants.some(
+      p => p.user.toString() === req.user.id || p.user.toString() === req.user._id?.toString()
+    );
     if (!isParticipant) {
       return res.status(403).json({
         success: false,
@@ -40,21 +42,13 @@ exports.sendMessage = async (req, res) => {
     });
 
     // Update conversation's last message
-    conv.lastMessage = {
-      text: type === 'text' ? text : `[${type}]`,
-      sender: req.user.id,
-      timestamp: new Date()
-    };
+    conv.lastMessage = message._id;
+    conv.lastMessageAt = new Date();
 
     // Increment unread count for other participants
     conv.participants.forEach(participant => {
-      if (participant.toString() !== req.user.id) {
-        const participantSettings = conv.participantSettings.find(
-          ps => ps.user.toString() === participant.toString()
-        );
-        if (participantSettings) {
-          participantSettings.unreadCount += 1;
-        }
+      if (participant.user.toString() !== req.user.id) {
+        participant.unreadCount = (participant.unreadCount || 0) + 1;
       }
     });
 
@@ -104,7 +98,9 @@ exports.getMessages = async (req, res) => {
       });
     }
 
-    const isParticipant = conv.participants.includes(req.user.id);
+    const isParticipant = conv.participants.some(
+      p => p.user.toString() === req.user.id || p.user.toString() === req.user._id?.toString()
+    );
     if (!isParticipant) {
       return res.status(403).json({
         success: false,
@@ -174,11 +170,12 @@ exports.markAsRead = async (req, res) => {
 
     // Reset unread count in conversation
     const conv = await Conversation.findById(conversation);
-    const participantSettings = conv.participantSettings.find(
-      ps => ps.user.toString() === req.user.id
+    const participant = conv.participants.find(
+      p => p.user.toString() === req.user.id
     );
-    if (participantSettings) {
-      participantSettings.unreadCount = 0;
+    if (participant) {
+      participant.unreadCount = 0;
+      participant.lastReadAt = new Date();
       await conv.save();
     }
 

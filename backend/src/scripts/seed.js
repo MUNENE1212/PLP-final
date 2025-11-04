@@ -25,7 +25,8 @@ const sampleUsers = [
       address: 'Nairobi, Kenya',
       city: 'Nairobi',
       county: 'Nairobi'
-    }
+    },
+    bio: 'Platform Administrator - Managing EmEnTech operations'
   },
   {
     firstName: 'Mike',
@@ -57,13 +58,16 @@ const sampleUsers = [
         verified: true
       }
     ],
-    availability: [
-      { dayOfWeek: 1, startTime: '08:00', endTime: '17:00', isAvailable: true },
-      { dayOfWeek: 2, startTime: '08:00', endTime: '17:00', isAvailable: true },
-      { dayOfWeek: 3, startTime: '08:00', endTime: '17:00', isAvailable: true },
-      { dayOfWeek: 4, startTime: '08:00', endTime: '17:00', isAvailable: true },
-      { dayOfWeek: 5, startTime: '08:00', endTime: '17:00', isAvailable: true }
-    ],
+    availability: {
+      isAvailable: true,
+      schedule: [
+        { dayOfWeek: 1, startTime: '08:00', endTime: '17:00', isAvailable: true },
+        { dayOfWeek: 2, startTime: '08:00', endTime: '17:00', isAvailable: true },
+        { dayOfWeek: 3, startTime: '08:00', endTime: '17:00', isAvailable: true },
+        { dayOfWeek: 4, startTime: '08:00', endTime: '17:00', isAvailable: true },
+        { dayOfWeek: 5, startTime: '08:00', endTime: '17:00', isAvailable: true }
+      ]
+    },
     hourlyRate: 1500,
     yearsOfExperience: 5,
     rating: {
@@ -95,13 +99,16 @@ const sampleUsers = [
         verified: true
       }
     ],
-    availability: [
-      { dayOfWeek: 1, startTime: '09:00', endTime: '18:00', isAvailable: true },
-      { dayOfWeek: 2, startTime: '09:00', endTime: '18:00', isAvailable: true },
-      { dayOfWeek: 3, startTime: '09:00', endTime: '18:00', isAvailable: true },
-      { dayOfWeek: 4, startTime: '09:00', endTime: '18:00', isAvailable: true },
-      { dayOfWeek: 5, startTime: '09:00', endTime: '18:00', isAvailable: true }
-    ],
+    availability: {
+      isAvailable: true,
+      schedule: [
+        { dayOfWeek: 1, startTime: '09:00', endTime: '18:00', isAvailable: true },
+        { dayOfWeek: 2, startTime: '09:00', endTime: '18:00', isAvailable: true },
+        { dayOfWeek: 3, startTime: '09:00', endTime: '18:00', isAvailable: true },
+        { dayOfWeek: 4, startTime: '09:00', endTime: '18:00', isAvailable: true },
+        { dayOfWeek: 5, startTime: '09:00', endTime: '18:00', isAvailable: true }
+      ]
+    },
     hourlyRate: 2000,
     yearsOfExperience: 7,
     rating: {
@@ -135,6 +142,14 @@ const sampleUsers = [
     role: 'support',
     isEmailVerified: true,
     isPhoneVerified: true,
+    location: {
+      type: 'Point',
+      coordinates: [36.8219, -1.2921],
+      address: 'Nairobi, Kenya',
+      city: 'Nairobi',
+      county: 'Nairobi'
+    },
+    bio: 'Customer Support Specialist - Here to help 24/7',
     supportInfo: {
       employeeId: 'SUP001',
       department: 'general',
@@ -143,7 +158,22 @@ const sampleUsers = [
       availability: {
         status: 'available',
         maxConcurrentTickets: 5
-      }
+      },
+      stats: {
+        ticketsHandled: 150,
+        ticketsClosed: 142,
+        averageResponseTime: 15,
+        averageResolutionTime: 45,
+        satisfactionRating: 4.8,
+        ratingCount: 120
+      },
+      shiftSchedule: [
+        { dayOfWeek: 1, startTime: '08:00', endTime: '17:00' },
+        { dayOfWeek: 2, startTime: '08:00', endTime: '17:00' },
+        { dayOfWeek: 3, startTime: '08:00', endTime: '17:00' },
+        { dayOfWeek: 4, startTime: '08:00', endTime: '17:00' },
+        { dayOfWeek: 5, startTime: '08:00', endTime: '17:00' }
+      ]
     }
   }
 ];

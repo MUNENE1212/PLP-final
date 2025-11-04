@@ -29,10 +29,17 @@ const ConversationList: React.FC<ConversationListProps> = ({
 
     // Find participant that is not the current user
     const otherParticipantSettings = conversation.participants.find(
-      (p) => p.user !== user?._id
+      (p) => {
+        const userId = typeof p.user === 'string' ? p.user : p.user._id;
+        return userId !== user?._id;
+      }
     );
 
-    // For simplified version, return null. In production, need to populate user data
+    // Return the populated user data if available
+    if (otherParticipantSettings && typeof otherParticipantSettings.user !== 'string') {
+      return otherParticipantSettings.user;
+    }
+
     return null;
   };
 
@@ -46,7 +53,14 @@ const ConversationList: React.FC<ConversationListProps> = ({
       return `Booking #${bookingId.slice(-6)}`;
     }
 
-    // For direct conversations, would show other participant's name
+    // For direct/support conversations, show other participant's name
+    if (conversation.type === 'direct' || conversation.type === 'support') {
+      const otherUser = getOtherParticipant(conversation);
+      if (otherUser) {
+        return `${otherUser.firstName} ${otherUser.lastName}`;
+      }
+    }
+
     return 'Conversation';
   };
 
@@ -66,7 +80,10 @@ const ConversationList: React.FC<ConversationListProps> = ({
 
   const getUnreadCount = (conversation: Conversation): number => {
     const userParticipant = conversation.participants.find(
-      (p) => p.user === user?._id
+      (p) => {
+        const userId = typeof p.user === 'string' ? p.user : p.user._id;
+        return userId === user?._id;
+      }
     );
     return userParticipant?.unreadCount || 0;
   };
@@ -98,10 +115,10 @@ const ConversationList: React.FC<ConversationListProps> = ({
   }
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-gray-800 border-r">
+    <div className="flex flex-col h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
       {/* Header */}
-      <div className="p-4 border-b">
-        <h2 className="text-xl font-bold mb-3">Messages</h2>
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+        <h2 className="text-lg md:text-xl font-bold mb-3 text-gray-900 dark:text-gray-100">Messages</h2>
 
         {/* Search */}
         <input
@@ -109,7 +126,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
           placeholder="Search conversations..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
         />
       </div>
 
@@ -144,7 +161,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
             </p>
           </div>
         ) : (
-          <div className="divide-y">
+          <div className="divide-y divide-gray-200 dark:divide-gray-700">
             {filteredConversations.map((conversation) => {
               const isActive = currentConversation?._id === conversation._id;
               const unreadCount = getUnreadCount(conversation);
@@ -158,33 +175,38 @@ const ConversationList: React.FC<ConversationListProps> = ({
                 <div
                   key={conversation._id}
                   onClick={() => handleSelectConversation(conversation)}
-                  className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors ${
-                    isActive ? 'bg-primary/5 border-l-4 border-primary' : ''
+                  className={`p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
+                    isActive ? 'bg-primary/5 dark:bg-primary/10 border-l-4 border-primary' : ''
                   }`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
                       {/* Title and Badge */}
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className={`font-semibold truncate ${unreadCount > 0 ? 'text-gray-900' : 'text-gray-700'}`}>
+                        <h3 className={`font-semibold truncate ${unreadCount > 0 ? 'text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300'}`}>
                           {title}
                         </h3>
                         {conversation.type === 'booking' && (
-                          <span className="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full">
+                          <span className="px-2 py-0.5 text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full flex-shrink-0">
                             Booking
+                          </span>
+                        )}
+                        {conversation.type === 'support' && (
+                          <span className="px-2 py-0.5 text-xs bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded-full flex-shrink-0">
+                            Support
                           </span>
                         )}
                       </div>
 
                       {/* Last Message Preview */}
-                      <p className={`text-sm truncate ${unreadCount > 0 ? 'font-medium text-gray-900' : 'text-gray-500'}`}>
+                      <p className={`text-sm truncate ${unreadCount > 0 ? 'font-medium text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>
                         {preview}
                       </p>
                     </div>
 
                     {/* Time and Unread Count */}
-                    <div className="flex flex-col items-end ml-3">
-                      <span className="text-xs text-gray-500 mb-1">{timeAgo}</span>
+                    <div className="flex flex-col items-end ml-3 flex-shrink-0">
+                      <span className="text-xs text-gray-500 dark:text-gray-400 mb-1 whitespace-nowrap">{timeAgo}</span>
                       {unreadCount > 0 && (
                         <span className="px-2 py-0.5 text-xs bg-primary text-white rounded-full min-w-[20px] text-center">
                           {unreadCount > 99 ? '99+' : unreadCount}

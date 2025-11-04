@@ -20,6 +20,7 @@ import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
 import Textarea from '@/components/ui/Textarea';
 import Loading from '@/components/ui/Loading';
+import CustomerTicketModal from '@/components/support/CustomerTicketModal';
 import { cn } from '@/lib/utils';
 import axios from '@/lib/axios';
 import toast from 'react-hot-toast';
@@ -27,28 +28,36 @@ import { format } from 'date-fns';
 
 interface SupportTicket {
   _id: string;
-  type: 'support';
-  participants: Array<{
+  customer: {
     _id: string;
     firstName: string;
     lastName: string;
+    email?: string;
+    phoneNumber?: string;
     profilePicture?: string;
-    role: string;
-  }>;
-  lastMessage?: {
-    text: string;
-    timestamp: string;
-    sender: {
-      firstName: string;
-      lastName: string;
-    };
   };
-  subject?: string;
-  status: 'open' | 'in_progress' | 'resolved' | 'closed';
+  assignedTo?: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    email?: string;
+  };
+  subject: string;
+  description: string;
+  status: 'open' | 'assigned' | 'in_progress' | 'waiting_customer' | 'resolved' | 'closed';
   priority: 'low' | 'medium' | 'high' | 'urgent';
-  category?: string;
+  category: string;
+  subcategory?: string;
+  messages?: Array<{
+    sender: any;
+    senderRole: string;
+    message: string;
+    timestamp: string;
+  }>;
   createdAt: string;
   updatedAt: string;
+  resolvedAt?: string;
+  closedAt?: string;
 }
 
 interface NewTicketForm {
@@ -94,6 +103,8 @@ const Support: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [newTicket, setNewTicket] = useState<NewTicketForm>({
     subject: '',
@@ -109,10 +120,8 @@ const Support: React.FC = () => {
   const fetchTickets = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get('/conversations', {
-        params: { type: 'support' },
-      });
-      setTickets(response.data.conversations || []);
+      const response = await axios.get('/support/tickets');
+      setTickets(response.data.tickets || []);
     } catch (error: any) {
       console.error('Failed to fetch tickets:', error);
       toast.error('Failed to load support tickets');
@@ -132,20 +141,18 @@ const Support: React.FC = () => {
     try {
       setIsCreating(true);
 
-      // Create support conversation
-      const conversationResponse = await axios.post('/conversations', {
-        type: 'support',
-        participants: [], // Backend will assign support agent
-        name: newTicket.subject,
+      // Create support ticket
+      const ticketResponse = await axios.post('/support/tickets', {
+        subject: newTicket.subject,
+        description: newTicket.description,
+        category: newTicket.category,
+        priority: newTicket.priority,
       });
 
-      const conversation = conversationResponse.data.conversation;
-
-      // Send first message with ticket details
-      await axios.post('/messages', {
-        conversation: conversation._id,
-        type: 'text',
-        text: `**Category:** ${newTicket.category}\n**Priority:** ${newTicket.priority}\n\n${newTicket.description}`,
+      // Create support conversation
+      const conversationResponse = await axios.post('/support/conversation', {
+        ticketId: ticketResponse.data.ticket._id,
+        message: newTicket.description,
       });
 
       toast.success('Support ticket created successfully!');
@@ -165,41 +172,69 @@ const Support: React.FC = () => {
     }
   };
 
+  const handleTicketClick = (ticketId: string) => {
+    setSelectedTicketId(ticketId);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedTicketId(null);
+  };
+
+  const handleTicketUpdate = () => {
+    fetchTickets();
+  };
+
   const getStatusConfig = (status: string) => {
     switch (status) {
       case 'open':
         return {
           label: 'Open',
-          color: 'text-blue-700',
-          bgColor: 'bg-blue-100',
+          color: 'text-blue-700 dark:text-blue-400',
+          bgColor: 'bg-blue-100 dark:bg-blue-900/30',
           icon: Clock,
+        };
+      case 'assigned':
+        return {
+          label: 'Assigned',
+          color: 'text-indigo-700 dark:text-indigo-400',
+          bgColor: 'bg-indigo-100 dark:bg-indigo-900/30',
+          icon: AlertCircle,
         };
       case 'in_progress':
         return {
           label: 'In Progress',
-          color: 'text-yellow-700',
-          bgColor: 'bg-yellow-100',
+          color: 'text-yellow-700 dark:text-yellow-400',
+          bgColor: 'bg-yellow-100 dark:bg-yellow-900/30',
           icon: AlertCircle,
+        };
+      case 'waiting_customer':
+        return {
+          label: 'Waiting for You',
+          color: 'text-orange-700 dark:text-orange-400',
+          bgColor: 'bg-orange-100 dark:bg-orange-900/30',
+          icon: Clock,
         };
       case 'resolved':
         return {
           label: 'Resolved',
-          color: 'text-green-700',
-          bgColor: 'bg-green-100',
+          color: 'text-green-700 dark:text-green-400',
+          bgColor: 'bg-green-100 dark:bg-green-900/30',
           icon: CheckCircle,
         };
       case 'closed':
         return {
           label: 'Closed',
-          color: 'text-gray-700',
-          bgColor: 'bg-gray-100',
+          color: 'text-gray-700 dark:text-gray-400',
+          bgColor: 'bg-gray-100 dark:bg-gray-700',
           icon: XCircle,
         };
       default:
         return {
           label: 'Open',
-          color: 'text-blue-700',
-          bgColor: 'bg-blue-100',
+          color: 'text-blue-700 dark:text-blue-400',
+          bgColor: 'bg-blue-100 dark:bg-blue-900/30',
           icon: Clock,
         };
     }
@@ -211,7 +246,8 @@ const Support: React.FC = () => {
       const query = searchQuery.toLowerCase();
       return (
         ticket.subject?.toLowerCase().includes(query) ||
-        ticket.lastMessage?.text.toLowerCase().includes(query)
+        ticket.description?.toLowerCase().includes(query) ||
+        ticket.category?.toLowerCase().includes(query)
       );
     }
     return true;
@@ -340,7 +376,9 @@ const Support: React.FC = () => {
               >
                 <option value="all">All Status</option>
                 <option value="open">Open</option>
+                <option value="assigned">Assigned</option>
                 <option value="in_progress">In Progress</option>
+                <option value="waiting_customer">Waiting for Response</option>
                 <option value="resolved">Resolved</option>
                 <option value="closed">Closed</option>
               </Select>
@@ -366,50 +404,63 @@ const Support: React.FC = () => {
               const StatusIcon = statusConfig.icon;
 
               return (
-                <button
+                <div
                   key={ticket._id}
-                  onClick={() => navigate('/messages', { state: { conversationId: ticket._id } })}
-                  className="w-full p-6 text-left transition-colors hover:bg-gray-50 dark:bg-gray-900"
+                  onClick={() => handleTicketClick(ticket._id)}
+                  className="p-6 transition-colors hover:bg-gray-50 dark:hover:bg-gray-900/50 cursor-pointer"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center space-x-3">
-                        <h3 className="font-semibold text-gray-900 dark:text-gray-100">
-                          {ticket.subject || 'Support Request'}
-                        </h3>
-                        <span
-                          className={cn(
-                            'rounded-full px-3 py-1 text-xs font-semibold',
-                            statusConfig.bgColor,
-                            statusConfig.color
-                          )}
-                        >
-                          <StatusIcon className="mr-1 inline h-3 w-3" />
-                          {statusConfig.label}
-                        </span>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center space-x-3">
+                          <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                            {ticket.subject}
+                          </h3>
+                          <span
+                            className={cn(
+                              'rounded-full px-3 py-1 text-xs font-semibold',
+                              statusConfig.bgColor,
+                              statusConfig.color
+                            )}
+                          >
+                            <StatusIcon className="mr-1 inline h-3 w-3" />
+                            {statusConfig.label}
+                          </span>
+                        </div>
+                        {ticket.priority && (
+                          <span className={cn(
+                            'text-xs px-2 py-1 rounded-full',
+                            ticket.priority === 'urgent' && 'bg-red-100 text-red-700',
+                            ticket.priority === 'high' && 'bg-orange-100 text-orange-700',
+                            ticket.priority === 'medium' && 'bg-yellow-100 text-yellow-700',
+                            ticket.priority === 'low' && 'bg-gray-100 text-gray-700'
+                          )}>
+                            {ticket.priority.toUpperCase()}
+                          </span>
+                        )}
                       </div>
 
-                      {ticket.lastMessage && (
-                        <p className="mt-2 line-clamp-2 text-sm text-gray-600 dark:text-gray-400">
-                          {ticket.lastMessage.text}
-                        </p>
-                      )}
+                      <p className="mt-2 line-clamp-2 text-sm text-gray-600 dark:text-gray-400">
+                        {ticket.description}
+                      </p>
 
                       <div className="mt-3 flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
+                        <span className="flex items-center gap-1">
+                          <FileText className="h-3 w-3" />
+                          {ticket.category}
+                        </span>
                         <span>
                           Created {format(new Date(ticket.createdAt), 'MMM dd, yyyy')}
                         </span>
-                        {ticket.lastMessage && (
+                        {ticket.assignedTo && (
                           <span>
-                            Last reply {format(new Date(ticket.lastMessage.timestamp), 'MMM dd, HH:mm')}
+                            Assigned to {ticket.assignedTo.firstName} {ticket.assignedTo.lastName}
                           </span>
                         )}
                       </div>
                     </div>
-
-                    <ChevronRight className="h-5 w-5 flex-shrink-0 text-gray-400" />
                   </div>
-                </button>
+                </div>
               );
             })
           )}
@@ -489,6 +540,16 @@ const Support: React.FC = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Customer Ticket Detail Modal */}
+      {selectedTicketId && (
+        <CustomerTicketModal
+          ticketId={selectedTicketId}
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          onUpdate={handleTicketUpdate}
+        />
       )}
     </div>
   );

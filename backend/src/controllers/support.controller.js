@@ -1,6 +1,8 @@
 const SupportTicket = require('../models/SupportTicket');
 const User = require('../models/User');
 const Conversation = require('../models/Conversation');
+const Booking = require('../models/Booking');
+const bcrypt = require('bcryptjs');
 
 /**
  * @desc    Create a support ticket
@@ -21,6 +23,14 @@ exports.createTicket = async (req, res) => {
       tags
     } = req.body;
 
+    // Validate user is authenticated
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not authenticated'
+      });
+    }
+
     // Set SLA targets based on priority
     const slaTargets = {
       urgent: { firstResponse: 15, resolution: 120 },   // 15 min, 2 hours
@@ -32,8 +42,10 @@ exports.createTicket = async (req, res) => {
     const ticketPriority = priority || 'medium';
     const slaTarget = slaTargets[ticketPriority];
 
+    const userId = req.user._id || req.user.id;
+
     const ticket = await SupportTicket.create({
-      customer: req.user.id,
+      customer: userId,
       subject,
       description,
       category,
@@ -58,7 +70,7 @@ exports.createTicket = async (req, res) => {
 
     // Add initial message
     ticket.addMessage(
-      req.user.id,
+      userId,
       'customer',
       description,
       attachments || []
@@ -80,10 +92,12 @@ exports.createTicket = async (req, res) => {
     });
   } catch (error) {
     console.error('Create ticket error:', error);
+    console.error('Error stack:', error.stack);
     res.status(500).json({
       success: false,
       message: 'Error creating support ticket',
-      error: error.message
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };
@@ -109,28 +123,29 @@ exports.getTickets = async (req, res) => {
     } = req.query;
 
     const query = {};
+    const userId = req.user._id || req.user.id;
 
     // Role-based filtering
     if (req.user.role === 'customer') {
-      query.customer = req.user.id;
+      query.customer = userId;
     } else if (req.user.role === 'support') {
       // Support agents see assigned tickets or unassigned
       if (!assignedTo) {
         query.$or = [
-          { assignedTo: req.user.id },
+          { assignedTo: userId },
           { status: 'open', assignedTo: { $exists: false } }
         ];
       } else if (assignedTo === 'me') {
-        query.assignedTo = req.user.id;
+        query.assignedTo = userId;
       }
     }
     // Admin sees all tickets
 
-    // Filters
-    if (status) query.status = status;
-    if (priority) query.priority = priority;
-    if (category) query.category = category;
-    if (assignedTo && assignedTo !== 'me') query.assignedTo = assignedTo;
+    // Filters (ignore 'all' as it means no filter)
+    if (status && status !== 'all') query.status = status;
+    if (priority && priority !== 'all') query.priority = priority;
+    if (category && category !== 'all') query.category = category;
+    if (assignedTo && assignedTo !== 'me' && assignedTo !== 'all') query.assignedTo = assignedTo;
 
     if (startDate || endDate) {
       query.createdAt = {};
@@ -145,6 +160,11 @@ exports.getTickets = async (req, res) => {
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
+    // Debug logging
+    console.log('🎫 Fetching tickets with query:', JSON.stringify(query));
+    console.log('👤 User role:', req.user.role);
+    console.log('🆔 User ID:', userId);
+
     const tickets = await SupportTicket.find(query)
       .populate('customer', 'firstName lastName email phoneNumber profilePicture')
       .populate('assignedTo', 'firstName lastName email')
@@ -153,6 +173,8 @@ exports.getTickets = async (req, res) => {
       .limit(parseInt(limit));
 
     const total = await SupportTicket.countDocuments(query);
+
+    console.log('📊 Found tickets:', tickets.length, '/', total);
 
     res.status(200).json({
       success: true,
@@ -182,7 +204,13 @@ exports.getTicket = async (req, res) => {
       .populate('customer', 'firstName lastName email phoneNumber profilePicture')
       .populate('assignedTo', 'firstName lastName email profilePicture')
       .populate('messages.sender', 'firstName lastName profilePicture role')
-      .populate('relatedBooking')
+      .populate({
+        path: 'relatedBooking',
+        populate: {
+          path: 'technician customer service',
+          select: 'firstName lastName email phoneNumber profilePicture name description'
+        }
+      })
       .populate('relatedTransaction');
 
     if (!ticket) {
@@ -192,10 +220,14 @@ exports.getTicket = async (req, res) => {
       });
     }
 
-    // Check authorization
+    // Check authorization - support agents can view all tickets
+    const userId = req.user._id || req.user.id;
+    const customerId = ticket.customer._id || ticket.customer;
+    const assignedToId = ticket.assignedTo?._id || ticket.assignedTo;
+
     const isAuthorized =
-      ticket.customer._id.toString() === req.user.id ||
-      ticket.assignedTo?._id.toString() === req.user.id ||
+      customerId.toString() === userId.toString() ||
+      (assignedToId && assignedToId.toString() === userId.toString()) ||
       req.user.role === 'admin' ||
       req.user.role === 'support';
 
@@ -218,9 +250,11 @@ exports.getTicket = async (req, res) => {
     });
   } catch (error) {
     console.error('Get ticket error:', error);
+    console.error('Error stack:', error.stack);
     res.status(500).json({
       success: false,
-      message: 'Error fetching ticket'
+      message: 'Error fetching ticket',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -633,6 +667,132 @@ exports.rateTicket = async (req, res) => {
 };
 
 /**
+ * @desc    Get support dashboard statistics (for Dashboard UI)
+ * @route   GET /api/v1/support/dashboard-stats
+ * @access  Private (Support/Admin)
+ */
+exports.getDashboardStats = async (req, res) => {
+  try {
+    const agentId = req.user.id;
+    const { timeRange = 'today' } = req.query;
+
+    // Calculate date range
+    const now = new Date();
+    let startDate = new Date(0);
+
+    if (timeRange === 'today') {
+      startDate = new Date(now.setHours(0, 0, 0, 0));
+    } else if (timeRange === 'week') {
+      startDate = new Date(now.setDate(now.getDate() - 7));
+    } else if (timeRange === 'month') {
+      startDate = new Date(now.setMonth(now.getMonth() - 1));
+    }
+
+    // Get ticket counts
+    const openTickets = await SupportTicket.countDocuments({
+      status: { $in: ['open', 'assigned'] },
+    });
+
+    const inProgressTickets = await SupportTicket.countDocuments({
+      status: 'in_progress',
+    });
+
+    const resolvedToday = await SupportTicket.countDocuments({
+      status: { $in: ['resolved', 'closed'] },
+      resolvedAt: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) },
+    });
+
+    const totalResolved = await SupportTicket.countDocuments({
+      status: { $in: ['resolved', 'closed'] },
+    });
+
+    // Get agent's personal stats
+    const agentStats = await SupportTicket.getAgentStats(agentId, startDate, new Date());
+
+    // Calculate average response and resolution times
+    const responseTimeData = await SupportTicket.aggregate([
+      {
+        $match: {
+          firstResponseAt: { $exists: true },
+          createdAt: { $gte: startDate },
+        },
+      },
+      {
+        $project: {
+          responseTime: {
+            $divide: [
+              { $subtract: ['$firstResponseAt', '$createdAt'] },
+              1000 * 60, // Convert to minutes
+            ],
+          },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          avgResponseTime: { $avg: '$responseTime' },
+        },
+      },
+    ]);
+
+    const avgResponseTime = responseTimeData.length > 0
+      ? Math.round(responseTimeData[0].avgResponseTime)
+      : 0;
+
+    // Get satisfaction ratings
+    const satisfactionData = await SupportTicket.aggregate([
+      {
+        $match: {
+          'customerSatisfaction.rating': { $exists: true },
+          createdAt: { $gte: startDate },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          avgRating: { $avg: '$customerSatisfaction.rating' },
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const satisfactionRating = satisfactionData.length > 0
+      ? parseFloat(satisfactionData[0].avgRating.toFixed(1))
+      : 0;
+    const totalRatings = satisfactionData.length > 0 ? satisfactionData[0].count : 0;
+
+    res.json({
+      success: true,
+      data: {
+        openTickets,
+        inProgressTickets,
+        resolvedToday,
+        totalResolved,
+        avgResponseTime,
+        satisfactionRating,
+        totalRatings,
+        agentStats: {
+          ticketsHandled: agentStats.total || 0,
+          ticketsClosed: agentStats.closed || 0,
+          averageResponseTime: agentStats.avgResponseTime || 0,
+          averageResolutionTime: agentStats.avgResolutionTime || 0,
+          satisfactionRating: parseFloat(agentStats.satisfactionRating) || 0,
+          ratingCount: agentStats.total || 0,
+        },
+        timeRange,
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching dashboard stats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch dashboard statistics',
+      error: error.message,
+    });
+  }
+};
+
+/**
  * @desc    Get ticket statistics
  * @route   GET /api/v1/support/stats
  * @access  Private (Support/Admin)
@@ -824,7 +984,13 @@ exports.createSupportConversation = async (req, res) => {
       if (ticket.relatedConversation) {
         const conversation = await Conversation.findById(ticket.relatedConversation)
           .populate('participants.user', 'firstName lastName profilePicture role')
-          .populate('lastMessage');
+          .populate({
+            path: 'lastMessage',
+            populate: {
+              path: 'sender',
+              select: 'firstName lastName profilePicture'
+            }
+          });
 
         return res.status(200).json({
           success: true,
@@ -921,6 +1087,289 @@ exports.createSupportConversation = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error creating support conversation',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Create customer account (WhatsApp onboarding)
+ * @route   POST /api/v1/support/create-customer
+ * @access  Private (Support/Admin only)
+ */
+exports.createCustomerAccount = async (req, res) => {
+  try {
+    const {
+      firstName,
+      lastName,
+      email,
+      phoneNumber,
+      password,
+      address,
+      source
+    } = req.body;
+
+    // Check if user already exists
+    const existingUser = await User.findOne({
+      $or: [
+        { email: email?.toLowerCase() },
+        { phoneNumber }
+      ]
+    });
+
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'User with this email or phone number already exists',
+        existingUser: {
+          id: existingUser._id,
+          firstName: existingUser.firstName,
+          lastName: existingUser.lastName,
+          email: existingUser.email,
+          phoneNumber: existingUser.phoneNumber
+        }
+      });
+    }
+
+    // Generate a secure random password if not provided
+    const userPassword = password || Math.random().toString(36).slice(-10) + 'A1!';
+
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(userPassword, salt);
+
+    // Create customer account
+    const customer = await User.create({
+      firstName,
+      lastName,
+      email: email?.toLowerCase(),
+      phoneNumber,
+      password: hashedPassword,
+      role: 'customer',
+      status: 'active',
+      address: address || {},
+      onboarding: {
+        source: source || 'whatsapp_support',
+        completed: true,
+        completedAt: new Date()
+      },
+      createdBy: req.user.id,
+      isEmailVerified: false,
+      isPhoneVerified: false
+    });
+
+    // Create activity log
+    customer.activityLog.push({
+      action: 'account_created',
+      performedBy: req.user.id,
+      details: `Account created by support agent via ${source || 'WhatsApp'}`,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent']
+    });
+
+    await customer.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Customer account created successfully',
+      customer: {
+        id: customer._id,
+        firstName: customer.firstName,
+        lastName: customer.lastName,
+        email: customer.email,
+        phoneNumber: customer.phoneNumber,
+        role: customer.role
+      },
+      temporaryPassword: password ? undefined : userPassword
+    });
+  } catch (error) {
+    console.error('Create customer account error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error creating customer account',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Create booking/match for customer
+ * @route   POST /api/v1/support/create-booking
+ * @access  Private (Support/Admin only)
+ */
+exports.createBookingForCustomer = async (req, res) => {
+  try {
+    const {
+      customerId,
+      technicianId,
+      serviceId,
+      serviceType,
+      scheduledDate,
+      scheduledTime,
+      address,
+      description,
+      urgency,
+      estimatedDuration,
+      notes
+    } = req.body;
+
+    // Validate customer exists
+    const customer = await User.findById(customerId);
+    if (!customer || customer.role !== 'customer') {
+      return res.status(404).json({
+        success: false,
+        message: 'Customer not found'
+      });
+    }
+
+    // Validate technician exists and is available
+    const technician = await User.findById(technicianId);
+    if (!technician || technician.role !== 'technician') {
+      return res.status(404).json({
+        success: false,
+        message: 'Technician not found'
+      });
+    }
+
+    if (technician.status !== 'active') {
+      return res.status(400).json({
+        success: false,
+        message: 'Technician is not active'
+      });
+    }
+
+    // Create booking
+    const booking = await Booking.create({
+      customer: customerId,
+      technician: technicianId,
+      service: serviceId,
+      serviceType: serviceType || 'general',
+      scheduledDate: scheduledDate ? new Date(scheduledDate) : new Date(),
+      scheduledTime,
+      address: address || customer.address,
+      description,
+      status: 'pending',
+      urgency: urgency || 'normal',
+      estimatedDuration: estimatedDuration || 120,
+      source: 'whatsapp_support',
+      createdBy: req.user.id,
+      notes: notes || `Booking created by support agent ${req.user.firstName} ${req.user.lastName}`
+    });
+
+    await booking.populate([
+      { path: 'customer', select: 'firstName lastName email phoneNumber address' },
+      { path: 'technician', select: 'firstName lastName email phoneNumber skills rating' },
+      { path: 'service', select: 'name description category basePrice' }
+    ]);
+
+    // Create notification for customer
+    const Notification = require('../models/Notification');
+    await Notification.create({
+      recipient: customerId,
+      sender: technicianId,
+      type: 'booking_created',
+      category: 'booking',
+      title: 'New Booking Created',
+      body: `A booking has been created for you with ${technician.firstName} ${technician.lastName}`,
+      relatedBooking: booking._id,
+      priority: urgency === 'urgent' ? 'high' : 'normal'
+    });
+
+    // Create notification for technician
+    await Notification.create({
+      recipient: technicianId,
+      sender: customerId,
+      type: 'booking_created',
+      category: 'booking',
+      title: 'New Booking Assignment',
+      body: `You have been assigned a new booking by support team`,
+      relatedBooking: booking._id,
+      priority: urgency === 'urgent' ? 'high' : 'normal'
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Booking created successfully',
+      booking
+    });
+  } catch (error) {
+    console.error('Create booking error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error creating booking',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Search technicians for matching
+ * @route   GET /api/v1/support/search-technicians
+ * @access  Private (Support/Admin only)
+ */
+exports.searchTechnicians = async (req, res) => {
+  try {
+    const {
+      skills,
+      serviceType,
+      location,
+      minRating,
+      availability,
+      search,
+      limit = 20
+    } = req.query;
+
+    const query = {
+      role: 'technician',
+      status: 'active',
+      deletedAt: null
+    };
+
+    // Filter by skills
+    if (skills) {
+      const skillsArray = skills.split(',').map(s => s.trim());
+      query['skills.name'] = { $in: skillsArray };
+    }
+
+    // Filter by service type
+    if (serviceType) {
+      query['services'] = serviceType;
+    }
+
+    // Filter by minimum rating
+    if (minRating) {
+      query['rating.average'] = { $gte: parseFloat(minRating) };
+    }
+
+    // Filter by availability
+    if (availability === 'true') {
+      query['availability.isAvailable'] = true;
+    }
+
+    // Text search
+    if (search) {
+      query.$or = [
+        { firstName: { $regex: search, $options: 'i' } },
+        { lastName: { $regex: search, $options: 'i' } },
+        { 'skills.name': { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const technicians = await User.find(query)
+      .select('firstName lastName email phoneNumber profilePicture skills rating availability location services')
+      .limit(parseInt(limit))
+      .sort({ 'rating.average': -1, 'rating.count': -1 });
+
+    res.status(200).json({
+      success: true,
+      count: technicians.length,
+      technicians
+    });
+  } catch (error) {
+    console.error('Search technicians error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error searching technicians',
       error: error.message
     });
   }

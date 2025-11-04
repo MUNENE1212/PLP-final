@@ -7,12 +7,23 @@ import { User, Calendar, MessageSquare, Star, RefreshCw } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import Feed from '@/components/social/Feed';
 import Loading from '@/components/ui/Loading';
+import AdminDashboard from './AdminDashboard';
+import SupportDashboard from './SupportDashboard';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
   const { stats, recentActivity, isLoading } = useAppSelector((state) => state.dashboard);
+
+  // Route to role-specific dashboard
+  if (user?.role === 'admin') {
+    return <AdminDashboard />;
+  }
+
+  if (user?.role === 'support') {
+    return <SupportDashboard />;
+  }
 
   // Fetch dashboard data on mount
   useEffect(() => {

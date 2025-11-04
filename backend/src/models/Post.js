@@ -37,6 +37,10 @@ const CommentSchema = new Schema({
     required: true,
     maxlength: 500
   },
+  mentions: [{
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  }],
   likes: [{
     type: Schema.Types.ObjectId,
     ref: 'User'
@@ -56,6 +60,10 @@ const CommentSchema = new Schema({
       required: true,
       maxlength: 500
     },
+    mentions: [{
+      type: Schema.Types.ObjectId,
+      ref: 'User'
+    }],
     createdAt: {
       type: Date,
       default: Date.now

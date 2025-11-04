@@ -18,9 +18,11 @@ import {
   deletePost,
   Post,
 } from '@/store/slices/postSlice';
+import MentionTextarea from '../common/MentionTextarea';
 import { cn } from '@/lib/utils';
 import { timeAgo } from '@/lib/utils';
 import { formatRating } from '@/utils/rating';
+import { getRoleStyles, UserRole } from '@/utils/roleColors';
 
 interface PostCardProps {
   post: Post;
@@ -101,8 +103,15 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
     return icons[post.type] || icons.text;
   };
 
+  // Get role-based styling
+  const roleStyles = getRoleStyles(post.author.role as UserRole);
+
   return (
-    <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-indigo-50 dark:bg-gray-800 shadow-sm transition-shadow hover:shadow-md">
+    <div className={cn(
+      "rounded-lg border bg-indigo-50 dark:bg-gray-800 shadow-sm transition-shadow hover:shadow-md",
+      "border-gray-200 dark:border-gray-700",
+      roleStyles.border
+    )}>
       {/* Header */}
       <div className="flex items-start justify-between p-3 sm:p-4">
         <div className="flex space-x-2 sm:space-x-3 flex-1 min-w-0">
@@ -110,25 +119,29 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             <img
               src={getProfilePicture(post.author)}
               alt={post.author.firstName}
-              className="h-12 w-12 rounded-full object-cover ring-2 ring-gray-100 cursor-pointer hover:ring-primary-500 transition-all"
+              className={cn(
+                "h-12 w-12 rounded-full object-cover ring-2 cursor-pointer transition-all",
+                `ring-2 ${roleStyles.ring.replace('ring-', 'ring-')}/30 hover:${roleStyles.ring}`
+              )}
             />
           </Link>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Link to={`/profile/${post.author._id}`}>
-                <h3 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-gray-100 hover:text-primary-600 transition-colors cursor-pointer truncate">
+                <h3 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-gray-100 hover:text-primary-600 transition-colors cursor-pointer">
                   {post.author.firstName} {post.author.lastName}
                 </h3>
               </Link>
+              <span className={roleStyles.badge}>
+                {roleStyles.emoji} {roleStyles.name}
+              </span>
               {post.author.rating && post.author.rating.count > 0 && (
                 <span className="flex items-center text-xs sm:text-sm text-yellow-600 flex-shrink-0">
                   ⭐ {formatRating(post.author.rating)}
                 </span>
               )}
             </div>
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-amber-500">
-              <span className="capitalize">{post.author.role}</span>
-              <span>•</span>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-gray-500 dark:text-gray-400">
               <span>{timeAgo(post.createdAt)}</span>
               {post.type !== 'text' && (
                 <>
@@ -286,17 +299,20 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               className="h-8 w-8 rounded-full object-cover flex-shrink-0"
             />
             <div className="flex-1 flex space-x-2">
-              <input
-                type="text"
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                placeholder="Write a comment..."
-                className="flex-1 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 sm:px-4 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20"
-              />
+              <div className="flex-1">
+                <MentionTextarea
+                  value={commentText}
+                  onChange={setCommentText}
+                  placeholder="Write a comment... Use @ to mention someone"
+                  className="w-full resize-none rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 sm:px-4 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20"
+                  rows={1}
+                  maxLength={500}
+                />
+              </div>
               <button
                 type="submit"
                 disabled={!commentText.trim()}
-                className="rounded-full bg-primary-600 p-2 text-white transition-colors hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                className="rounded-full bg-primary-600 p-2 text-white transition-colors hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 h-fit"
               >
                 <Send className="h-4 w-4" />
               </button>

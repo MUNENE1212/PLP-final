@@ -743,3 +743,58 @@ exports.removeFCMToken = async (req, res) => {
     });
   }
 };
+
+/**
+ * @desc    Search users for @mention autocomplete
+ * @route   GET /api/v1/users/search/mentions
+ * @access  Private
+ */
+exports.searchUsersForMentions = async (req, res) => {
+  try {
+    const { q } = req.query;
+
+    if (!q || q.trim().length < 2) {
+      return res.status(400).json({
+        success: false,
+        message: 'Search query must be at least 2 characters'
+      });
+    }
+
+    const searchQuery = q.trim();
+
+    // Search by firstName, lastName, or username
+    const users = await User.find({
+      $or: [
+        { firstName: { $regex: searchQuery, $options: 'i' } },
+        { lastName: { $regex: searchQuery, $options: 'i' } },
+        { username: { $regex: searchQuery, $options: 'i' } }
+      ],
+      status: 'active',
+      deletedAt: null
+    })
+    .select('_id firstName lastName username profilePicture role')
+    .limit(10)
+    .lean();
+
+    // Format for autocomplete
+    const formattedUsers = users.map(user => ({
+      id: user._id,
+      name: `${user.firstName} ${user.lastName}`,
+      username: user.username || user.firstName,
+      profilePicture: user.profilePicture,
+      role: user.role
+    }));
+
+    res.status(200).json({
+      success: true,
+      count: formattedUsers.length,
+      users: formattedUsers
+    });
+  } catch (error) {
+    console.error('Search users for mentions error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error searching users'
+    });
+  }
+};

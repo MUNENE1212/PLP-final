@@ -1,5 +1,6 @@
 const Post = require('../models/Post');
 const User = require('../models/User');
+const { processMentions, createMentionNotifications } = require('../utils/mentionUtils');
 
 /**
  * @desc    Create a new post
@@ -10,18 +11,36 @@ exports.createPost = async (req, res) => {
   try {
     const { type, caption, media, hashtags, portfolioDetails, visibility } = req.body;
 
+    // Process mentions in caption
+    let mentionedUserIds = [];
+    if (caption) {
+      mentionedUserIds = await processMentions(caption);
+    }
+
     const post = await Post.create({
       author: req.user.id,
       type,
       caption,
       media: media || [],
       hashtags: hashtags || [],
+      mentions: mentionedUserIds,
       portfolioDetails,
       visibility: visibility || 'public',
       status: 'published'
     });
 
     await post.populate('author', 'firstName lastName profilePicture role');
+
+    // Create mention notifications
+    if (mentionedUserIds.length > 0 && caption) {
+      await createMentionNotifications(
+        req.user.id,
+        mentionedUserIds,
+        'post',
+        post._id,
+        caption
+      );
+    }
 
     res.status(201).json({
       success: true,
@@ -69,15 +88,22 @@ exports.getPosts = async (req, res) => {
     const fetchLimit = parseInt(limit) * 3;
 
     const posts = await Post.find(query)
-      .populate('author', 'firstName lastName profilePicture role rating subscription')
+      .populate({
+        path: 'author',
+        select: 'firstName lastName profilePicture role rating subscription',
+        match: { deletedAt: null } // Only populate if author exists and not deleted
+      })
       .populate('comments.user', '_id firstName lastName profilePicture')
       .sort(sort)
       .limit(fetchLimit);
 
+    // Filter out posts where author is null (deleted users)
+    const validPosts = posts.filter(post => post.author != null);
+
     const total = await Post.countDocuments(query);
 
     // Calculate engagement score and apply pro boost
-    const postsWithScores = posts.map(post => {
+    const postsWithScores = validPosts.map(post => {
       // Calculate base engagement score
       const likesWeight = 3;
       const commentsWeight = 5;
@@ -367,15 +393,33 @@ exports.addComment = async (req, res) => {
       });
     }
 
+    // Process mentions in comment
+    let mentionedUserIds = [];
+    if (text) {
+      mentionedUserIds = await processMentions(text);
+    }
+
     post.comments.push({
       user: req.user.id,
       text,
+      mentions: mentionedUserIds,
       timestamp: new Date()
     });
 
     await post.save();
 
     await post.populate('comments.user', '_id firstName lastName profilePicture');
+
+    // Create mention notifications
+    if (mentionedUserIds.length > 0 && text) {
+      await createMentionNotifications(
+        req.user.id,
+        mentionedUserIds,
+        'comment',
+        post._id,
+        text
+      );
+    }
 
     res.status(201).json({
       success: true,

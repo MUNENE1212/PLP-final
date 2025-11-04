@@ -283,8 +283,8 @@ SupportTicketSchema.virtual('messageCount').get(function() {
 
 // ===== MIDDLEWARE =====
 
-// Generate ticket number before saving
-SupportTicketSchema.pre('save', async function(next) {
+// Generate ticket number before validation (so it's available when validation runs)
+SupportTicketSchema.pre('validate', async function(next) {
   if (this.isNew && !this.ticketNumber) {
     const count = await this.constructor.countDocuments();
     this.ticketNumber = `TKT-${Date.now()}-${(count + 1).toString().padStart(6, '0')}`;
