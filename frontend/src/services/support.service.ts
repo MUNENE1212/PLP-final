@@ -24,8 +24,17 @@ export interface SupportDashboardStats {
 export interface SupportTicket {
   id: string;
   _id: string;
+  ticketNumber: string;
   subject: string;
-  customer: string;
+  customer: string | {
+    _id: string;
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phoneNumber?: string;
+    profilePicture?: string;
+  };
   customerDetails?: {
     _id: string;
     firstName: string;
@@ -34,7 +43,15 @@ export interface SupportTicket {
     phoneNumber?: string;
     profilePicture?: string;
   };
-  assignedTo?: string;
+  assignedTo?: string | {
+    _id: string;
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phoneNumber?: string;
+    profilePicture?: string;
+  };
   assignedToDetails?: {
     _id: string;
     firstName: string;
@@ -49,6 +66,8 @@ export interface SupportTicket {
   lastUpdate: string;
   messageCount: number;
   isEscalated: boolean;
+  assignedAt?: string;
+  resolvedAt?: string;
 }
 
 export interface PaginatedTickets {
@@ -63,6 +82,12 @@ export interface PaginatedTickets {
 
 export interface TicketDetails extends SupportTicket {
   description: string;
+  relatedBooking?: {
+    _id: string;
+    serviceType: string;
+    status: string;
+    scheduledDate?: string;
+  };
   messages: Array<{
     _id: string;
     sender: {

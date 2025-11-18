@@ -20,6 +20,7 @@ export interface Subscription {
 // User Types
 export interface User {
   _id: string;
+  id: string; // Alias for _id for compatibility
   firstName: string;
   lastName: string;
   email: string;

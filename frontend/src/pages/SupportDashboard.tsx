@@ -19,6 +19,7 @@ import { getCompleteDashboard, SupportDashboardStats, SupportTicket } from '@/se
 import Loading from '@/components/ui/Loading';
 import TicketDetailModal from '@/components/support/TicketDetailModal';
 import WhatsAppOnboarding from '@/components/support/WhatsAppOnboarding';
+import toast from 'react-hot-toast';
 
 const SupportDashboard: React.FC = () => {
   const { user } = useAppSelector((state) => state.auth);
@@ -272,7 +273,7 @@ const SupportDashboard: React.FC = () => {
                           <div className="flex items-center gap-3 mt-2 text-xs text-gray-600 dark:text-gray-400">
                             <span className="flex items-center gap-1">
                               <Users className="h-3 w-3" />
-                              {ticket.customer?.firstName} {ticket.customer?.lastName}
+                              {typeof ticket.customer === 'object' ? `${ticket.customer.firstName} ${ticket.customer.lastName}` : ticket.customerDetails ? `${ticket.customerDetails.firstName} ${ticket.customerDetails.lastName}` : 'Unknown'}
                             </span>
                             <span>•</span>
                             <span>{ticket.category}</span>

@@ -101,7 +101,7 @@ const WhatsAppOnboarding: React.FC<WhatsAppOnboardingProps> = ({ isOpen, onClose
       if (error.response?.data?.existingUser) {
         // User already exists, use existing user
         setCreatedCustomer(error.response.data.existingUser);
-        toast.info('Customer already exists. Using existing account.');
+        toast('Customer already exists. Using existing account.');
         setStep(2);
       } else {
         toast.error(error.response?.data?.message || 'Failed to create customer account');
@@ -123,7 +123,7 @@ const WhatsAppOnboarding: React.FC<WhatsAppOnboardingProps> = ({ isOpen, onClose
       });
       setTechnicians(response.data.technicians || []);
       if (response.data.technicians.length === 0) {
-        toast.info('No technicians found matching your search');
+        toast('No technicians found matching your search');
       }
     } catch (error: any) {
       console.error('Error searching technicians:', error);
