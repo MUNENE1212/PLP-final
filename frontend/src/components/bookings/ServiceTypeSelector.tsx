@@ -3,7 +3,7 @@ import { Search, AlertCircle, Check, HelpCircle } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
-import axios from 'axios';
+import axios from '@/lib/axios';
 
 interface ServiceType {
   serviceType: string;
@@ -64,7 +64,7 @@ const ServiceTypeSelector: React.FC<ServiceTypeSelectorProps> = ({
     try {
       setLoading(true);
       const response = await axios.get(
-        `/api/v1/pricing/service-types/${serviceCategory}`
+        `/pricing/service-types/${serviceCategory}`
       );
 
       if (response.data.success) {
@@ -83,7 +83,7 @@ const ServiceTypeSelector: React.FC<ServiceTypeSelectorProps> = ({
 
     try {
       setLoading(true);
-      const response = await axios.post('/api/v1/pricing/validate-service', {
+      const response = await axios.post('/pricing/validate-service', {
         serviceCategory,
         serviceType: customInput.trim()
       });
