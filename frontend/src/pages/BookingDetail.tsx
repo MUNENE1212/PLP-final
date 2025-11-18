@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchBooking, updateBookingStatus } from '@/store/slices/bookingSlice';
 import Button from '@/components/ui/Button';
 import Loading from '@/components/ui/Loading';
+import BookingFeePaymentModal from '@/components/bookings/BookingFeePaymentModal';
 import {
   ArrowLeft,
   Calendar,
@@ -94,6 +95,7 @@ const BookingDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const [searchParams] = useSearchParams();
 
   const { currentBooking: booking, isLoading, isUpdating } = useAppSelector(
     (state) => state.bookings
@@ -101,12 +103,20 @@ const BookingDetail: React.FC = () => {
   const { user } = useAppSelector((state) => state.auth);
 
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   useEffect(() => {
     if (id) {
       dispatch(fetchBooking(id));
     }
   }, [id, dispatch]);
+
+  // Check for ?action=pay query parameter and auto-open payment modal
+  useEffect(() => {
+    if (searchParams.get('action') === 'pay' && booking && booking.bookingFee?.status === 'pending') {
+      setIsPaymentModalOpen(true);
+    }
+  }, [searchParams, booking]);
 
   const handleStatusUpdate = async (newStatus: string) => {
     if (!booking) return;
@@ -341,7 +351,7 @@ const BookingDetail: React.FC = () => {
                   </div>
                 </div>
 
-                {isCustomer && booking.status !== 'pending' && (
+                {isCustomer && !booking.contactsHidden && booking.technician?.phoneNumber && !booking.technician.phoneNumber.includes('[Hidden') && (
                   <div className="space-y-2">
                     <a
                       href={`tel:${booking.technician.phoneNumber}`}
@@ -361,10 +371,10 @@ const BookingDetail: React.FC = () => {
                   </div>
                 )}
 
-                {isCustomer && booking.status === 'pending' && (
+                {isCustomer && (booking.contactsHidden || !booking.technician || booking.technician.phoneNumber?.includes('[Hidden')) && (
                   <div className="mt-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-4">
                     <p className="text-sm text-yellow-800 dark:text-yellow-300">
-                      Complete payment to view technician contact details and begin communication.
+                      {booking.contactsHiddenReason || 'Complete payment to view technician contact details and begin communication.'}
                     </p>
                   </div>
                 )}
@@ -398,7 +408,7 @@ const BookingDetail: React.FC = () => {
                   </div>
                 </div>
 
-                {booking.status !== 'pending' && (
+                {!booking.contactsHidden && booking.customer?.phoneNumber && !booking.customer.phoneNumber.includes('[Hidden') && (
                   <div className="space-y-2">
                     <a
                       href={`tel:${booking.customer.phoneNumber}`}
@@ -418,10 +428,10 @@ const BookingDetail: React.FC = () => {
                   </div>
                 )}
 
-                {booking.status === 'pending' && (
+                {(booking.contactsHidden || booking.customer.phoneNumber?.includes('[Hidden')) && (
                   <div className="mt-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-4">
                     <p className="text-sm text-yellow-800 dark:text-yellow-300">
-                      Customer contact details will be available once booking payment is confirmed.
+                      {booking.contactsHiddenReason || 'Customer contact details will be available once booking payment is confirmed.'}
                     </p>
                   </div>
                 )}
@@ -434,7 +444,33 @@ const BookingDetail: React.FC = () => {
             <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">Actions</h2>
 
             <div className="space-y-2">
+              {/* Payment Required Alert */}
+              {isCustomer && booking.bookingFee?.status === 'pending' && (
+                <div className="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
+                  <div className="flex items-start">
+                    <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5 mr-3 flex-shrink-0" />
+                    <div>
+                      <h3 className="font-semibold text-red-800 dark:text-red-300">Payment Required</h3>
+                      <p className="text-sm text-red-700 dark:text-red-400 mt-1">
+                        Complete the booking fee payment to proceed with technician assignment and unlock contact details.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Customer Actions */}
+              {isCustomer && booking.bookingFee?.status === 'pending' && (
+                <Button
+                  variant="primary"
+                  onClick={() => setIsPaymentModalOpen(true)}
+                  className="w-full bg-green-600 hover:bg-green-700"
+                >
+                  <DollarSign className="mr-2 h-4 w-4" />
+                  Pay Booking Fee (KES {booking.bookingFee.amount.toLocaleString()})
+                </Button>
+              )}
+
               {isCustomer && booking.status === 'pending' && (
                 <Button
                   variant="outline"
@@ -532,6 +568,24 @@ const BookingDetail: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Payment Modal */}
+      {booking && (
+        <BookingFeePaymentModal
+          isOpen={isPaymentModalOpen}
+          onClose={() => setIsPaymentModalOpen(false)}
+          bookingId={booking._id}
+          amount={booking.bookingFee?.amount || 0}
+          onPaymentSuccess={() => {
+            setIsPaymentModalOpen(false);
+            toast.success('Payment completed successfully!');
+            // Refresh booking data
+            if (id) {
+              dispatch(fetchBooking(id));
+            }
+          }}
+        />
       )}
     </div>
   );

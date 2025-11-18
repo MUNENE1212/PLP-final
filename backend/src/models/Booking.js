@@ -77,6 +77,10 @@ const BookingSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'User'
   },
+  preferredTechnician: {
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  },
 
   // Service Details
   serviceCategory: {

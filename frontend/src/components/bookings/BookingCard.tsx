@@ -226,6 +226,15 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, userRole }) => {
 
       {/* Actions */}
       <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 border-t border-gray-100 dark:border-gray-700 pt-3 sm:pt-4">
+        {/* Payment Required Banner - Show for any booking with pending payment */}
+        {userRole === 'customer' && booking.bookingFee?.status === 'pending' && (
+          <div className="flex-1 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3 mr-2">
+            <p className="text-sm text-red-800 dark:text-red-300 font-medium">
+              🚨 Payment Required: Complete booking fee payment to proceed
+            </p>
+          </div>
+        )}
+
         <Button
           variant="outline"
           size="sm"
@@ -237,6 +246,22 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, userRole }) => {
         >
           View Details
         </Button>
+
+        {/* Complete Payment Button - Show for ANY booking with pending payment */}
+        {userRole === 'customer' && booking.bookingFee?.status === 'pending' && (
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/bookings/${booking._id}?action=pay`);
+            }}
+            className="w-full sm:w-auto flex items-center justify-center bg-red-600 hover:bg-red-700"
+          >
+            <DollarSign className="mr-1 h-4 w-4" />
+            Complete Payment Now
+          </Button>
+        )}
 
         {/* Status-specific actions */}
         {userRole === 'technician' && booking.status === 'assigned' && (

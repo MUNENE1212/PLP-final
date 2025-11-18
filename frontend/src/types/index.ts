@@ -100,6 +100,12 @@ export interface Booking {
   urgency: 'low' | 'normal' | 'high' | 'urgent';
   createdAt: string;
   updatedAt: string;
+  contactsHidden?: boolean;
+  contactsHiddenReason?: string;
+  bookingFee?: {
+    status: string;
+    amount: number;
+  };
 }
 
 // Pagination Types

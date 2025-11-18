@@ -530,10 +530,19 @@ exports.assignTechnician = async (req, res) => {
       });
     }
 
-    if (booking.status !== 'pending') {
+    if (booking.status !== 'pending' && booking.status !== 'matching') {
       return res.status(400).json({
         success: false,
-        message: 'Cannot assign technician to non-pending booking'
+        message: 'Cannot assign technician to this booking'
+      });
+    }
+
+    // Check if booking fee has been paid
+    const paymentVerified = ['held', 'paid', 'released'].includes(booking.bookingFee?.status);
+    if (!paymentVerified) {
+      return res.status(400).json({
+        success: false,
+        message: 'Booking fee must be paid before assigning technician'
       });
     }
 
@@ -547,7 +556,7 @@ exports.assignTechnician = async (req, res) => {
     }
 
     booking.technician = technician;
-    booking.status = 'awaiting_acceptance';
+    booking.status = 'assigned';
 
     await booking.save();
 
