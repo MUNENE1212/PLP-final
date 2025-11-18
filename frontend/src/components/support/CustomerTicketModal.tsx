@@ -275,9 +275,9 @@ const CustomerTicketModal: React.FC<CustomerTicketModalProps> = ({ ticketId, isO
                   </h3>
                   <div className="space-y-2">
                     <p className="text-sm text-gray-900 dark:text-gray-100 font-medium">
-                      {ticket.assignedTo.firstName} {ticket.assignedTo.lastName}
+                      {typeof ticket.assignedTo === 'object' ? `${ticket.assignedTo.firstName} ${ticket.assignedTo.lastName}` : ticket.assignedToDetails ? `${ticket.assignedToDetails.firstName} ${ticket.assignedToDetails.lastName}` : 'Unknown Agent'}
                     </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">{ticket.assignedTo.email}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{typeof ticket.assignedTo === 'object' ? ticket.assignedTo.email : ticket.assignedToDetails?.email || 'N/A'}</p>
                   </div>
                 </div>
               )}

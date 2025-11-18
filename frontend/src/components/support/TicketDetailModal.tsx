@@ -236,12 +236,12 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({ ticketId, isOpen,
                 </h3>
                 <div className="space-y-2">
                   <p className="text-sm text-gray-900 dark:text-gray-100 font-medium">
-                    {ticket.customer?.firstName} {ticket.customer?.lastName}
+                    {typeof ticket.customer === 'object' ? `${ticket.customer.firstName} ${ticket.customer.lastName}` : ticket.customerDetails ? `${ticket.customerDetails.firstName} ${ticket.customerDetails.lastName}` : 'Unknown'}
                   </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{ticket.customer?.email}</p>
-                  {ticket.customer?.phoneNumber && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400">{ticket.customer?.phoneNumber}</p>
-                  )}
+                  <p className="text-sm text-gray-600 dark:text-gray-400">{typeof ticket.customer === 'object' ? ticket.customer.email : ticket.customerDetails?.email || 'N/A'}</p>
+                  {(typeof ticket.customer === 'object' && ticket.customer.phoneNumber) || (ticket.customerDetails?.phoneNumber) ? (
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{typeof ticket.customer === 'object' ? ticket.customer.phoneNumber : ticket.customerDetails?.phoneNumber}</p>
+                  ) : null}
                 </div>
               </div>
 

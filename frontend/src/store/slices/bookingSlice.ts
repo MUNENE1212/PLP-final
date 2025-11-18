@@ -70,6 +70,8 @@ export interface Booking {
   pricing: BookingPricing;
   bookingFee?: BookingFee;
   images?: Array<{ url: string; caption?: string }>;
+  contactsHidden?: boolean;
+  contactsHiddenReason?: string;
   createdAt: string;
   updatedAt: string;
 }
