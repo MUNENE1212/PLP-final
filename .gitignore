@@ -77,7 +77,7 @@ dist
 
 # Gatsby files
 .cache/
-public
+# public  # Commented out - we need frontend/public/ for Vite assets
 
 # Storybook build outputs
 .out
