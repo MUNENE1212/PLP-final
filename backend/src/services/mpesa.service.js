@@ -20,6 +20,10 @@ class MpesaService {
       : 'https://sandbox.safaricom.co.ke';
 
     this.callbackURL = process.env.MPESA_CALLBACK_URL || `${process.env.API_URL}/api/v1/payments/mpesa/callback`;
+    this.b2cCallbackURL = process.env.MPESA_B2C_CALLBACK_URL || `${process.env.API_URL}/api/v1/payments/mpesa/b2c-callback`;
+    this.b2cTimeoutURL = process.env.MPESA_B2C_TIMEOUT_URL || `${process.env.API_URL}/api/v1/payments/mpesa/b2c-timeout`;
+    this.initiatorName = process.env.MPESA_INITIATOR_NAME || 'testapi';
+    this.securityCredential = process.env.MPESA_SECURITY_CREDENTIAL;
   }
 
   /**
@@ -258,8 +262,30 @@ class MpesaService {
         result.success = true;
         result.amount = metadata.Amount;
         result.mpesaReceiptNumber = metadata.MpesaReceiptNumber;
-        result.transactionDate = metadata.TransactionDate;
         result.phoneNumber = metadata.PhoneNumber;
+
+        // Parse M-Pesa transaction date (format: YYYYMMDDHHmmss)
+        // Example: 20231119143052 = 2023-11-19 14:30:52
+        if (metadata.TransactionDate) {
+          const dateStr = metadata.TransactionDate.toString();
+          if (dateStr.length === 14) {
+            const year = dateStr.substring(0, 4);
+            const month = dateStr.substring(4, 6);
+            const day = dateStr.substring(6, 8);
+            const hour = dateStr.substring(8, 10);
+            const minute = dateStr.substring(10, 12);
+            const second = dateStr.substring(12, 14);
+
+            // Create ISO date string
+            result.transactionDate = new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}+03:00`);
+            console.log('Parsed transaction date:', result.transactionDate);
+          } else {
+            console.warn('Invalid transaction date format:', dateStr);
+            result.transactionDate = new Date(); // Fallback to current date
+          }
+        } else {
+          result.transactionDate = new Date(); // Fallback to current date
+        }
       } else {
         result.success = false;
         result.errorMessage = stkCallback.ResultDesc;
@@ -286,6 +312,142 @@ class MpesaService {
 
     // Check if it has required fields
     if (!stkCallback.MerchantRequestID || !stkCallback.CheckoutRequestID) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Initiate B2C (Business to Customer) Payment
+   * @param {Object} params - B2C parameters
+   * @param {string} params.phoneNumber - Recipient phone number
+   * @param {number} params.amount - Amount to send
+   * @param {string} params.remarks - Payment remarks
+   * @param {string} params.occasion - Payment occasion
+   * @returns {Object} B2C response
+   */
+  async initiateB2C({ phoneNumber, amount, remarks, occasion }) {
+    try {
+      // Get access token
+      const accessToken = await this.getAccessToken();
+
+      // Format phone number
+      const formattedPhone = this.formatPhoneNumber(phoneNumber);
+
+      // Prepare request payload
+      const payload = {
+        InitiatorName: this.initiatorName,
+        SecurityCredential: this.securityCredential,
+        CommandID: 'BusinessPayment', // For B2C payments to registered customers
+        Amount: Math.ceil(amount), // M-Pesa only accepts whole numbers
+        PartyA: this.shortCode, // Business shortcode
+        PartyB: formattedPhone, // Customer phone number
+        Remarks: remarks || 'Payment',
+        QueueTimeOutURL: this.b2cTimeoutURL,
+        ResultURL: this.b2cCallbackURL,
+        Occasion: occasion || 'Payment',
+      };
+
+      console.log('M-Pesa B2C Request:', {
+        ...payload,
+        SecurityCredential: '[HIDDEN]',
+      });
+
+      // Make request to M-Pesa
+      const response = await axios.post(
+        `${this.baseURL}/mpesa/b2c/v1/paymentrequest`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      console.log('M-Pesa B2C Response:', response.data);
+
+      return {
+        success: true,
+        data: {
+          conversationId: response.data.ConversationID,
+          originatorConversationId: response.data.OriginatorConversationID,
+          responseCode: response.data.ResponseCode,
+          responseDescription: response.data.ResponseDescription,
+        },
+      };
+    } catch (error) {
+      console.error('M-Pesa B2C Error:', error.response?.data || error.message);
+
+      return {
+        success: false,
+        error: error.response?.data?.errorMessage || error.message || 'B2C payment failed',
+        details: error.response?.data,
+      };
+    }
+  }
+
+  /**
+   * Process M-Pesa B2C callback
+   * @param {Object} callbackData - Callback data from M-Pesa
+   */
+  processB2CCallback(callbackData) {
+    try {
+      const { Result } = callbackData;
+
+      const result = {
+        conversationId: Result.ConversationID,
+        originatorConversationId: Result.OriginatorConversationID,
+        transactionId: Result.TransactionID,
+        resultCode: Result.ResultCode,
+        resultDesc: Result.ResultDesc,
+      };
+
+      // ResultCode 0 means success
+      if (Result.ResultCode === 0) {
+        // Extract result parameters
+        const resultParameters = Result.ResultParameters?.ResultParameter || [];
+
+        const parameters = {};
+        resultParameters.forEach(param => {
+          parameters[param.Key] = param.Value;
+        });
+
+        result.success = true;
+        result.transactionAmount = parameters.TransactionAmount;
+        result.transactionReceipt = parameters.TransactionReceipt;
+        result.b2CRecipientIsRegisteredCustomer = parameters.B2CRecipientIsRegisteredCustomer;
+        result.b2CChargesPaidAccountAvailableFunds = parameters.B2CChargesPaidAccountAvailableFunds;
+        result.receiverPartyPublicName = parameters.ReceiverPartyPublicName;
+        result.transactionCompletedDateTime = parameters.TransactionCompletedDateTime;
+        result.b2CUtilityAccountAvailableFunds = parameters.B2CUtilityAccountAvailableFunds;
+        result.b2CWorkingAccountAvailableFunds = parameters.B2CWorkingAccountAvailableFunds;
+      } else {
+        result.success = false;
+        result.errorMessage = Result.ResultDesc;
+      }
+
+      return result;
+    } catch (error) {
+      console.error('M-Pesa B2C Callback Processing Error:', error);
+      throw new Error('Failed to process M-Pesa B2C callback');
+    }
+  }
+
+  /**
+   * Validate M-Pesa B2C callback authenticity
+   */
+  validateB2CCallback(callbackData) {
+    // Check if callback has required structure
+    if (!callbackData.Result) {
+      return false;
+    }
+
+    const { Result } = callbackData;
+
+    // Check if it has required fields
+    if (!Result.ConversationID || !Result.OriginatorConversationID) {
       return false;
     }
 

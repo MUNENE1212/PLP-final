@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Calendar,
@@ -11,9 +11,12 @@ import {
   AlertCircle,
   Loader,
 } from 'lucide-react';
-import { Booking } from '@/store/slices/bookingSlice';
+import { Booking, acceptBooking, rejectBooking } from '@/store/slices/bookingSlice';
+import { useAppDispatch } from '@/store/hooks';
 import { cn } from '@/lib/utils';
 import Button from '../ui/Button';
+import CounterOfferModal from './CounterOfferModal';
+import toast from 'react-hot-toast';
 
 interface BookingCardProps {
   booking: Booking;
@@ -22,6 +25,47 @@ interface BookingCardProps {
 
 const BookingCard: React.FC<BookingCardProps> = ({ booking, userRole }) => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [showCounterOfferModal, setShowCounterOfferModal] = useState(false);
+
+  const handleAcceptBooking = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isProcessing) return;
+
+    try {
+      setIsProcessing(true);
+      await dispatch(acceptBooking(booking._id)).unwrap();
+      toast.success('Booking accepted successfully!');
+    } catch (error: any) {
+      toast.error(error || 'Failed to accept booking');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleRejectBooking = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isProcessing) return;
+
+    const reason = prompt('Please provide a reason for rejecting this booking (optional):');
+    if (reason === null) return; // User cancelled
+
+    try {
+      setIsProcessing(true);
+      await dispatch(rejectBooking({ bookingId: booking._id, reason })).unwrap();
+      toast.success('Booking rejected. Finding another technician...');
+    } catch (error: any) {
+      toast.error(error || 'Failed to reject booking');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleCounterOffer = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowCounterOfferModal(true);
+  };
 
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<
@@ -72,6 +116,16 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, userRole }) => {
         label: 'Completed',
         color: 'bg-green-100 text-green-800 border-green-300',
         icon: <CheckCircle className="h-4 w-4" />,
+      },
+      verified: {
+        label: 'Verified',
+        color: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+        icon: <CheckCircle className="h-4 w-4" />,
+      },
+      paused: {
+        label: 'Paused',
+        color: 'bg-orange-100 text-orange-800 border-orange-300',
+        icon: <AlertCircle className="h-4 w-4" />,
       },
       cancelled: {
         label: 'Cancelled',
@@ -269,24 +323,29 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, userRole }) => {
             <Button
               variant="outline"
               size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                // Handle reject
-              }}
+              onClick={handleCounterOffer}
+              disabled={isProcessing}
               className="w-full sm:w-auto"
             >
-              Decline
+              Counter Offer
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRejectBooking}
+              disabled={isProcessing}
+              className="w-full sm:w-auto text-red-600 border-red-300 hover:bg-red-50"
+            >
+              {isProcessing ? 'Processing...' : 'Decline'}
             </Button>
             <Button
               variant="primary"
               size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                // Handle accept
-              }}
+              onClick={handleAcceptBooking}
+              disabled={isProcessing}
               className="w-full sm:w-auto"
             >
-              Accept
+              {isProcessing ? 'Processing...' : 'Accept'}
             </Button>
           </>
         )}
@@ -306,6 +365,13 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, userRole }) => {
           </Button>
         )}
       </div>
+
+      {/* Counter Offer Modal */}
+      <CounterOfferModal
+        booking={booking}
+        isOpen={showCounterOfferModal}
+        onClose={() => setShowCounterOfferModal(false)}
+      />
     </div>
   );
 };

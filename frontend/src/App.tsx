@@ -19,6 +19,7 @@ import ProfileSettings from './pages/ProfileSettings';
 import Messages from './pages/Messages';
 import Support from './pages/Support';
 import WhatsAppSupport from './pages/WhatsAppSupport';
+import PostDetail from './pages/PostDetail';
 import About from './pages/About';
 import Careers from './pages/Careers';
 import Donate from './pages/Donate';
@@ -106,6 +107,7 @@ const App: React.FC = () => {
               <Route path="bookings/:id" element={<BookingDetail />} />
               <Route path="bookings" element={<MyBookings />} />
               <Route path="messages" element={<Messages />} />
+              <Route path="posts/:postId" element={<PostDetail />} />
               <Route path="support" element={<Support />} />
               <Route path="preferences" element={<MatchingPreferences />} />
               <Route path="settings" element={<ProfileSettings />} />

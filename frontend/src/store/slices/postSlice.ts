@@ -112,6 +112,18 @@ export const fetchExploreFeed = createAsyncThunk(
   }
 );
 
+export const fetchPost = createAsyncThunk(
+  'posts/fetchPost',
+  async (postId: string, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(`/posts/${postId}`);
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch post');
+    }
+  }
+);
+
 export const createPost = createAsyncThunk(
   'posts/createPost',
   async (postData: CreatePostData, { rejectWithValue }) => {
@@ -257,6 +269,21 @@ const postSlice = createSlice({
         state.posts = action.payload.posts;
       })
       .addCase(fetchExploreFeed.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      });
+
+    // Fetch single post
+    builder
+      .addCase(fetchPost.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchPost.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.currentPost = action.payload.post;
+      })
+      .addCase(fetchPost.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       });

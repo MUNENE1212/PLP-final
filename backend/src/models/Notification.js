@@ -30,6 +30,16 @@ const NotificationSchema = new Schema({
       'booking_completed',
       'booking_cancelled',
       'booking_reminder',
+      'booking_en_route',
+      'booking_arrived',
+      'booking_in_progress',
+      'booking_paused',
+      'counter_offer_submitted',
+      'counter_offer_accepted',
+      'counter_offer_rejected',
+      'completion_requested',
+      'completion_confirmed',
+      'completion_rejected',
 
       // Payment notifications
       'payment_received',
@@ -37,6 +47,9 @@ const NotificationSchema = new Schema({
       'payment_failed',
       'payout_processed',
       'refund_processed',
+      'booking_fee_required',
+      'booking_fee_held',
+      'booking_fee_released',
 
       // Message notifications
       'new_message',

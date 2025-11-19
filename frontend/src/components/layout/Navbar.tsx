@@ -1,15 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { logout } from '@/store/slices/authSlice';
+import { fetchUnreadCount } from '@/store/slices/notificationSlice';
 import Button from '../ui/Button';
 import { User, LogOut, Bell, Settings, HelpCircle, Sliders, Menu, X } from 'lucide-react';
 import ThemeToggle from '../common/ThemeToggle';
+import NotificationDropdown from '../notifications/NotificationDropdown';
 
 const Navbar: React.FC = () => {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+  const { unreadCount } = useAppSelector((state) => state.notifications);
   const dispatch = useAppDispatch();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [notificationDropdownOpen, setNotificationDropdownOpen] = useState(false);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -20,16 +24,36 @@ const Navbar: React.FC = () => {
     setMobileMenuOpen(false);
   };
 
+  // Fetch unread count when authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      dispatch(fetchUnreadCount());
+      // Poll for new notifications every 2 minutes (120 seconds)
+      const interval = setInterval(() => {
+        dispatch(fetchUnreadCount());
+      }, 120000);
+      return () => clearInterval(interval);
+    }
+  }, [isAuthenticated, dispatch]);
+
   return (
     <nav className="border-b bg-white dark:bg-gray-800 shadow-sm transition-colors duration-200">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="h-8 w-8 rounded-lg bg-primary-600 dark:bg-primary-500 flex items-center justify-center">
-              <span className="text-white font-bold text-xl">E</span>
-            </div>
-            <span className="text-xl font-bold text-gray-900 dark:text-gray-100">EmEnTech</span>
+          <Link to="/" className="flex items-center">
+            <img
+              src="/images/logo-medium.png"
+              alt="Dumu Waks"
+              className="h-12 w-auto drop-shadow-sm hover:drop-shadow-md transition-all duration-200"
+              onError={(e) => {
+                // Fallback to JPG if PNG doesn't exist
+                e.currentTarget.src = '/images/logo.jpg';
+                e.currentTarget.style.height = '48px';
+                e.currentTarget.style.width = 'auto';
+                e.currentTarget.style.objectFit = 'contain';
+              }}
+            />
           </Link>
 
           {/* Navigation Links */}
@@ -86,10 +110,23 @@ const Navbar: React.FC = () => {
               <>
                 <ThemeToggle />
 
-                <button className="relative rounded-full p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                  <Bell className="h-5 w-5" />
-                  <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500" />
-                </button>
+                <div className="relative">
+                  <button
+                    onClick={() => setNotificationDropdownOpen(!notificationDropdownOpen)}
+                    className="relative rounded-full p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <Bell className="h-5 w-5" />
+                    {unreadCount > 0 && (
+                      <span className="absolute top-1 right-1 flex items-center justify-center h-4 w-4 text-xs font-bold text-white bg-red-500 rounded-full">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
+                  </button>
+                  <NotificationDropdown
+                    isOpen={notificationDropdownOpen}
+                    onClose={() => setNotificationDropdownOpen(false)}
+                  />
+                </div>
 
                 <div className="flex items-center space-x-3">
                   <Link to="/settings">
@@ -232,11 +269,19 @@ const Navbar: React.FC = () => {
 
                 {/* Actions */}
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mt-2">
-                  <button className="w-full flex items-center rounded-md px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                  <Link
+                    to="/notifications"
+                    onClick={closeMobileMenu}
+                    className="w-full flex items-center rounded-md px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  >
                     <Bell className="h-5 w-5 mr-2" />
                     Notifications
-                    <span className="ml-auto h-2 w-2 rounded-full bg-red-500" />
-                  </button>
+                    {unreadCount > 0 && (
+                      <span className="ml-auto flex items-center justify-center h-5 w-5 text-xs font-bold text-white bg-red-500 rounded-full">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
+                  </Link>
 
                   <Link
                     to="/settings"

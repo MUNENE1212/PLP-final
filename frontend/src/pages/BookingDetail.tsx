@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { fetchBooking, updateBookingStatus } from '@/store/slices/bookingSlice';
+import { fetchBooking, cancelBooking } from '@/store/slices/bookingSlice';
 import Button from '@/components/ui/Button';
 import Loading from '@/components/ui/Loading';
 import BookingFeePaymentModal from '@/components/bookings/BookingFeePaymentModal';
+import TechnicianStatusActions from '@/components/bookings/TechnicianStatusActions';
+import CompletionConfirmation from '@/components/bookings/CompletionConfirmation';
 import {
   ArrowLeft,
   Calendar,
@@ -77,6 +79,18 @@ const STATUS_CONFIG: Record<
     bgColor: 'bg-green-100',
     icon: CheckCircle,
   },
+  verified: {
+    label: 'Verified',
+    color: 'text-emerald-700',
+    bgColor: 'bg-emerald-100',
+    icon: CheckCircle,
+  },
+  paused: {
+    label: 'Paused',
+    color: 'text-orange-700',
+    bgColor: 'bg-orange-100',
+    icon: AlertCircle,
+  },
   cancelled: {
     label: 'Cancelled',
     color: 'text-red-700',
@@ -118,20 +132,29 @@ const BookingDetail: React.FC = () => {
     }
   }, [searchParams, booking]);
 
-  const handleStatusUpdate = async (newStatus: string) => {
+  const handleCancelBooking = async () => {
     if (!booking) return;
+
+    const reason = prompt('Please provide a reason for cancellation (optional):');
+    if (reason === null) return; // User cancelled the prompt
 
     try {
       await dispatch(
-        updateBookingStatus({
+        cancelBooking({
           bookingId: booking._id,
-          status: newStatus,
+          reason: reason || undefined,
         })
       ).unwrap();
-      toast.success(`Booking ${newStatus} successfully`);
       setShowCancelDialog(false);
     } catch (error: any) {
-      toast.error(error || 'Failed to update booking status');
+      toast.error(error || 'Failed to cancel booking');
+    }
+  };
+
+  const handleUpdate = () => {
+    // Refresh booking data after any status update
+    if (id) {
+      dispatch(fetchBooking(id));
     }
   };
 
@@ -439,104 +462,52 @@ const BookingDetail: React.FC = () => {
             </div>
           )}
 
-          {/* Actions */}
-          <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">Actions</h2>
-
-            <div className="space-y-2">
-              {/* Payment Required Alert */}
-              {isCustomer && booking.bookingFee?.status === 'pending' && (
-                <div className="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
-                  <div className="flex items-start">
-                    <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5 mr-3 flex-shrink-0" />
-                    <div>
-                      <h3 className="font-semibold text-red-800 dark:text-red-300">Payment Required</h3>
-                      <p className="text-sm text-red-700 dark:text-red-400 mt-1">
-                        Complete the booking fee payment to proceed with technician assignment and unlock contact details.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Customer Actions */}
-              {isCustomer && booking.bookingFee?.status === 'pending' && (
-                <Button
-                  variant="primary"
-                  onClick={() => setIsPaymentModalOpen(true)}
-                  className="w-full bg-green-600 hover:bg-green-700"
-                >
-                  <DollarSign className="mr-2 h-4 w-4" />
-                  Pay Booking Fee (KES {booking.bookingFee.amount.toLocaleString()})
-                </Button>
-              )}
-
-              {isCustomer && booking.status === 'pending' && (
-                <Button
-                  variant="outline"
-                  onClick={() => setShowCancelDialog(true)}
-                  className="w-full text-red-600 hover:bg-red-50"
-                >
-                  Cancel Booking
-                </Button>
-              )}
-
-              {/* Technician Actions */}
-              {isTechnician && booking.status === 'assigned' && (
-                <>
+          {/* Payment Required Alert */}
+          {isCustomer && booking.bookingFee?.status === 'pending' && (
+            <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
+              <div className="flex items-start">
+                <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5 mr-3 flex-shrink-0" />
+                <div>
+                  <h3 className="font-semibold text-red-800 dark:text-red-300">Payment Required</h3>
+                  <p className="text-sm text-red-700 dark:text-red-400 mt-1">
+                    Complete the booking fee payment to proceed with technician assignment and unlock contact details.
+                  </p>
                   <Button
                     variant="primary"
-                    onClick={() => handleStatusUpdate('accepted')}
-                    disabled={isUpdating}
-                    className="w-full"
+                    onClick={() => setIsPaymentModalOpen(true)}
+                    className="mt-3 w-full bg-green-600 hover:bg-green-700"
                   >
-                    Accept Booking
+                    <DollarSign className="mr-2 h-4 w-4" />
+                    Pay Booking Fee (KES {booking.bookingFee.amount.toLocaleString()})
                   </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => handleStatusUpdate('rejected')}
-                    disabled={isUpdating}
-                    className="w-full text-red-600 hover:bg-red-50"
-                  >
-                    Reject Booking
-                  </Button>
-                </>
-              )}
-
-              {isTechnician && booking.status === 'accepted' && (
-                <Button
-                  variant="primary"
-                  onClick={() => handleStatusUpdate('en_route')}
-                  disabled={isUpdating}
-                  className="w-full"
-                >
-                  Mark as On The Way
-                </Button>
-              )}
-
-              {isTechnician && booking.status === 'en_route' && (
-                <Button
-                  variant="primary"
-                  onClick={() => handleStatusUpdate('arrived')}
-                  disabled={isUpdating}
-                  className="w-full"
-                >
-                  Mark as Arrived
-                </Button>
-              )}
-
-              {isTechnician && (booking.status === 'arrived' || booking.status === 'in_progress') && (
-                <Button
-                  variant="primary"
-                  onClick={() => handleStatusUpdate(booking.status === 'arrived' ? 'in_progress' : 'completed')}
-                  disabled={isUpdating}
-                  className="w-full"
-                >
-                  {booking.status === 'arrived' ? 'Start Work' : 'Complete Booking'}
-                </Button>
-              )}
+                </div>
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Customer - Completion Confirmation */}
+          {isCustomer && booking.status === 'completed' && (
+            <CompletionConfirmation booking={booking} onUpdate={handleUpdate} />
+          )}
+
+          {/* Technician - Status Actions */}
+          {isTechnician && (
+            <TechnicianStatusActions booking={booking} onUpdate={handleUpdate} />
+          )}
+
+          {/* Cancel Booking Button (Customer) */}
+          {isCustomer && ['pending', 'matching', 'assigned', 'accepted'].includes(booking.status) && (
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm">
+              <Button
+                variant="outline"
+                onClick={() => setShowCancelDialog(true)}
+                className="w-full text-red-600 hover:bg-red-50"
+              >
+                <XCircle className="mr-2 h-4 w-4" />
+                Cancel Booking
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -559,7 +530,7 @@ const BookingDetail: React.FC = () => {
               </Button>
               <Button
                 variant="primary"
-                onClick={() => handleStatusUpdate('cancelled')}
+                onClick={handleCancelBooking}
                 disabled={isUpdating}
                 className="flex-1 bg-red-600 hover:bg-red-700"
               >

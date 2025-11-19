@@ -57,12 +57,22 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           {/* Brand Section */}
           <div className="lg:col-span-2">
-            <Link to="/" className="flex items-center space-x-2 mb-4">
-              <Wrench className="h-8 w-8 text-primary-500 dark:text-primary-400" />
-              <span className="text-2xl font-bold text-gray-900 dark:text-white">EmEnTech</span>
+            <Link to="/" className="inline-block mb-4">
+              <img
+                src="/images/logo-full.png"
+                alt="Dumu Waks"
+                className="h-16 w-auto drop-shadow-sm hover:drop-shadow-md transition-all duration-200"
+                onError={(e) => {
+                  // Fallback to JPG if PNG doesn't exist
+                  e.currentTarget.src = '/images/logo.jpg';
+                  e.currentTarget.style.height = '64px';
+                  e.currentTarget.style.width = 'auto';
+                  e.currentTarget.style.objectFit = 'contain';
+                }}
+              />
             </Link>
             <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md">
-              Kenya's leading platform connecting customers with skilled technicians for emergency repairs,
+              Kenya's leading platform connecting customers with skilled technicians for professional repairs,
               maintenance, and engineering services. Available 24/7 across all counties.
             </p>
 
@@ -219,7 +229,7 @@ const Footer = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
             <p className="text-gray-600 dark:text-gray-400 text-sm text-center md:text-left">
-              © {currentYear} EmEnTech. All rights reserved. Built with ❤️ in Kenya.
+              © {currentYear} Dumu Waks. All rights reserved. Built with ❤️ in Kenya.
             </p>
             <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
               <span>Made in Kenya 🇰🇪</span>

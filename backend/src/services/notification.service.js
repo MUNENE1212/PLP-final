@@ -105,7 +105,9 @@ exports.notifyNewBooking = async (user, booking) => {
   await this.createNotification(user._id, {
     type: 'booking',
     title: 'New Booking Request',
-    message: `You have a new booking request for ${booking.serviceCategory}`,
+    body: `You have a new booking request for ${booking.serviceCategory}`,
+    category: 'booking',
+    relatedBooking: booking._id,
     data: {
       bookingId: booking._id,
       bookingNumber: booking.bookingNumber
@@ -140,12 +142,14 @@ exports.notifyBookingStatusChange = async (user, booking, status) => {
     cancelled: 'Your booking has been cancelled'
   };
 
-  const message = statusMessages[status] || `Booking status changed to ${status}`;
+  const body = statusMessages[status] || `Booking status changed to ${status}`;
 
   await this.createNotification(user._id, {
     type: 'booking_update',
     title: 'Booking Update',
-    message,
+    body,
+    category: 'booking',
+    relatedBooking: booking._id,
     data: {
       bookingId: booking._id,
       bookingNumber: booking.bookingNumber,
@@ -176,7 +180,9 @@ exports.notifyPaymentReceived = async (user, transaction) => {
   await this.createNotification(user._id, {
     type: 'payment',
     title: 'Payment Received',
-    message: `You received a payment of KES ${transaction.amount.net}`,
+    body: `You received a payment of KES ${transaction.amount.net}`,
+    category: 'payment',
+    relatedTransaction: transaction._id,
     data: {
       transactionId: transaction._id,
       transactionNumber: transaction.transactionNumber,
@@ -204,9 +210,11 @@ exports.notifyPaymentReceived = async (user, transaction) => {
  */
 exports.notifyNewMessage = async (user, sender, messageText) => {
   await this.createNotification(user._id, {
-    type: 'message',
+    type: 'new_message',
     title: `New message from ${sender.firstName}`,
-    message: messageText.substring(0, 100),
+    body: messageText.substring(0, 100),
+    category: 'message',
+    sender: sender._id,
     data: {
       senderId: sender._id,
       senderName: `${sender.firstName} ${sender.lastName}`
@@ -233,9 +241,11 @@ exports.notifyNewMessage = async (user, sender, messageText) => {
  */
 exports.notifyNewReview = async (user, reviewer, rating) => {
   await this.createNotification(user._id, {
-    type: 'review',
+    type: 'review_received',
     title: 'New Review',
-    message: `${reviewer.firstName} left you a ${rating}-star review`,
+    body: `${reviewer.firstName} left you a ${rating}-star review`,
+    category: 'social',
+    sender: reviewer._id,
     data: {
       reviewerId: reviewer._id,
       rating
@@ -295,6 +305,185 @@ exports.getUnreadCount = async (userId) => {
     console.error('Get unread count error:', error);
     throw error;
   }
+};
+
+// ===== BOOKING-SPECIFIC NOTIFICATIONS =====
+
+/**
+ * Notify booking accepted
+ */
+exports.notifyBookingAccepted = async (booking) => {
+  const customerId = booking.customer._id || booking.customer;
+  const technicianName = booking.technician?.firstName || 'The technician';
+
+  await this.createNotification(customerId, {
+    type: 'booking_accepted',
+    title: 'Booking Accepted',
+    body: `${technicianName} has accepted your booking #${booking.bookingNumber}`,
+    category: 'booking',
+    relatedBooking: booking._id,
+    priority: 'high',
+    actionData: {
+      bookingId: booking._id,
+      action: 'view_booking'
+    }
+  });
+};
+
+/**
+ * Notify booking rejected
+ */
+exports.notifyBookingRejected = async (booking) => {
+  const customerId = booking.customer._id || booking.customer;
+
+  await this.createNotification(customerId, {
+    type: 'booking_rejected',
+    title: 'Booking Declined',
+    body: `Booking #${booking.bookingNumber} was declined. We're finding another technician for you.`,
+    category: 'booking',
+    relatedBooking: booking._id,
+    priority: 'high'
+  });
+};
+
+/**
+ * Notify counter offer submitted
+ */
+exports.notifyCounterOfferSubmitted = async (booking, technicianName) => {
+  const customerId = booking.customer._id || booking.customer;
+
+  await this.createNotification(customerId, {
+    type: 'counter_offer_submitted',
+    title: 'Counter Offer Received',
+    body: `${technicianName} submitted a counter offer for booking #${booking.bookingNumber}`,
+    category: 'booking',
+    relatedBooking: booking._id,
+    priority: 'high',
+    actionData: {
+      bookingId: booking._id,
+      action: 'view_counter_offer'
+    }
+  });
+};
+
+/**
+ * Notify counter offer accepted
+ */
+exports.notifyCounterOfferAccepted = async (booking, customerName) => {
+  const technicianId = booking.technician._id || booking.technician;
+
+  await this.createNotification(technicianId, {
+    type: 'counter_offer_accepted',
+    title: 'Counter Offer Accepted',
+    body: `${customerName} accepted your counter offer for booking #${booking.bookingNumber}`,
+    category: 'booking',
+    relatedBooking: booking._id,
+    priority: 'high'
+  });
+};
+
+/**
+ * Notify counter offer rejected
+ */
+exports.notifyCounterOfferRejected = async (booking, customerName) => {
+  const technicianId = booking.technician._id || booking.technician;
+
+  await this.createNotification(technicianId, {
+    type: 'counter_offer_rejected',
+    title: 'Counter Offer Rejected',
+    body: `${customerName} rejected your counter offer for booking #${booking.bookingNumber}`,
+    category: 'booking',
+    relatedBooking: booking._id,
+    priority: 'normal'
+  });
+};
+
+/**
+ * Notify status change (en_route, arrived, in_progress, paused)
+ */
+exports.notifyStatusChange = async (booking, status, recipientId, body) => {
+  const statusTypeMap = {
+    en_route: 'booking_en_route',
+    arrived: 'booking_arrived',
+    in_progress: 'booking_in_progress',
+    paused: 'booking_paused',
+    cancelled: 'booking_cancelled'
+  };
+
+  const statusTitles = {
+    en_route: 'Technician On The Way',
+    arrived: 'Technician Arrived',
+    in_progress: 'Work Started',
+    paused: 'Job Paused',
+    cancelled: 'Booking Cancelled'
+  };
+
+  await this.createNotification(recipientId, {
+    type: statusTypeMap[status] || 'booking_started',
+    title: statusTitles[status] || 'Booking Update',
+    body: body || `Booking #${booking.bookingNumber} status updated to ${status}`,
+    category: 'booking',
+    relatedBooking: booking._id,
+    priority: ['en_route', 'arrived'].includes(status) ? 'high' : 'normal'
+  });
+};
+
+/**
+ * Notify completion requested
+ */
+exports.notifyCompletionRequested = async (booking, technicianName) => {
+  const customerId = booking.customer._id || booking.customer;
+
+  await this.createNotification(customerId, {
+    type: 'completion_requested',
+    title: 'Job Completion - Action Required',
+    body: `${technicianName} has completed booking #${booking.bookingNumber}. Please confirm to release payment.`,
+    category: 'booking',
+    relatedBooking: booking._id,
+    priority: 'urgent',
+    actionData: {
+      bookingId: booking._id,
+      action: 'confirm_completion'
+    }
+  });
+};
+
+/**
+ * Notify completion confirmed/rejected
+ */
+exports.notifyCompletionResponse = async (booking, customerName, approved) => {
+  const technicianId = booking.technician._id || booking.technician;
+
+  await this.createNotification(technicianId, {
+    type: approved ? 'completion_confirmed' : 'completion_rejected',
+    title: approved ? 'Job Approved' : 'Job Completion Rejected',
+    body: approved
+      ? `${customerName} confirmed completion of booking #${booking.bookingNumber}. Payment will be released soon.`
+      : `${customerName} reported issues with booking #${booking.bookingNumber}. Please check the details.`,
+    category: 'booking',
+    relatedBooking: booking._id,
+    priority: 'high'
+  });
+};
+
+/**
+ * Notify payment required
+ */
+exports.notifyPaymentRequired = async (booking) => {
+  const customerId = booking.customer._id || booking.customer;
+
+  await this.createNotification(customerId, {
+    type: 'booking_fee_required',
+    title: 'Payment Required',
+    body: `Complete booking fee payment for #${booking.bookingNumber} to proceed with technician matching`,
+    category: 'payment',
+    relatedBooking: booking._id,
+    priority: 'urgent',
+    actionData: {
+      bookingId: booking._id,
+      action: 'pay_booking_fee'
+    }
+  });
 };
 
 module.exports = exports;

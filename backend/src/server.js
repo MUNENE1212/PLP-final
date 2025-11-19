@@ -90,10 +90,14 @@ app.use(mongoSanitize());
 // Rate Limiting
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 500, // Increased from 100 to 500
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => {
+    // Skip rate limiting for health check and status endpoints
+    return req.path === '/api/health' || req.path === '/api/status';
+  }
 });
 
 app.use('/api/', limiter);
@@ -159,6 +163,7 @@ app.use('/api/v1/matching', require('./routes/matching.routes'));
 app.use('/api/v1/media', require('./routes/media.routes'));
 app.use('/api/v1/upload', require('./routes/upload.routes'));
 app.use('/api/v1/payments/mpesa', require('./routes/mpesa.routes'));
+app.use('/api/v1/payments/payouts', require('./routes/payout.routes'));
 app.use('/api/v1/pricing', require('./routes/pricing.routes'));
 
 // 404 Handler

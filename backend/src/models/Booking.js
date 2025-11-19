@@ -171,6 +171,39 @@ const BookingSchema = new Schema({
     }
   },
 
+  // Counter Offer from Technician
+  counterOffer: {
+    proposedBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User' // Technician who proposed the counter offer
+    },
+    proposedAt: Date,
+    status: {
+      type: String,
+      enum: ['pending', 'accepted', 'rejected', 'expired', 'withdrawn']
+    },
+    proposedPricing: {
+      basePrice: Number,
+      serviceCharge: Number,
+      platformFee: Number,
+      tax: Number,
+      discount: Number,
+      totalAmount: Number,
+      currency: {
+        type: String,
+        default: 'KES'
+      }
+    },
+    reason: String, // Why the technician is proposing different pricing
+    additionalNotes: String,
+    validUntil: Date, // Counter offer expiration
+    customerResponse: {
+      respondedAt: Date,
+      accepted: Boolean,
+      notes: String
+    }
+  },
+
   // Payment Details
   payment: {
     status: {

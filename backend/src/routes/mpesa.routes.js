@@ -5,6 +5,8 @@ const {
   mpesaCallback,
   queryTransactionStatus,
   getPaymentHistory,
+  b2cCallback,
+  b2cTimeout,
 } = require('../controllers/mpesa.controller');
 const { protect, authorize } = require('../middleware/auth');
 const { validate } = require('../middleware/validation');
@@ -51,6 +53,20 @@ router.post(
 router.post('/callback', mpesaCallback);
 
 /**
+ * @route   GET /api/v1/payments/mpesa/callback/test
+ * @desc    Test endpoint to verify callback URL is accessible
+ * @access  Public
+ */
+router.get('/callback/test', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'M-Pesa callback endpoint is accessible!',
+    timestamp: new Date().toISOString(),
+    info: 'This endpoint confirms your callback URL is publicly reachable'
+  });
+});
+
+/**
  * @route   GET /api/v1/payments/mpesa/status/:transactionId
  * @desc    Query M-Pesa transaction status
  * @access  Private
@@ -63,5 +79,19 @@ router.get('/status/:transactionId', protect, queryTransactionStatus);
  * @access  Private
  */
 router.get('/history', protect, getPaymentHistory);
+
+/**
+ * @route   POST /api/v1/payments/mpesa/b2c-callback
+ * @desc    M-Pesa B2C callback endpoint (called by Safaricom)
+ * @access  Public (No auth - called by M-Pesa servers)
+ */
+router.post('/b2c-callback', b2cCallback);
+
+/**
+ * @route   POST /api/v1/payments/mpesa/b2c-timeout
+ * @desc    M-Pesa B2C timeout endpoint (called by Safaricom)
+ * @access  Public (No auth - called by M-Pesa servers)
+ */
+router.post('/b2c-timeout', b2cTimeout);
 
 module.exports = router;

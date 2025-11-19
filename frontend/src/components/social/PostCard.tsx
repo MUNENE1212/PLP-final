@@ -35,6 +35,8 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [showMenu, setShowMenu] = useState(false);
+  const [isLiking, setIsLiking] = useState(false);
+  const [isBookmarking, setIsBookmarking] = useState(false);
 
   // Early return if post author is not populated
   if (!post.author || typeof post.author !== 'object' || !post.author._id) {
@@ -45,7 +47,13 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const isOwnPost = user?._id === post.author._id;
 
   const handleLike = async () => {
-    await dispatch(toggleLike(post._id));
+    if (isLiking) return; // Prevent multiple concurrent requests
+    setIsLiking(true);
+    try {
+      await dispatch(toggleLike(post._id));
+    } finally {
+      setIsLiking(false);
+    }
   };
 
   const handleComment = async (e: React.FormEvent) => {
@@ -63,7 +71,13 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   };
 
   const handleBookmark = async () => {
-    await dispatch(toggleBookmark(post._id));
+    if (isBookmarking) return; // Prevent multiple concurrent requests
+    setIsBookmarking(true);
+    try {
+      await dispatch(toggleBookmark(post._id));
+    } finally {
+      setIsBookmarking(false);
+    }
   };
 
   const handleDelete = async () => {
@@ -247,8 +261,9 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
       <div className="flex items-center justify-around border-t border-gray-100 dark:border-gray-700 px-2 sm:px-4 py-2">
         <button
           onClick={handleLike}
+          disabled={isLiking}
           className={cn(
-            'flex flex-1 items-center justify-center space-x-1 sm:space-x-2 rounded-lg py-2 text-xs sm:text-sm font-medium transition-colors',
+            'flex flex-1 items-center justify-center space-x-1 sm:space-x-2 rounded-lg py-2 text-xs sm:text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
             post.isLiked
               ? 'text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20'
               : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -276,8 +291,9 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
         <button
           onClick={handleBookmark}
+          disabled={isBookmarking}
           className={cn(
-            'flex flex-1 items-center justify-center space-x-1 sm:space-x-2 rounded-lg py-2 text-xs sm:text-sm font-medium transition-colors',
+            'flex flex-1 items-center justify-center space-x-1 sm:space-x-2 rounded-lg py-2 text-xs sm:text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
             post.isBookmarked
               ? 'text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20'
               : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'

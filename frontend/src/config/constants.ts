@@ -3,8 +3,8 @@ export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/ap
 export const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
 
 // App Configuration
-export const APP_NAME = import.meta.env.VITE_APP_NAME || 'EmEnTech';
-export const APP_DESCRIPTION = import.meta.env.VITE_APP_DESCRIPTION || 'Emergency Maintenance & Engineering Platform';
+export const APP_NAME = import.meta.env.VITE_APP_NAME || 'Dumu Waks';
+export const APP_DESCRIPTION = import.meta.env.VITE_APP_DESCRIPTION || 'Professional Maintenance & Repair Services Platform';
 
 // Feature Flags
 export const ENABLE_2FA = import.meta.env.VITE_ENABLE_2FA === 'true';
@@ -67,8 +67,8 @@ export const DATETIME_FORMAT = 'MMM dd, yyyy HH:mm';
 
 // Storage Keys
 export const STORAGE_KEYS = {
-  TOKEN: 'ementech_token',
-  REFRESH_TOKEN: 'ementech_refresh_token',
-  USER: 'ementech_user',
-  THEME: 'ementech_theme',
+  TOKEN: 'dumuwaks_token',
+  REFRESH_TOKEN: 'dumuwaks_refresh_token',
+  USER: 'dumuwaks_user',
+  THEME: 'dumuwaks_theme',
 } as const;
