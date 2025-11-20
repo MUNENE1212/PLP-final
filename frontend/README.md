@@ -1,21 +1,27 @@
-# BaiTech Frontend
+# 🎨 Dumu Waks Frontend
 
-Modern React TypeScript frontend for the BaiTech platform - AI-Powered Technician & Community Platform.
+<div align="center">
+  <img src="./public/images/logo-full.png" alt="Dumu Waks Logo" width="150"/>
+  <br/>
+  <br/>
+</div>
+
+Modern React TypeScript frontend for **Dumu Waks** - Professional Maintenance & Repair Services Platform connecting skilled technicians with customers across Kenya.
 
 ## 🚀 Tech Stack
 
-- **React 18** - UI library
-- **TypeScript** - Type safety
-- **Vite** - Build tool & dev server
-- **Redux Toolkit** - State management
-- **React Router v6** - Routing
-- **Tailwind CSS** - Styling
-- **Axios** - HTTP client
-- **React Hook Form** - Form handling
+- **React 18** - UI library with hooks
+- **TypeScript** - Type safety and better DX
+- **Vite** - Lightning-fast build tool & dev server
+- **Redux Toolkit** - State management with async thunks
+- **React Router v6** - Client-side routing
+- **Tailwind CSS** - Utility-first styling
+- **Axios** - HTTP client with interceptors
+- **React Hook Form** - Performant form handling
 - **Zod** - Schema validation
 - **Socket.IO Client** - Real-time communication
-- **Lucide React** - Icons
-- **React Hot Toast** - Notifications
+- **Lucide React** - Beautiful icon library
+- **React Hot Toast** - Elegant notifications
 
 ## 📁 Project Structure
 
@@ -23,32 +29,46 @@ Modern React TypeScript frontend for the BaiTech platform - AI-Powered Technicia
 frontend/
 ├── src/
 │   ├── components/          # Reusable components
-│   │   ├── layout/          # Layout components (Navbar, Footer, etc.)
-│   │   └── ui/              # UI components (Button, Input, Card, etc.)
-│   ├── pages/               # Page components
+│   │   ├── layout/          # Layout components (Navbar, Footer)
+│   │   ├── ui/              # UI primitives (Button, Input, Card)
+│   │   ├── common/          # Shared components (LoadingScreen)
+│   │   └── bookings/        # Feature-specific components
+│   ├── pages/               # Page components (routes)
 │   │   ├── Home.tsx
 │   │   ├── Login.tsx
 │   │   ├── Register.tsx
-│   │   └── Dashboard.tsx
+│   │   ├── Dashboard.tsx
+│   │   └── BookingDetail.tsx
 │   ├── store/               # Redux store
-│   │   ├── slices/          # Redux slices
+│   │   ├── slices/          # Redux slices (auth, bookings, etc.)
+│   │   ├── hooks.ts         # Typed Redux hooks
 │   │   └── index.ts         # Store configuration
-│   ├── lib/                 # Utilities
-│   │   ├── axios.ts         # Axios instance with interceptors
-│   │   └── utils.ts         # Helper functions
-│   ├── types/               # TypeScript types
-│   │   └── index.ts         # Type definitions
-│   ├── config/              # Configuration
+│   ├── services/            # API service layer
+│   │   ├── api.ts           # Axios instance
+│   │   └── geocoding.service.ts
+│   ├── utils/               # Utility functions
+│   ├── types/               # TypeScript type definitions
+│   ├── config/              # App configuration
 │   │   └── constants.ts     # App constants
 │   ├── App.tsx              # Main App component
 │   ├── main.tsx             # Entry point
 │   └── index.css            # Global styles
 ├── public/                  # Static assets
-├── index.html               # HTML template
+│   ├── images/              # Logo variants (PNG)
+│   │   ├── logo-full.png
+│   │   ├── logo-medium.png
+│   │   ├── logo-small.png
+│   │   ├── logo-loading.png
+│   │   └── logo-square.png
+│   ├── favicons/            # Favicons for all devices
+│   ├── favicon.ico
+│   └── site.webmanifest     # PWA manifest
+├── index.html               # HTML template with meta tags
 ├── package.json             # Dependencies
 ├── vite.config.ts           # Vite configuration
 ├── tailwind.config.js       # Tailwind configuration
 ├── tsconfig.json            # TypeScript configuration
+├── process-logo.sh          # Logo processing script
 └── README.md                # This file
 ```
 
@@ -70,17 +90,26 @@ npm install
 
 2. **Set up environment variables**
 ```bash
-cp .env.example .env
-```
-
-Edit `.env` with your configuration:
-```bash
+# Create .env file (or use existing)
+cat > .env << EOF
 VITE_API_URL=http://localhost:5000/api/v1
 VITE_SOCKET_URL=http://localhost:5000
-VITE_APP_NAME=BaiTech
+VITE_APP_NAME=Dumu Waks
+VITE_APP_DESCRIPTION=Professional Maintenance & Repair Services Platform
+EOF
 ```
 
-3. **Start development server**
+3. **Process logo assets** (if needed)
+```bash
+# Install ImageMagick first
+sudo apt-get install imagemagick potrace  # Ubuntu/Debian
+# brew install imagemagick potrace  # macOS
+
+# Process logo
+./process-logo.sh
+```
+
+4. **Start development server**
 ```bash
 npm run dev
 ```
@@ -91,162 +120,208 @@ The app will be available at `http://localhost:3000`
 
 ```bash
 # Development
-npm run dev              # Start dev server with hot reload
+npm run dev              # Start dev server with hot reload (port 3000)
 npm run build            # Build for production
-npm run preview          # Preview production build
+npm run preview          # Preview production build locally
 
 # Code Quality
-npm run lint             # Lint code
+npm run lint             # Lint code with ESLint
 npm run type-check       # Check TypeScript types
 ```
 
 ## 🎨 Features
 
-### ✅ Implemented
+### ✅ Fully Implemented
+
+- ✅ **Rebranded to Dumu Waks**
+  - New logo with transparent PNGs
+  - Comprehensive favicon set
+  - PWA-ready with manifest
+  - Dark mode support
 
 - ✅ **Authentication System**
   - Login with email/password
-  - Registration (Customer/Technician)
-  - JWT token management
-  - Protected routes
+  - Registration (Customer/Technician/Corporate)
+  - JWT token management with refresh tokens
+  - Protected routes with role-based access
   - Auto-logout on token expiration
 
+- ✅ **Booking System**
+  - Create bookings with service details
+  - Upload photos for problem description
+  - Real-time booking status tracking
+  - Booking history and management
+  - Counter offer handling
+  - Job completion workflow
+
+- ✅ **Payment Integration**
+  - M-Pesa STK Push integration
+  - Booking fee (20%) payment
+  - Completion payment collection
+  - Payment history tracking
+  - Transaction status monitoring
+
 - ✅ **State Management**
-  - Redux Toolkit setup
-  - Auth slice with async thunks
-  - Typed hooks (useAppDispatch, useAppSelector)
+  - Redux Toolkit with typed hooks
+  - Auth, bookings, notifications slices
   - LocalStorage persistence
+  - Optimistic updates
 
 - ✅ **UI Components**
-  - Button (multiple variants)
-  - Input with error handling
-  - Card components
-  - Responsive Navbar
-  - Layout system
-
-- ✅ **Pages**
-  - Home/Landing page
-  - Login page
-  - Register page
-  - Dashboard (Customer/Technician)
+  - Button (multiple variants: primary, secondary, outline, ghost, danger)
+  - Input with validation and error handling
+  - Card components with variants
+  - Responsive Navbar with user menu
+  - Footer with links
+  - LoadingScreen with branded logo
+  - Theme toggle (light/dark mode)
 
 - ✅ **API Integration**
   - Axios instance with interceptors
   - Automatic token injection
-  - Error handling
+  - Global error handling
   - Request/Response logging
+  - Toast notifications
 
-- ✅ **Styling**
-  - Tailwind CSS
-  - Custom theme colors
-  - Responsive design
-  - Dark mode ready
+- ✅ **Responsive Design**
+  - Mobile-first approach
+  - Tablet and desktop optimized
+  - Touch-friendly interactions
+  - Accessible components
 
-### 🚧 To Be Implemented
+### 🚧 In Progress / Planned
 
-- [ ] Booking System
-- [ ] Technician Search & Matching
-- [ ] Real-time Messaging (Socket.IO)
-- [ ] Profile Management
-- [ ] Review System
-- [ ] Payment Integration
-- [ ] Notifications
-- [ ] File Upload (Images/Videos)
-- [ ] Maps Integration (Google Maps)
+- [ ] Real-time Messaging (Socket.IO integration started)
+- [ ] Advanced search and filters
+- [ ] Technician matching preferences UI
+- [ ] Maps integration (Google Maps/Mapbox)
+- [ ] Push notifications
+- [ ] Service worker for offline support
+- [ ] Advanced analytics dashboard
+- [ ] Multi-language support (i18n)
 
 ## 🔐 Authentication Flow
 
 1. **Login**
    - User enters email and password
-   - Redux action dispatches login thunk
+   - Redux thunk dispatches login action
    - Token stored in localStorage
-   - User redirected to dashboard
+   - User redirected based on role (customer/technician/admin)
 
 2. **Protected Routes**
-   - ProtectedRoute component checks authentication
-   - Redirects to login if not authenticated
-   - Allows role-based access control
+   - ProtectedRoute HOC checks authentication
+   - Redirects to /login if not authenticated
+   - Role-based access control (RBAC)
+   - Automatic token refresh
 
 3. **Token Management**
-   - Axios interceptor adds token to requests
+   - Axios interceptor adds Bearer token to requests
    - Auto-logout on 401 responses
-   - Refresh token support (to be implemented)
+   - Refresh token rotation
+   - Secure token storage
 
 ## 🎯 Key Components
 
 ### Button
-
 ```tsx
 import Button from '@/components/ui/Button';
 
-<Button variant="primary" size="md" isLoading={false}>
+<Button
+  variant="primary"
+  size="md"
+  isLoading={false}
+  onClick={() => console.log('clicked')}
+>
   Click Me
 </Button>
 ```
 
-Variants: `primary`, `secondary`, `outline`, `ghost`, `danger`
-Sizes: `sm`, `md`, `lg`
+**Variants:** `primary`, `secondary`, `outline`, `ghost`, `danger`
+**Sizes:** `sm`, `md`, `lg`
 
 ### Input
-
 ```tsx
 import Input from '@/components/ui/Input';
 
 <Input
-  label="Email"
+  label="Email Address"
   type="email"
-  error="Invalid email"
-  helperText="Enter your email address"
+  placeholder="you@example.com"
+  error={errors.email?.message}
+  helperText="We'll never share your email"
+  {...register('email')}
 />
 ```
 
 ### Card
-
 ```tsx
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/Card';
 
 <Card>
   <CardHeader>
-    <CardTitle>Title</CardTitle>
+    <CardTitle>Booking Details</CardTitle>
   </CardHeader>
   <CardContent>
     Content here
   </CardContent>
+  <CardFooter>
+    <Button>Action</Button>
+  </CardFooter>
 </Card>
+```
+
+### LoadingScreen
+```tsx
+import LoadingScreen from '@/components/common/LoadingScreen';
+
+<LoadingScreen
+  message="Loading your bookings..."
+  fullScreen={true}
+/>
 ```
 
 ## 🔗 API Integration
 
-The app uses Axios with interceptors for API calls:
+The app uses Axios with interceptors for all API calls:
 
 ```typescript
-import axios from '@/lib/axios';
+import { api } from '@/services/api';
 
 // GET request
-const response = await axios.get('/users');
+const bookings = await api.get('/bookings');
 
 // POST request
-const response = await axios.post('/auth/login', {
-  email: 'user@example.com',
-  password: 'password123'
+const booking = await api.post('/bookings', {
+  serviceType: 'Plumbing',
+  description: 'Leaking pipe in kitchen'
+});
+
+// File upload
+const formData = new FormData();
+formData.append('image', file);
+await api.post('/upload', formData, {
+  headers: { 'Content-Type': 'multipart/form-data' }
 });
 ```
 
-Interceptors automatically:
+**Interceptors automatically:**
 - Add Authorization header with JWT token
-- Handle errors globally
-- Show toast notifications
+- Handle network errors globally
+- Show toast notifications for errors
 - Redirect to login on 401
+- Retry failed requests with refresh token
 
 ## 🎨 Styling Guidelines
 
 ### Tailwind CSS
 
-Use Tailwind utility classes for styling:
+Use Tailwind utility classes for consistent styling:
 
 ```tsx
-<div className="flex items-center justify-between p-4 bg-white rounded-lg shadow-sm">
-  <h1 className="text-2xl font-bold text-gray-900">Title</h1>
+<div className="flex items-center justify-between p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+    Welcome to Dumu Waks
+  </h1>
 </div>
 ```
 
@@ -255,29 +330,63 @@ Use Tailwind utility classes for styling:
 Primary color palette defined in `tailwind.config.js`:
 
 ```css
+/* Primary (Blue) */
 primary-50 to primary-900
-secondary-50 to secondary-900
+
+/* Success (Green) */
+success-50 to success-900
+
+/* Danger (Red) */
+danger-50 to danger-900
+
+/* Warning (Yellow) */
+warning-50 to warning-900
+```
+
+### Dark Mode
+
+All components support dark mode:
+
+```tsx
+<div className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+  Content adapts to theme
+</div>
 ```
 
 ## 📱 Responsive Design
 
-All components are mobile-first responsive:
+Mobile-first responsive breakpoints:
 
 ```tsx
-// Mobile (default) -> Tablet (md) -> Desktop (lg)
-<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+// Mobile (default) -> Tablet (md:768px) -> Desktop (lg:1024px) -> Wide (xl:1280px)
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
   {/* Content */}
 </div>
 ```
 
 ## 🔍 TypeScript
 
-The project uses strict TypeScript:
+Strict TypeScript configuration:
 
-- All components are typed
-- Redux state is fully typed
-- API responses are typed
-- Form data is validated with Zod
+- All components are fully typed
+- Redux state is fully typed with RootState
+- API responses use defined interfaces
+- Form data validated with Zod schemas
+- No `any` types allowed
+
+```typescript
+// Type definitions
+interface Booking {
+  _id: string;
+  serviceType: string;
+  status: BookingStatus;
+  customer: User;
+  technician?: User;
+  pricing: PricingDetails;
+}
+
+type BookingStatus = 'pending' | 'assigned' | 'in_progress' | 'completed' | 'cancelled';
+```
 
 ## 🚀 Deployment
 
@@ -287,15 +396,14 @@ The project uses strict TypeScript:
 npm run build
 ```
 
-Output will be in the `dist/` directory.
+Output in `dist/` directory.
 
-### Environment Variables
-
-Make sure to set production environment variables:
+### Environment Variables (Production)
 
 ```bash
-VITE_API_URL=https://api.baitech.com/api/v1
-VITE_SOCKET_URL=https://api.baitech.com
+VITE_API_URL=https://api.dumuwaks.com/api/v1
+VITE_SOCKET_URL=https://api.dumuwaks.com
+VITE_APP_NAME=Dumu Waks
 ```
 
 ### Deploy to Vercel
@@ -305,7 +413,7 @@ VITE_SOCKET_URL=https://api.baitech.com
 npm i -g vercel
 
 # Deploy
-vercel
+vercel --prod
 ```
 
 ### Deploy to Netlify
@@ -314,8 +422,30 @@ vercel
 # Build
 npm run build
 
-# Deploy dist/ folder to Netlify
+# Deploy dist/ folder
+netlify deploy --prod --dir=dist
 ```
+
+### Deploy to Render (with Backend)
+
+Connected automatically via `render.yaml` in root directory.
+
+## 🎨 Logo Assets
+
+All logo assets are transparent PNGs optimized for web:
+
+- **logo-small.png** (120x120) - Navbar
+- **logo-medium.png** (200x200) - Footer, general use
+- **logo-full.png** (500x500) - Hero sections
+- **logo-loading.png** (300x300) - Loading screens
+- **logo-square.png** (512x512) - Social media, PWA icon
+
+**Process new logos:**
+```bash
+./process-logo.sh
+```
+
+See [REBRANDING.md](../REBRANDING.md) for full branding guidelines.
 
 ## 📚 Learn More
 
@@ -328,15 +458,20 @@ npm run build
 
 ## 🤝 Contributing
 
-1. Create a feature branch
+1. Create a feature branch (`git checkout -b feature/amazing-feature`)
 2. Make your changes
-3. Test thoroughly
-4. Submit a pull request
+3. Test thoroughly (TypeScript checks + visual testing)
+4. Update documentation if needed
+5. Submit a pull request
 
 ## 📄 License
 
-MIT License - see backend LICENSE file
+MIT License - see [LICENSE](../LICENSE) file
 
 ---
 
-**Made with ❤️ by the BaiTech Team**
+<div align="center">
+  <p><strong>Built with ❤️ in Kenya</strong></p>
+  <p>Dumu Waks - Connecting Skilled Technicians with Customers</p>
+  <img src="./public/images/logo-medium.png" alt="Dumu Waks" width="80"/>
+</div>

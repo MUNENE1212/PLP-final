@@ -8,6 +8,7 @@ const {
   deletePost,
   toggleLike,
   addComment,
+  addReply,
   deleteComment,
   sharePost,
   toggleBookmark
@@ -50,6 +51,16 @@ router.post(
     validate
   ],
   addComment
+);
+
+router.post(
+  '/:id/comment/:commentId/reply',
+  protect,
+  [
+    body('text').trim().notEmpty().withMessage('Reply text is required'),
+    validate
+  ],
+  addReply
 );
 
 router.delete('/:id/comment/:commentId', protect, deleteComment);

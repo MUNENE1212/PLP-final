@@ -8,6 +8,7 @@ import {
   MoreVertical,
   Send,
   Trash2,
+  Edit2,
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
@@ -19,6 +20,7 @@ import {
   Post,
 } from '@/store/slices/postSlice';
 import MentionTextarea from '../common/MentionTextarea';
+import EditPostModal from './EditPostModal';
 import { cn } from '@/lib/utils';
 import { timeAgo } from '@/lib/utils';
 import { formatRating } from '@/utils/rating';
@@ -37,6 +39,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
   const [isBookmarking, setIsBookmarking] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   // Early return if post author is not populated
   if (!post.author || typeof post.author !== 'object' || !post.author._id) {
@@ -182,15 +185,27 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
           {showMenu && (
             <div className="absolute right-0 z-10 mt-2 w-48 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 py-1 shadow-lg">
               {isOwnPost ? (
-                <button
-                  onClick={handleDelete}
-                  className="flex w-full items-center space-x-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  <span>Delete Post</span>
-                </button>
+                <>
+                  <button
+                    onClick={() => {
+                      setShowEditModal(true);
+                      setShowMenu(false);
+                    }}
+                    className="flex w-full items-center space-x-2 px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30"
+                  >
+                    <Edit2 className="h-4 w-4" />
+                    <span>Edit Post</span>
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    className="flex w-full items-center space-x-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span>Delete Post</span>
+                  </button>
+                </>
               ) : (
-                <button className="flex w-full items-center space-x-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:bg-gray-900">
+                <button className="flex w-full items-center space-x-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900">
                   <span>Report Post</span>
                 </button>
               )}
@@ -373,6 +388,13 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
           </div>
         </div>
       )}
+
+      {/* Edit Post Modal */}
+      <EditPostModal
+        post={post}
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+      />
     </div>
   );
 };

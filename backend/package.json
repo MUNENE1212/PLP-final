@@ -1,7 +1,7 @@
 {
-  "name": "ementech-backend",
+  "name": "dumuwaks-backend",
   "version": "1.0.0",
-  "description": "EmEnTech - Emergency Maintenance & Engineering Platform - Backend API",
+  "description": "Dumu Waks - Professional Maintenance & Repair Services Platform - Backend API",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
@@ -18,9 +18,12 @@
     "technician",
     "booking",
     "social",
-    "marketplace"
+    "marketplace",
+    "kenya",
+    "maintenance",
+    "repair"
   ],
-  "author": "EmEnTech Team",
+  "author": "Dumu Waks Team",
   "license": "MIT",
   "dependencies": {
     "africastalking": "^0.6.2",

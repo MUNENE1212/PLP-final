@@ -15,11 +15,19 @@ export interface PostAuthor {
   };
 }
 
+export interface PostReply {
+  _id?: string;
+  user: PostAuthor;
+  text: string;
+  createdAt: string;
+}
+
 export interface PostComment {
   _id: string;
   user: PostAuthor;
   text: string;
   likesCount: number;
+  replies?: PostReply[];
   createdAt: string;
 }
 
@@ -139,6 +147,21 @@ export const createPost = createAsyncThunk(
   }
 );
 
+export const updatePost = createAsyncThunk(
+  'posts/updatePost',
+  async ({ postId, postData }: { postId: string; postData: Partial<CreatePostData> }, { rejectWithValue }) => {
+    try {
+      const response = await axios.put(`/posts/${postId}`, postData);
+      toast.success('Post updated successfully!');
+      return response.data;
+    } catch (error: any) {
+      const message = error.response?.data?.message || 'Failed to update post';
+      toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
 export const toggleLike = createAsyncThunk(
   'posts/toggleLike',
   async (postId: string, { rejectWithValue }) => {
@@ -160,6 +183,21 @@ export const addComment = createAsyncThunk(
       return { postId, ...response.data };
     } catch (error: any) {
       const message = error.response?.data?.message || 'Failed to add comment';
+      toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const addReply = createAsyncThunk(
+  'posts/addReply',
+  async ({ postId, commentId, text }: { postId: string; commentId: string; text: string }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`/posts/${postId}/comment/${commentId}/reply`, { text });
+      toast.success('Reply added!');
+      return { postId, commentId, ...response.data };
+    } catch (error: any) {
+      const message = error.response?.data?.message || 'Failed to add reply';
       toast.error(message);
       return rejectWithValue(message);
     }
@@ -303,6 +341,27 @@ const postSlice = createSlice({
         state.error = action.payload as string;
       });
 
+    // Update post
+    builder
+      .addCase(updatePost.pending, (state) => {
+        state.isCreating = true;
+        state.error = null;
+      })
+      .addCase(updatePost.fulfilled, (state, action) => {
+        state.isCreating = false;
+        const postIndex = state.posts.findIndex((p) => p._id === action.payload.post._id);
+        if (postIndex !== -1) {
+          state.posts[postIndex] = action.payload.post;
+        }
+        if (state.currentPost?._id === action.payload.post._id) {
+          state.currentPost = action.payload.post;
+        }
+      })
+      .addCase(updatePost.rejected, (state, action) => {
+        state.isCreating = false;
+        state.error = action.payload as string;
+      });
+
     // Toggle like
     builder.addCase(toggleLike.fulfilled, (state, action) => {
       const post = state.posts.find((p) => p._id === action.payload.postId);
@@ -318,6 +377,20 @@ const postSlice = createSlice({
       if (post) {
         post.comments.push(action.payload.comment);
         post.commentsCount = action.payload.commentsCount;
+      }
+    });
+
+    // Add reply to comment
+    builder.addCase(addReply.fulfilled, (state, action) => {
+      const post = state.posts.find((p) => p._id === action.payload.postId);
+      if (post) {
+        const comment = post.comments.find((c) => c._id === action.payload.commentId);
+        if (comment) {
+          if (!comment.replies) {
+            comment.replies = [];
+          }
+          comment.replies.push(action.payload.reply);
+        }
       }
     });
 

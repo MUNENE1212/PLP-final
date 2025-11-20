@@ -1,13 +1,15 @@
-# BaiTech Backend API
+# Dumu Waks Backend API
 
 <div align="center">
 
-![BaiTech Logo](https://via.placeholder.com/150x150?text=BaiTech)
+<img src="../frontend/public/images/logo-full.png" alt="Dumu Waks Logo" width="150"/>
 
-**AI-Powered Technician & Community Platform**
+<br/><br/>
+
+**Professional Maintenance & Repair Services Platform**
 
 [![Node.js](https://img.shields.io/badge/Node.js-18.x-green.svg)](https://nodejs.org/)
-[![MongoDB](https://img.shields.io/badge/MongoDB-6.x-green.svg)](https://www.mongodb.com/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-7.0-green.svg)](https://www.mongodb.com/)
 [![Express](https://img.shields.io/badge/Express-4.x-blue.svg)](https://expressjs.com/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -36,7 +38,7 @@
 
 ## Overview
 
-BaiTech is a comprehensive platform connecting customers with skilled technicians. The backend provides a robust RESTful API with real-time capabilities, AI-powered matching, payment processing, and social features.
+Dumu Waks is a comprehensive platform connecting customers with skilled technicians across Kenya. The backend provides a robust RESTful API with real-time capabilities, AI-powered matching, payment processing, and social features.
 
 ### Key Highlights
 
@@ -87,11 +89,24 @@ BaiTech is a comprehensive platform connecting customers with skilled technician
 - Block/unblock technicians
 
 #### 4. Payment Processing
-- **M-Pesa Integration**: STK Push, callbacks, transaction query
-- **Stripe Integration**: Card payments, refunds, webhooks
+- **M-Pesa Integration**:
+  - STK Push (C2B) for customer payments
+  - B2C for technician payouts
+  - Real-time callbacks and transaction query
+- **Booking Fee System**:
+  - 20% refundable deposit held in escrow
+  - Automatic collection on booking creation
+- **Completion Payment Flow**:
+  - Remaining balance collected when customer confirms job completion
+  - Automatic 85/15 split (technician/platform)
+  - M-Pesa B2C automatic payout to technicians
+- **Admin Payout Management**:
+  - View pending payouts
+  - Single and batch payout processing
+  - Technician earning history
+- **Stripe Integration**: Card payments, refunds, webhooks (optional)
 - Transaction history & receipts
-- Platform fee management
-- Wallet system (future)
+- Transparent fee breakdown
 
 #### 5. Communication
 - Real-time messaging with Socket.IO
@@ -313,15 +328,6 @@ npm start
 - API Documentation: http://localhost:5000/api-docs
 - Health Check: http://localhost:5000/health
 
-### Sample Credentials (After Seeding)
-
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | admin@baitech.com | Admin@123 |
-| Technician | tech1@baitech.com | Tech@123 |
-| Customer | customer1@gmail.com | Customer@123 |
-| Support | support@baitech.com | Support@123 |
-
 ---
 
 ## Environment Setup
@@ -337,7 +343,7 @@ PORT=5000
 API_VERSION=v1
 
 # Database
-MONGODB_URI=mongodb://localhost:27017/baitech
+MONGODB_URI=mongodb://localhost:27017/dumuwaks
 
 # JWT
 JWT_SECRET=your-super-secret-jwt-key
@@ -350,22 +356,29 @@ SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your-email@gmail.com
 SMTP_PASS=your-app-password
-EMAIL_FROM=noreply@baitech.com
+EMAIL_FROM=noreply@dumuwaks.com
 
 # SMS (Africa's Talking)
 AT_USERNAME=your-username
 AT_API_KEY=your-api-key
-AT_SENDER_ID=BAITECH
+AT_SENDER_ID=DUMUWAKS
 
-# Payment - M-Pesa
+# Payment - M-Pesa (C2B & B2C)
 MPESA_CONSUMER_KEY=your-consumer-key
 MPESA_CONSUMER_SECRET=your-consumer-secret
 MPESA_PASSKEY=your-passkey
 MPESA_SHORTCODE=174379
 MPESA_ENVIRONMENT=sandbox
 MPESA_CALLBACK_URL=https://yourdomain.com/api/v1/payments/mpesa/callback
+MPESA_TIMEOUT_URL=https://yourdomain.com/api/v1/payments/mpesa/timeout
 
-# Payment - Stripe
+# M-Pesa B2C Configuration (Technician Payouts)
+MPESA_B2C_CALLBACK_URL=https://yourdomain.com/api/v1/payments/mpesa/b2c-callback
+MPESA_B2C_TIMEOUT_URL=https://yourdomain.com/api/v1/payments/mpesa/b2c-timeout
+MPESA_INITIATOR_NAME=testapi
+MPESA_SECURITY_CREDENTIAL=your-security-credential-here
+
+# Payment - Stripe (Optional)
 STRIPE_SECRET_KEY=sk_test_your_stripe_key
 STRIPE_PUBLISHABLE_KEY=pk_test_your_publishable_key
 STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
@@ -380,7 +393,10 @@ CLOUDINARY_API_SECRET=your-api-secret
 
 # Client URLs
 CLIENT_WEB_URL=http://localhost:3000
-CLIENT_MOBILE_URL=baitech://
+CLIENT_MOBILE_URL=dumuwaks://
+
+# Admin Configuration
+ADMIN_EMAIL=admin@dumuwaks.com
 ```
 
 See [ENV_VARIABLES.md](ENV_VARIABLES.md) for complete list and descriptions.
@@ -457,6 +473,26 @@ POST   /api/v1/bookings/:id/accept     # Accept booking
 POST   /api/v1/bookings/:id/complete   # Complete booking
 ```
 
+#### Payments & Payouts (NEW)
+```
+# M-Pesa Payments
+POST   /api/v1/payments/mpesa/stk-push           # Initiate STK Push payment
+POST   /api/v1/payments/mpesa/callback           # M-Pesa callback handler
+POST   /api/v1/payments/mpesa/timeout            # M-Pesa timeout handler
+POST   /api/v1/payments/mpesa/b2c-callback       # B2C callback handler
+POST   /api/v1/payments/mpesa/b2c-timeout        # B2C timeout handler
+GET    /api/v1/payments/mpesa/:id/query          # Query transaction status
+
+# Technician Payouts (Admin/Finance)
+GET    /api/v1/payments/payouts/pending          # Get pending payouts
+GET    /api/v1/payments/payouts/:id              # Get payout details
+POST   /api/v1/payments/payouts/:id/process      # Process single payout
+POST   /api/v1/payments/payouts/batch-process    # Process multiple payouts
+
+# Technician Earnings
+GET    /api/v1/payments/payouts/my-payouts       # Get my earnings history
+```
+
 See [API_ROUTES_SUMMARY.md](API_ROUTES_SUMMARY.md) for complete endpoint documentation.
 
 ---
@@ -517,7 +553,7 @@ curl -X POST http://localhost:5000/api/v1/auth/register \
     "lastName": "Doe",
     "email": "john@example.com",
     "phoneNumber": "+254712345678",
-    "password": "Password@123"
+    "password": "your-secure-password"
   }'
 
 # Login
@@ -525,7 +561,7 @@ curl -X POST http://localhost:5000/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "john@example.com",
-    "password": "Password@123"
+    "password": "your-secure-password"
   }'
 ```
 
@@ -550,10 +586,24 @@ curl -X POST http://localhost:5000/api/v1/auth/login \
 
 ### Deployment Options
 
-#### 1. Heroku
+#### 1. Render (Recommended)
+See [RENDER_DEPLOYMENT.md](../docs/deployment/RENDER_DEPLOYMENT.md) for complete guide.
+
+```bash
+# Push to GitHub
+git push origin master
+
+# Deploy via Render Dashboard
+# - Connect GitHub repository
+# - Render auto-detects render.yaml
+# - Configure environment variables
+# - Deploy
+```
+
+#### 2. Heroku
 ```bash
 # Install Heroku CLI
-heroku create baitech-api
+heroku create dumuwaks-api
 
 # Set environment variables
 heroku config:set NODE_ENV=production
@@ -564,16 +614,16 @@ heroku config:set MONGODB_URI=your-mongodb-uri
 git push heroku main
 ```
 
-#### 2. Docker
+#### 3. Docker
 ```bash
 # Build image
-docker build -t baitech-backend .
+docker build -t dumuwaks-backend .
 
 # Run container
-docker run -p 5000:5000 --env-file .env baitech-backend
+docker run -p 5000:5000 --env-file .env dumuwaks-backend
 ```
 
-#### 3. VPS (Ubuntu)
+#### 4. VPS (Ubuntu)
 ```bash
 # Install Node.js
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
@@ -583,12 +633,12 @@ sudo apt-get install -y nodejs
 sudo npm install -g pm2
 
 # Clone and setup
-git clone <repo> /var/www/baitech-backend
-cd /var/www/baitech-backend
+git clone <repo> /var/www/dumuwaks-backend
+cd /var/www/dumuwaks-backend
 npm install --production
 
 # Start with PM2
-pm2 start src/server.js --name baitech-api
+pm2 start src/server.js --name dumuwaks-api
 pm2 save
 pm2 startup
 ```
@@ -725,14 +775,14 @@ GET /health
 # Response
 {
   "status": "healthy",
-  "timestamp": "2025-10-15T10:00:00.000Z",
+  "timestamp": "2025-11-19T10:00:00.000Z",
   "uptime": 3600,
   "environment": "production",
   "database": {
     "status": "connected",
     "isHealthy": true,
     "host": "localhost",
-    "database": "baitech"
+    "database": "dumuwaks"
   }
 }
 ```
@@ -748,25 +798,27 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Support
 
 For support and questions:
-- Email: support@baitech.com
-- Documentation: https://docs.baitech.com
-- Issue Tracker: https://github.com/baitech/backend/issues
+- **Email**: support@dumuwaks.com
+- **Documentation**: See [docs/](../docs/) folder
+- **Issue Tracker**: GitHub Issues
 
 ---
 
 ## Acknowledgments
 
-- Express.js team
-- MongoDB team
-- Socket.IO team
-- All contributors
+- Express.js team for the robust web framework
+- MongoDB team for the powerful database
+- Socket.IO team for real-time capabilities
+- Safaricom for M-Pesa Daraja API
+- All contributors and testers
 
 ---
 
 <div align="center">
 
-**Made with ❤️ by the BaiTech Team**
+<p><strong>Built with ❤️ in Kenya</strong></p>
+<p>Dumu Waks - Connecting Skilled Technicians with Customers</p>
 
-[Website](https://baitech.com) • [Twitter](https://twitter.com/baitech) • [LinkedIn](https://linkedin.com/company/baitech)
+<img src="../frontend/public/images/logo-medium.png" alt="Dumu Waks" width="100"/>
 
 </div>

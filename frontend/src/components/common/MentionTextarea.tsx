@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import axios from 'axios';
+import axios from '@/lib/axios';
 
 interface User {
   id: string;

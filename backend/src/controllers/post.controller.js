@@ -437,6 +437,81 @@ exports.addComment = async (req, res) => {
 };
 
 /**
+ * @desc    Add reply to comment
+ * @route   POST /api/v1/posts/:id/comment/:commentId/reply
+ * @access  Private
+ */
+exports.addReply = async (req, res) => {
+  try {
+    const { text } = req.body;
+    const { id: postId, commentId } = req.params;
+
+    const post = await Post.findById(postId);
+
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: 'Post not found'
+      });
+    }
+
+    const comment = post.comments.id(commentId);
+
+    if (!comment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Comment not found'
+      });
+    }
+
+    // Process mentions in reply
+    let mentionedUserIds = [];
+    if (text) {
+      mentionedUserIds = await processMentions(text);
+    }
+
+    comment.replies.push({
+      user: req.user.id,
+      text,
+      mentions: mentionedUserIds,
+      createdAt: new Date()
+    });
+
+    await post.save();
+
+    // Populate the reply user
+    await post.populate('comments.replies.user', '_id firstName lastName profilePicture role');
+
+    // Get the newly added reply
+    const newReply = comment.replies[comment.replies.length - 1];
+
+    // Create mention notifications
+    if (mentionedUserIds.length > 0 && text) {
+      await createMentionNotifications(
+        req.user.id,
+        mentionedUserIds,
+        'reply',
+        post._id,
+        text
+      );
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Reply added successfully',
+      reply: newReply,
+      repliesCount: comment.replies.length
+    });
+  } catch (error) {
+    console.error('Add reply error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error adding reply'
+    });
+  }
+};
+
+/**
  * @desc    Delete comment
  * @route   DELETE /api/v1/posts/:id/comment/:commentId
  * @access  Private

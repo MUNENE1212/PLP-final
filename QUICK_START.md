@@ -1,4 +1,4 @@
-# BaiTech Platform - Quick Start Guide
+# Dumu Waks Platform - Quick Start Guide
 
 ## 🎉 Database Schemas Initialized Successfully!
 
@@ -64,7 +64,7 @@ nano .env
 
 **Minimum required for local development:**
 ```env
-MONGODB_URI=mongodb://localhost:27017/baitech
+MONGODB_URI=mongodb://localhost:27017/dumuwaks
 JWT_SECRET=your-secret-key-at-least-32-characters
 JWT_REFRESH_SECRET=your-refresh-secret-key
 ```
@@ -231,7 +231,7 @@ Content-Type: application/json
   "lastName": "Doe",
   "email": "john@example.com",
   "phoneNumber": "+254712345678",
-  "password": "securePassword123",
+  "password": "your-secure-password",
   "role": "customer"
 }
 ```

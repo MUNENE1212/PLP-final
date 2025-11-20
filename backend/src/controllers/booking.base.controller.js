@@ -360,23 +360,89 @@ exports.getBookingStats = async (req, res) => {
       query.technician = req.user.id;
     }
 
-    const stats = await Booking.aggregate([
-      { $match: query },
+    // Get counts by status
+    const totalBookings = await Booking.countDocuments(query);
+    const activeBookings = await Booking.countDocuments({
+      ...query,
+      status: { $in: ['pending', 'awaiting_acceptance', 'accepted', 'in_progress'] }
+    });
+    const completedBookings = await Booking.countDocuments({
+      ...query,
+      status: 'completed'
+    });
+    const cancelledBookings = await Booking.countDocuments({
+      ...query,
+      status: 'cancelled'
+    });
+    const pendingBookings = await Booking.countDocuments({
+      ...query,
+      status: { $in: ['pending', 'awaiting_acceptance'] }
+    });
+
+    // Get earnings/spending data
+    const revenueData = await Booking.aggregate([
+      {
+        $match: {
+          ...query,
+          status: 'completed',
+          'payment.status': 'completed'
+        }
+      },
       {
         $group: {
-          _id: '$status',
-          count: { $sum: 1 },
-          totalRevenue: { $sum: '$pricing.totalAmount' }
+          _id: null,
+          totalAmount: { $sum: '$pricing.totalAmount' }
         }
       }
     ]);
 
-    const total = await Booking.countDocuments(query);
+    const totalEarningsOrSpent = revenueData.length > 0 ? revenueData[0].totalAmount : 0;
+
+    // Get average rating
+    const Review = require('../models/Review');
+    let averageRating = 0;
+
+    if (req.user.role === 'technician') {
+      const ratingData = await Review.aggregate([
+        { $match: { technician: req.user._id } },
+        { $group: { _id: null, avgRating: { $avg: '$rating' } } }
+      ]);
+      averageRating = ratingData.length > 0 ? ratingData[0].avgRating : 0;
+    } else if (req.user.role === 'customer') {
+      const ratingData = await Review.aggregate([
+        { $match: { customer: req.user._id } },
+        { $group: { _id: null, avgRating: { $avg: '$rating' } } }
+      ]);
+      averageRating = ratingData.length > 0 ? ratingData[0].avgRating : 0;
+    }
+
+    // Get unread message count
+    const Conversation = require('../models/Conversation');
+    const conversations = await Conversation.find({
+      participants: req.user.id,
+      deletedFor: { $ne: req.user.id }
+    });
+
+    let unreadMessages = 0;
+    conversations.forEach(conv => {
+      const participant = conv.participants.find(p => p.user.toString() === req.user.id.toString());
+      if (participant) {
+        unreadMessages += participant.unreadCount || 0;
+      }
+    });
 
     res.status(200).json({
       success: true,
-      total,
-      stats
+      stats: {
+        totalBookings,
+        activeBookings,
+        completedBookings,
+        cancelledBookings,
+        pendingBookings,
+        ...(req.user.role === 'technician' ? { totalEarnings: totalEarningsOrSpent } : { totalSpent: totalEarningsOrSpent }),
+        averageRating: averageRating > 0 ? parseFloat(averageRating.toFixed(1)) : null,
+        unreadMessages
+      }
     });
   } catch (error) {
     console.error('Get booking stats error:', error);

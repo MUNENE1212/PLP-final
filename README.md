@@ -1,17 +1,46 @@
-# 🔧 EmEnTech - Emergency Maintenance & Engineering Platform
+# 🔧 Dumu Waks - Professional Maintenance & Repair Services Platform
 
-> A comprehensive platform connecting customers with skilled technicians for emergency repairs, maintenance, and engineering services across Kenya.
+<div align="center">
+  <img src="./frontend/public/images/logo-full.png" alt="Dumu Waks Logo" width="200"/>
+  <br/>
+  <br/>
+
+  <h3>🌐 <a href="https://ementech-frontend.onrender.com/">Live Demo</a></h3>
+
+  <p><strong>Connecting skilled technicians with customers across Kenya</strong></p>
+</div>
+
+> A comprehensive full-stack platform enabling customers to find, book, and pay skilled technicians for professional repairs, maintenance, and engineering services. Built with the MERN stack and featuring AI-powered matching, real-time communication, and M-Pesa payment integration.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org)
 [![MongoDB](https://img.shields.io/badge/MongoDB-7.0-green)](https://www.mongodb.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-18-61DAFB)](https://reactjs.org/)
+[![Live Demo](https://img.shields.io/badge/demo-online-success)](https://ementech-frontend.onrender.com/)
+
+---
+
+## 🌟 Live Application
+
+**🔗 Visit the app:** [https://ementech-frontend.onrender.com/](https://ementech-frontend.onrender.com/)
+
+> **Production Ready!** The platform is live and accepting real users. Create your account to start:
+> - **Customers**: Find and book skilled technicians for your maintenance needs
+> - **Technicians**: Showcase your skills and connect with customers
+> - **Real Payments**: Integrated M-Pesa payment system (Kenya)
+> - **Real-Time Matching**: AI-powered technician matching algorithm
+
+**Note:** First load may take 30-60 seconds as the free tier services spin up from sleep mode.
+
+---
 
 ## 🚀 Quick Start
 
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd ementech
+cd dumuwaks
 
 # Quick setup
 cp .env.docker.example .env.docker
@@ -57,11 +86,14 @@ cd frontend && npm install && npm run dev
 - 🎫 **Support System** - Comprehensive ticket-based support
 
 ### Payment Features
-- 20% refundable booking fee (held in escrow)
-- Transparent pricing breakdown
-- Platform commission model
-- Automatic urgency calculation
-- Distance-based fees
+- 💳 **M-Pesa Integration** - Seamless STK Push payments
+- 💰 **Booking Fee System** - 20% refundable deposit (held in escrow)
+- 🔄 **Completion Payment** - Automatic collection of remaining balance
+- 💸 **Technician Payouts** - 85% payout to technicians via M-Pesa B2C
+- 📊 **Transparent Pricing** - Clear breakdown of all fees
+- 🤖 **Automatic Processing** - Platform commission (15%) handled automatically
+- ⚡ **Dynamic Pricing** - Based on urgency, distance, and time
+- 📱 **Admin Dashboard** - Manage pending payouts and batch processing
 
 ### Advanced Features
 - Service completion verification
@@ -102,7 +134,7 @@ cd frontend && npm install && npm run dev
 ## 📁 Project Structure
 
 ```
-ementech/
+dumuwaks/
 ├── backend/              # Node.js/Express API
 │   ├── src/
 │   │   ├── controllers/  # Route controllers
@@ -355,18 +387,36 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - **Documentation:** See [docs/](./docs/) folder
 - **Issues:** GitHub Issues
-- **Email:** support@ementech.com (if applicable)
+- **Email:** support@dumuwaks.com
+
+## 🎨 Branding
+
+The platform was recently rebranded from EmEnTech to **Dumu Waks**. All branding assets have been updated:
+
+- ✅ **Logo Assets** - Transparent PNG variants (small, medium, full, loading, square)
+- ✅ **Favicons** - Comprehensive set for all devices (iOS, Android, Windows)
+- ✅ **PWA Support** - Progressive Web App manifest and icons
+- ✅ **Dark Mode Ready** - All logos work on light and dark backgrounds
+- ✅ **Documentation** - Complete rebranding guides available
+
+See [REBRANDING.md](./REBRANDING.md) and [SVG_CONVERSION_GUIDE.md](./SVG_CONVERSION_GUIDE.md) for details.
 
 ## 🗺️ Roadmap
 
 - [ ] Mobile app (React Native)
 - [ ] Advanced analytics dashboard
 - [ ] Multi-language support
-- [ ] SMS notifications
-- [ ] Automated testing suite
-- [ ] Performance monitoring
-- [ ] CI/CD pipeline
+- [ ] SMS notifications via Africa's Talking
+- [ ] Automated testing suite (Jest + React Testing Library)
+- [ ] Performance monitoring (New Relic/Sentry)
+- [ ] CI/CD pipeline (GitHub Actions)
+- [ ] Enhanced technician verification (KYC)
+- [ ] Video consultations (Agora integration)
 
 ---
 
-**Built with ❤️ for connecting skilled technicians with customers in need**
+<div align="center">
+  <p><strong>Built with ❤️ in Kenya</strong></p>
+  <p>Connecting skilled technicians with customers who need them</p>
+  <img src="./frontend/public/images/logo-medium.png" alt="Dumu Waks" width="100"/>
+</div>
