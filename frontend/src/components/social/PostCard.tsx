@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Heart,
   MessageCircle,
@@ -14,6 +15,8 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
   toggleLike,
   addComment,
+  addReply,
+  toggleCommentLike,
   sharePost,
   toggleBookmark,
   deletePost,
@@ -25,6 +28,7 @@ import { cn } from '@/lib/utils';
 import { timeAgo } from '@/lib/utils';
 import { formatRating } from '@/utils/rating';
 import { getRoleStyles, UserRole } from '@/utils/roleColors';
+import { Card } from '@/components/ui';
 
 interface PostCardProps {
   post: Post;
@@ -40,6 +44,8 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const [isLiking, setIsLiking] = useState(false);
   const [isBookmarking, setIsBookmarking] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
 
   // Early return if post author is not populated
   if (!post.author || typeof post.author !== 'object' || !post.author._id) {
@@ -89,6 +95,19 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
     }
   };
 
+  const handleCommentLike = async (commentId: string) => {
+    await dispatch(toggleCommentLike({ postId: post._id, commentId }));
+  };
+
+  const handleReply = async (commentId: string) => {
+    if (!replyText.trim()) return;
+    const result = await dispatch(addReply({ postId: post._id, commentId, text: replyText }));
+    if (addReply.fulfilled.match(result)) {
+      setReplyText('');
+      setReplyingTo(null);
+    }
+  };
+
   const getProfilePicture = (author: any) => {
     if (!author) return 'https://ui-avatars.com/api/?name=User&background=random';
     return author.profilePicture || `https://ui-avatars.com/api/?name=${author.firstName || 'User'}+${author.lastName || ''}&background=random`;
@@ -124,117 +143,177 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const roleStyles = getRoleStyles(post.author.role as UserRole);
 
   return (
-    <div className={cn(
-      "rounded-lg border bg-indigo-50 dark:bg-gray-800 shadow-sm transition-shadow hover:shadow-md",
-      "border-gray-200 dark:border-gray-700",
-      roleStyles.border
-    )}>
+    <Card className="overflow-hidden hover:shadow-xl transition-all duration-300">
       {/* Header */}
-      <div className="flex items-start justify-between p-3 sm:p-4">
-        <div className="flex space-x-2 sm:space-x-3 flex-1 min-w-0">
-          <Link to={`/profile/${post.author._id}`} className="flex-shrink-0">
-            <img
-              src={getProfilePicture(post.author)}
-              alt={post.author.firstName}
-              className={cn(
-                "h-12 w-12 rounded-full object-cover ring-2 cursor-pointer transition-all",
-                `ring-2 ${roleStyles.ring.replace('ring-', 'ring-')}/30 hover:${roleStyles.ring}`
-              )}
-            />
-          </Link>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Link to={`/profile/${post.author._id}`}>
-                <h3 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-gray-100 hover:text-primary-600 transition-colors cursor-pointer">
-                  {post.author.firstName} {post.author.lastName}
-                </h3>
-              </Link>
-              <span className={roleStyles.badge}>
-                {roleStyles.emoji} {roleStyles.name}
-              </span>
-              {post.author.rating && post.author.rating.count > 0 && (
-                <span className="flex items-center text-xs sm:text-sm text-yellow-600 flex-shrink-0">
-                  ⭐ {formatRating(post.author.rating)}
+      <div className="p-4 flex items-center gap-3">
+        <Link to={`/profile/${post.author._id}`} className="flex-shrink-0">
+          <img
+            src={getProfilePicture(post.author)}
+            alt={post.author.firstName}
+            className={cn(
+              "h-12 w-12 rounded-full object-cover ring-2 cursor-pointer transition-all hover:scale-105",
+              `ring-2 ${roleStyles.ring.replace('ring-', 'ring-')}/30 hover:${roleStyles.ring}`
+            )}
+          />
+        </Link>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Link to={`/profile/${post.author._id}`}>
+              <h3 className="font-semibold text-neutral-900 dark:text-white hover:text-primary-600 transition-colors cursor-pointer">
+                {post.author.firstName} {post.author.lastName}
+              </h3>
+            </Link>
+            <span className={cn('text-xs px-2 py-0.5 rounded-full', roleStyles.badge)}>
+              {roleStyles.emoji} {roleStyles.name}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+            <span>{timeAgo(post.createdAt)}</span>
+            {post.type !== 'text' && (
+              <>
+                <span>•</span>
+                <span className={cn('flex items-center gap-1', getPostTypeColor())}>
+                  <span>{getPostTypeIcon()}</span>
+                  <span className="capitalize">{post.type}</span>
                 </span>
-              )}
-            </div>
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-gray-500 dark:text-gray-400">
-              <span>{timeAgo(post.createdAt)}</span>
-              {post.type !== 'text' && (
-                <>
-                  <span>•</span>
-                  <span className={cn('flex items-center space-x-1', getPostTypeColor())}>
-                    <span>{getPostTypeIcon()}</span>
-                    <span className="capitalize">{post.type}</span>
-                  </span>
-                </>
-              )}
-            </div>
+              </>
+            )}
           </div>
         </div>
 
         {/* Menu */}
         <div className="relative">
-          <button
+          <motion.button
+            whileTap={{ scale: 0.95 }}
             onClick={() => setShowMenu(!showMenu)}
-            className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-400"
+            className="rounded-full p-2 text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
           >
             <MoreVertical className="h-5 w-5" />
-          </button>
+          </motion.button>
 
-          {showMenu && (
-            <div className="absolute right-0 z-10 mt-2 w-48 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 py-1 shadow-lg">
-              {isOwnPost ? (
-                <>
-                  <button
-                    onClick={() => {
-                      setShowEditModal(true);
-                      setShowMenu(false);
-                    }}
-                    className="flex w-full items-center space-x-2 px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30"
-                  >
-                    <Edit2 className="h-4 w-4" />
-                    <span>Edit Post</span>
+          <AnimatePresence>
+            {showMenu && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.1 }}
+                className="absolute right-0 z-10 mt-2 w-48 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 py-1 shadow-lg"
+              >
+                {isOwnPost ? (
+                  <>
+                    <button
+                      onClick={() => {
+                        setShowEditModal(true);
+                        setShowMenu(false);
+                      }}
+                      className="flex w-full items-center gap-2 px-4 py-2 text-sm text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                      <span>Edit Post</span>
+                    </button>
+                    <button
+                      onClick={handleDelete}
+                      className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span>Delete Post</span>
+                    </button>
+                  </>
+                ) : (
+                  <button className="flex w-full items-center gap-2 px-4 py-2 text-sm text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors">
+                    <span>Report Post</span>
                   </button>
-                  <button
-                    onClick={handleDelete}
-                    className="flex w-full items-center space-x-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    <span>Delete Post</span>
-                  </button>
-                </>
-              ) : (
-                <button className="flex w-full items-center space-x-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900">
-                  <span>Report Post</span>
-                </button>
-              )}
-            </div>
-          )}
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="px-3 sm:px-4 pb-3">
-        <p className="whitespace-pre-wrap text-sm sm:text-base text-gray-800 dark:text-gray-200">{post.caption}</p>
-
-        {/* Hashtags */}
-        {post.hashtags && post.hashtags.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-2">
-            {post.hashtags.map((tag) => (
-              <span
-                key={tag}
-                className="text-sm text-primary-600 hover:underline cursor-pointer"
-              >
-                #{tag}
-              </span>
-            ))}
+      {/* Shared Post Indicator */}
+      {post.sharedPost && (
+        <div className="px-3 sm:px-4 pb-2">
+          <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mb-2">
+            <Share2 className="h-3 w-3 mr-1" />
+            <span>Shared</span>
           </div>
-        )}
-      </div>
+          {post.shareCaption && (
+            <p className="whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200 mb-3">
+              {post.shareCaption}
+            </p>
+          )}
+        </div>
+      )}
 
-      {/* Media */}
-      {post.media && post.media.length > 0 && (
+      {/* Content - if shared post, show the original in a card */}
+      {post.sharedPost ? (
+        <div className="mx-3 sm:mx-4 mb-3 rounded-lg border border-gray-300 dark:border-gray-600 overflow-hidden">
+          {/* Original post header */}
+          <div className="flex items-start space-x-2 p-3 bg-gray-50 dark:bg-gray-900">
+            <Link to={`/profile/${post.sharedPost.author._id}`}>
+              <img
+                src={getProfilePicture(post.sharedPost.author)}
+                alt={post.sharedPost.author.firstName}
+                className="h-10 w-10 rounded-full object-cover"
+              />
+            </Link>
+            <div className="flex-1">
+              <Link to={`/profile/${post.sharedPost.author._id}`}>
+                <h4 className="font-semibold text-sm text-gray-900 dark:text-gray-100 hover:text-primary-600">
+                  {post.sharedPost.author.firstName} {post.sharedPost.author.lastName}
+                </h4>
+              </Link>
+              <span className="text-xs text-gray-500">{timeAgo(post.sharedPost.createdAt)}</span>
+            </div>
+          </div>
+
+          {/* Original post content */}
+          <div className="p-3">
+            {post.sharedPost.caption && (
+              <p className="whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200">
+                {post.sharedPost.caption}
+              </p>
+            )}
+
+            {/* Original post media */}
+            {post.sharedPost.media && post.sharedPost.media.length > 0 && (
+              <div className="mt-2">
+                {post.sharedPost.media.map((media, index) => (
+                  <div key={index} className="relative aspect-video overflow-hidden rounded">
+                    {media.type === 'image' ? (
+                      <img src={media.url} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <video src={media.url} poster={media.thumbnail} controls className="w-full h-full object-cover" />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="px-3 sm:px-4 pb-3">
+            <p className="whitespace-pre-wrap text-sm sm:text-base text-gray-800 dark:text-gray-200">{post.caption}</p>
+
+            {/* Hashtags */}
+            {post.hashtags && post.hashtags.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {post.hashtags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="text-sm text-primary-600 hover:underline cursor-pointer"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Media */}
+          {post.media && post.media.length > 0 && (
         <div className={cn(
           'grid gap-1',
           post.media.length === 1 ? 'grid-cols-1' : 'grid-cols-2'
@@ -258,100 +337,107 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
             </div>
           ))}
         </div>
+          )}
+        </>
       )}
 
       {/* Engagement Stats */}
-      <div className="flex items-center justify-between border-t border-gray-100 dark:border-gray-700 px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-        <div className="flex flex-wrap gap-x-3 gap-y-1">
+      <div className="flex items-center justify-between border-t border-neutral-200 dark:border-neutral-800 px-4 py-2 text-xs text-neutral-500 dark:text-neutral-400">
+        <div className="flex gap-4">
           <span>{post.likesCount} likes</span>
           <span>{post.commentsCount} comments</span>
         </div>
-        <div className="flex flex-wrap gap-x-3 gap-y-1">
+        <div className="flex gap-4">
           <span className="hidden sm:inline">{post.sharesCount} shares</span>
           <span>{post.views} views</span>
         </div>
       </div>
 
       {/* Actions */}
-      <div className="flex items-center justify-around border-t border-gray-100 dark:border-gray-700 px-2 sm:px-4 py-2">
-        <button
+      <div className="flex items-center justify-around border-t border-neutral-200 dark:border-neutral-800 px-2 py-2">
+        <motion.button
+          whileTap={{ scale: 0.95 }}
           onClick={handleLike}
           disabled={isLiking}
           className={cn(
-            'flex flex-1 items-center justify-center space-x-1 sm:space-x-2 rounded-lg py-2 text-xs sm:text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
+            'flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
             post.isLiked
-              ? 'text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20'
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+              ? 'text-red-600 bg-red-50 dark:bg-red-900/20'
+              : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'
           )}
         >
-          <Heart className={cn('h-4 w-4 sm:h-5 sm:w-5', post.isLiked && 'fill-current')} />
+          <Heart className={cn('h-5 w-5', post.isLiked && 'fill-current')} />
           <span className="hidden sm:inline">Like</span>
-        </button>
+        </motion.button>
 
-        <button
+        <motion.button
+          whileTap={{ scale: 0.95 }}
           onClick={() => setShowComments(!showComments)}
-          className="flex flex-1 items-center justify-center space-x-1 sm:space-x-2 rounded-lg py-2 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+          className="flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
         >
-          <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
+          <MessageCircle className="h-5 w-5" />
           <span className="hidden sm:inline">Comment</span>
-        </button>
+        </motion.button>
 
-        <button
+        <motion.button
+          whileTap={{ scale: 0.95 }}
           onClick={handleShare}
-          className="flex flex-1 items-center justify-center space-x-1 sm:space-x-2 rounded-lg py-2 text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 transition-colors hover:bg-gray-50 dark:hover:bg-gray-700"
+          className="flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
         >
-          <Share2 className="h-4 w-4 sm:h-5 sm:w-5" />
+          <Share2 className="h-5 w-5" />
           <span className="hidden sm:inline">Share</span>
-        </button>
+        </motion.button>
 
-        <button
+        <motion.button
+          whileTap={{ scale: 0.95 }}
           onClick={handleBookmark}
           disabled={isBookmarking}
           className={cn(
-            'flex flex-1 items-center justify-center space-x-1 sm:space-x-2 rounded-lg py-2 text-xs sm:text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
+            'flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
             post.isBookmarked
-              ? 'text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20'
-              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+              ? 'text-primary-600 bg-primary-50 dark:bg-primary-900/20'
+              : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'
           )}
         >
-          <Bookmark className={cn('h-4 w-4 sm:h-5 sm:w-5', post.isBookmarked && 'fill-current')} />
+          <Bookmark className={cn('h-5 w-5', post.isBookmarked && 'fill-current')} />
           <span className="hidden sm:inline">Save</span>
-        </button>
+        </motion.button>
       </div>
 
       {/* Comments Section */}
       {showComments && (
-        <div className="border-t border-gray-100 dark:border-gray-700 px-3 sm:px-4 py-3">
+        <div className="border-t border-neutral-200 dark:border-neutral-800 px-4 py-4">
           {/* Comment Form */}
-          <form onSubmit={handleComment} className="mb-4 flex space-x-2">
+          <form onSubmit={handleComment} className="mb-4 flex gap-3">
             <img
               src={getProfilePicture(user)}
               alt={user?.firstName}
-              className="h-8 w-8 rounded-full object-cover flex-shrink-0"
+              className="h-10 w-10 rounded-full object-cover flex-shrink-0"
             />
-            <div className="flex-1 flex space-x-2">
+            <div className="flex-1 flex gap-2">
               <div className="flex-1">
                 <MentionTextarea
                   value={commentText}
                   onChange={setCommentText}
                   placeholder="Write a comment... Use @ to mention someone"
-                  className="w-full resize-none rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 sm:px-4 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20"
+                  className="w-full resize-none rounded-full border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 px-4 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all"
                   rows={1}
                   maxLength={500}
                 />
               </div>
-              <button
+              <motion.button
+                whileTap={{ scale: 0.95 }}
                 type="submit"
                 disabled={!commentText.trim()}
-                className="rounded-full bg-primary-600 p-2 text-white transition-colors hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 h-fit"
+                className="rounded-full bg-gradient-to-r from-primary-500 to-secondary-500 p-2.5 text-white transition-all hover:from-primary-600 hover:to-secondary-600 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 h-fit shadow-lg shadow-primary-500/20"
               >
                 <Send className="h-4 w-4" />
-              </button>
+              </motion.button>
             </div>
           </form>
 
           {/* Comments List */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             {post.comments.map((comment) => {
               // Safety check: Ensure comment.user is populated
               if (!comment.user || typeof comment.user !== 'object' || !comment.user._id) {
@@ -359,7 +445,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
               }
 
               return (
-                <div key={comment._id} className="flex space-x-2">
+                <div key={comment._id} className="flex gap-3">
                   <Link to={`/profile/${comment.user._id}`}>
                     <img
                       src={getProfilePicture(comment.user)}
@@ -368,19 +454,83 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
                     />
                   </Link>
                   <div className="flex-1">
-                    <div className="rounded-lg bg-gray-50 dark:bg-gray-900 px-3 py-2">
+                    <div className="rounded-2xl bg-neutral-100 dark:bg-neutral-800/50 px-4 py-2.5">
                       <Link to={`/profile/${comment.user._id}`}>
-                        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 hover:text-primary-600 transition-colors cursor-pointer">
+                        <p className="text-sm font-semibold text-neutral-900 dark:text-white hover:text-primary-600 transition-colors cursor-pointer">
                           {comment.user.firstName} {comment.user.lastName}
                         </p>
                       </Link>
-                      <p className="text-sm text-gray-700 dark:text-gray-300">{comment.text}</p>
+                      <p className="text-sm text-neutral-700 dark:text-neutral-300 mt-0.5">{comment.text}</p>
                     </div>
-                    <div className="mt-1 flex items-center space-x-3 text-xs text-gray-500">
+                    <div className="mt-1.5 flex items-center gap-3 text-xs text-neutral-500 dark:text-neutral-400">
                       <span>{timeAgo(comment.createdAt)}</span>
-                      <button className="hover:underline">Like</button>
-                      <button className="hover:underline">Reply</button>
+                      <button
+                        onClick={() => handleCommentLike(comment._id)}
+                        className="hover:text-primary-600 transition-colors font-medium"
+                      >
+                        {comment.likesCount > 0 ? `Like (${comment.likesCount})` : 'Like'}
+                      </button>
+                      <button
+                        onClick={() => setReplyingTo(replyingTo === comment._id ? null : comment._id)}
+                        className="hover:text-primary-600 transition-colors font-medium"
+                      >
+                        Reply
+                      </button>
                     </div>
+
+                    {/* Reply input */}
+                    {replyingTo === comment._id && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mt-3 flex gap-2"
+                      >
+                        <input
+                          type="text"
+                          value={replyText}
+                          onChange={(e) => setReplyText(e.target.value)}
+                          placeholder="Write a reply..."
+                          className="flex-1 rounded-xl border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              handleReply(comment._id);
+                            }
+                          }}
+                        />
+                        <motion.button
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => handleReply(comment._id)}
+                          className="rounded-xl bg-gradient-to-r from-primary-500 to-secondary-500 px-4 py-2 text-sm text-white hover:from-primary-600 hover:to-secondary-600 transition-all shadow-lg shadow-primary-500/20"
+                        >
+                          Reply
+                        </motion.button>
+                      </motion.div>
+                    )}
+
+                    {/* Display replies */}
+                    {comment.replies && comment.replies.length > 0 && (
+                      <div className="mt-3 space-y-3">
+                        {comment.replies.map((reply, idx) => (
+                          <div key={idx} className="flex gap-2">
+                            <img
+                              src={getProfilePicture(reply.user)}
+                              alt={reply.user.firstName}
+                              className="h-6 w-6 rounded-full object-cover"
+                            />
+                            <div className="flex-1">
+                              <div className="rounded-xl bg-neutral-100 dark:bg-neutral-800/50 px-3 py-2">
+                                <p className="text-xs font-semibold text-neutral-900 dark:text-white">
+                                  {reply.user.firstName} {reply.user.lastName}
+                                </p>
+                                <p className="text-xs text-neutral-700 dark:text-neutral-300">{reply.text}</p>
+                              </div>
+                              <span className="mt-1 text-xs text-neutral-500">{timeAgo(reply.createdAt)}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -395,7 +545,7 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
       />
-    </div>
+    </Card>
   );
 };
 

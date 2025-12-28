@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { updateProfile, updateAvailability, clearError } from '@/store/slices/authSlice';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 import Loading from '@/components/ui/Loading';
 import Alert from '@/components/ui/Alert';
 import SkillsManager from '@/components/profile/SkillsManager';

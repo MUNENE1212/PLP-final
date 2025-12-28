@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { fetchDashboardStats, fetchRecentActivity } from '@/store/slices/dashboardSlice';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { User, Calendar, MessageSquare, Star, RefreshCw } from 'lucide-react';
+import { User, Calendar, MessageSquare, Star, RefreshCw, Wrench, Bell, Settings, HelpCircle, Bot, Clock, TrendingUp, FileText, MapPin } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import Feed from '@/components/social/Feed';
 import Loading from '@/components/ui/Loading';
@@ -76,165 +77,215 @@ const Dashboard: React.FC = () => {
   ];
 
   return (
-    <div>
-      {/* Welcome Section */}
-      <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-blue-950 dark:text-gray-100">
-          Welcome back, {user?.firstName}!
-        </h1>
-        <p className="mt-1 sm:mt-2 text-sm sm:text-base text-slate-600 dark:text-gray-400">
-          Connect with the community and {user?.role === 'customer' ? 'find services' : 'showcase your work'}.
-        </p>
-      </div>
-
-      {/* Main Layout - Two Column */}
-      <div className="grid gap-4 sm:gap-6 lg:grid-cols-12">
-        {/* Left Column - Feed */}
-        <div className="lg:col-span-8">
-          <Feed />
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-24 md:pb-8">
+      {/* Header with gradient */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 text-white p-6 md:p-8 mb-4"
+      >
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold mb-1">
+              Welcome back, {user?.firstName}! 👋
+            </h1>
+            <p className="text-white/90">
+              {user?.role === 'customer'
+                ? 'What would you like to get fixed today?'
+                : 'You have new opportunities to showcase your work'}
+            </p>
+          </div>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="bg-white/20 backdrop-blur-sm p-3 rounded-2xl relative"
+            onClick={() => navigate('/notifications')}
+          >
+            <Bell className="h-6 w-6" />
+            {(stats?.unreadMessages && stats.unreadMessages > 0) && (
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-xs flex items-center justify-center">
+                {stats.unreadMessages}
+              </span>
+            )}
+          </motion.button>
         </div>
 
-        {/* Right Column - Sidebar */}
-        <div className="space-y-4 sm:space-y-6 lg:col-span-4">
-          {/* Stats Grid */}
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-1 lg:space-y-0">
-            {isLoading && !stats ? (
-              <div className="col-span-2 lg:col-span-1 flex justify-center py-8">
-                <Loading size="md" text="Loading stats..." />
+        {/* Stats Row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { label: 'Total Bookings', value: stats?.totalBookings || 0, icon: Calendar },
+            { label: 'Upcoming', value: stats?.activeBookings || 0, icon: Clock },
+            { label: 'Completed', value: stats?.completedBookings || 0, icon: TrendingUp },
+            {
+              label: user?.role === 'customer' ? 'Total Spent' : 'Total Earnings',
+              value: stats?.totalEarnings
+                ? `KES ${(stats.totalEarnings / 1000).toFixed(1)}k`
+                : stats?.totalSpent
+                ? `KES ${(stats.totalSpent / 1000).toFixed(1)}k`
+                : 'KES 0',
+              icon: Star
+            }
+          ].map((stat, idx) => {
+            const Icon = stat.icon;
+            return (
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: idx * 0.1 }}
+                className="bg-white/10 backdrop-blur-sm p-4 rounded-xl"
+              >
+                <Icon className="h-5 w-5 mb-2 text-white/80" />
+                <p className="text-2xl font-bold">{stat.value}</p>
+                <p className="text-xs text-white/80">{stat.label}</p>
+              </motion.div>
+            );
+          })}
+        </div>
+      </motion.div>
+
+      {/* Bento Grid Content */}
+      <div className="container mx-auto px-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+
+          {/* Quick Actions - Featured */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="lg:col-span-2"
+          >
+            <Card className="p-6 h-full bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 border-0 shadow-lg">
+              <h3 className="font-semibold text-lg mb-4 text-gray-900 dark:text-white">
+                Quick Actions
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                {(user?.role === 'customer' ? [
+                  { icon: Wrench, label: 'Find Technician', route: '/find-technicians', color: 'from-blue-500 to-blue-600' },
+                  { icon: Calendar, label: 'New Booking', route: '/booking/create', color: 'from-purple-500 to-purple-600' },
+                  { icon: MessageSquare, label: 'Messages', route: '/messages', color: 'from-green-500 to-green-600' },
+                  { icon: HelpCircle, label: 'Get Help', route: '/support', color: 'from-orange-500 to-orange-600' }
+                ] : [
+                  { icon: Calendar, label: 'View Requests', route: '/bookings', color: 'from-blue-500 to-blue-600' },
+                  { icon: User, label: 'My Profile', route: '/settings', color: 'from-purple-500 to-purple-600' },
+                  { icon: MessageSquare, label: 'Messages', route: '/messages', color: 'from-green-500 to-green-600' },
+                  { icon: Settings, label: 'Settings', route: '/preferences', color: 'from-orange-500 to-orange-600' }
+                ] as const).map((action, idx) => (
+                  <motion.button
+                    key={action.label}
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => navigate(action.route)}
+                    className={`bg-gradient-to-r ${action.color} text-white p-4 rounded-xl flex flex-col items-center gap-2 shadow-md hover:shadow-xl transition-all`}
+                  >
+                    <action.icon className="h-6 w-6" />
+                    <span className="text-sm font-medium">{action.label}</span>
+                  </motion.button>
+                ))}
               </div>
-            ) : (
-              displayStats.map((stat) => {
-                const Icon = stat.icon;
-                return (
-                  <Card key={stat.name}>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">{stat.name}</CardTitle>
-                      <Icon className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold dark:text-gray-100">{stat.value}</div>
-                      <p className={`text-xs ${
-                        stat.changeType === 'positive' ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-400'
-                      }`}>
-                        {stat.change}
-                      </p>
-                    </CardContent>
-                  </Card>
-                );
-              })
-            )}
-          </div>
-
-          {/* Quick Actions */}
-          <div>
-            <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2 sm:mb-3">Quick Actions</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
-              {user?.role === 'customer' ? (
-                <>
-                  <Card
-                    className="hover:shadow-md dark:hover:shadow-gray-700 transition-shadow cursor-pointer"
-                    onClick={() => navigate('/find-technicians')}
-                  >
-                    <CardContent className="pt-4">
-                      <h3 className="font-medium text-gray-900 dark:text-gray-100">Find Technicians</h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                        Search for skilled technicians
-                      </p>
-                    </CardContent>
-                  </Card>
-
-                  <Card
-                    className="hover:shadow-md dark:hover:shadow-gray-700 transition-shadow cursor-pointer"
-                    onClick={() => navigate('/find-technicians')}
-                  >
-                    <CardContent className="pt-4">
-                      <h3 className="font-medium text-gray-900 dark:text-gray-100">New Booking</h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                        Create a service booking
-                      </p>
-                    </CardContent>
-                  </Card>
-                </>
-              ) : (
-                <>
-                  <Card className="hover:shadow-md dark:hover:shadow-gray-700 transition-shadow cursor-pointer">
-                    <CardContent className="pt-4">
-                      <h3 className="font-medium text-gray-900 dark:text-gray-100">View Requests</h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                        Check booking requests
-                      </p>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="hover:shadow-md dark:hover:shadow-gray-700 transition-shadow cursor-pointer">
-                    <CardContent className="pt-4">
-                      <h3 className="font-medium text-gray-900 dark:text-gray-100">Update Portfolio</h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                        Showcase your work
-                      </p>
-                    </CardContent>
-                  </Card>
-                </>
-              )}
-            </div>
-          </div>
+            </Card>
+          </motion.div>
 
           {/* Recent Activity */}
-          <div>
-            <div className="flex items-center justify-between mb-2 sm:mb-3">
-              <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100">
-                Recent Activity
-              </h2>
-              <button
-                onClick={() => dispatch(fetchRecentActivity(10))}
-                disabled={isLoading}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 disabled:opacity-50"
-                title="Refresh activity"
-              >
-                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-              </button>
-            </div>
-            <Card>
-              <CardContent className="pt-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <Card className="p-6 h-full">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-gray-900 dark:text-white">
+                  Recent Activity
+                </h3>
+                <button
+                  onClick={() => dispatch(fetchRecentActivity(10))}
+                  disabled={isLoading}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 disabled:opacity-50"
+                  title="Refresh activity"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                </button>
+              </div>
+              <div className="space-y-4">
                 {isLoading && recentActivity.length === 0 ? (
-                  <div className="flex justify-center py-8">
+                  <div className="flex justify-center py-4">
                     <Loading size="sm" text="Loading activity..." />
                   </div>
                 ) : recentActivity.length === 0 ? (
-                  <div className="text-center py-8">
+                  <div className="text-center py-4">
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       No recent activity
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {recentActivity.slice(0, 5).map((activity) => {
-                      const iconConfig = getActivityIcon(activity.type, activity.status);
-                      const Icon = iconConfig.icon;
+                  recentActivity.slice(0, 4).map((activity) => {
+                    const iconConfig = getActivityIcon(activity.type, activity.status);
+                    const Icon = iconConfig.icon;
 
-                      return (
-                        <div key={activity._id} className="flex items-start">
-                          <div className={`h-8 w-8 rounded-full ${iconConfig.bg} flex items-center justify-center flex-shrink-0`}>
-                            <Icon className={`h-4 w-4 ${iconConfig.color}`} />
-                          </div>
-                          <div className="ml-3 flex-1">
-                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                              {activity.title}
-                            </p>
-                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
-                              {activity.description}
-                            </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                              {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
-                            </p>
-                          </div>
+                    return (
+                      <div key={activity._id} className="flex items-start gap-3">
+                        <div className={`${iconConfig.bg} p-2 rounded-full flex-shrink-0`}>
+                          <Icon className={`h-4 w-4 ${iconConfig.color}`} />
                         </div>
-                      );
-                    })}
-                  </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                            {activity.title}
+                          </p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 truncate">
+                            {activity.description}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                            {formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })
                 )}
-              </CardContent>
+              </div>
             </Card>
+          </motion.div>
+
+          {/* AI Assistant Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <Card className="p-6 h-full bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950 dark:to-pink-950 border-2 border-purple-200 dark:border-purple-800">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="bg-purple-100 dark:bg-purple-900 p-3 rounded-2xl">
+                  <Bot className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
+                    AI Assistant
+                  </h3>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    Diagnose problems instantly
+                  </p>
+                </div>
+              </div>
+              <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
+                Not sure what's wrong? Let our AI help you identify the problem and find the right solution.
+              </p>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => document.querySelector('[aria-label="Open AI Assistant"]')?.querySelector('button')?.click()}
+                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-xl font-medium shadow-md hover:shadow-xl transition-all"
+              >
+                Start Diagnosis
+              </motion.button>
+            </Card>
+          </motion.div>
+
+        </div>
+
+        {/* Social Feed Section */}
+        <div className="grid gap-4 sm:gap-6 lg:grid-cols-12">
+          {/* Feed */}
+          <div className="lg:col-span-12">
+            <Feed />
           </div>
         </div>
       </div>

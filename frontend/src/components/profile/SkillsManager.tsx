@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, X, Wrench, Star, TrendingUp } from 'lucide-react';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 import { cn } from '@/lib/utils';
 
 interface Skill {

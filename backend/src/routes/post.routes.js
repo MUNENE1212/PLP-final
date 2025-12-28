@@ -11,7 +11,9 @@ const {
   addReply,
   deleteComment,
   sharePost,
-  toggleBookmark
+  toggleBookmark,
+  getBookmarkedPosts,
+  toggleCommentLike
 } = require('../controllers/post.controller');
 const { protect, optionalAuth } = require('../middleware/auth');
 const { validate } = require('../middleware/validation');
@@ -20,6 +22,7 @@ const router = express.Router();
 
 // Public/optional auth routes
 router.get('/', optionalAuth, getPosts);
+router.get('/bookmarked', protect, getBookmarkedPosts);
 router.get('/:id', optionalAuth, getPost);
 
 // Protected routes
@@ -62,6 +65,8 @@ router.post(
   ],
   addReply
 );
+
+router.post('/:id/comment/:commentId/like', protect, toggleCommentLike);
 
 router.delete('/:id/comment/:commentId', protect, deleteComment);
 

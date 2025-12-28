@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, AlertCircle, Check, HelpCircle } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
-import Input from '@/components/ui/Input';
-import Button from '@/components/ui/Button';
+import { Card, Input, Button } from '@/components/ui';
 import axios from '@/lib/axios';
 
 interface ServiceType {

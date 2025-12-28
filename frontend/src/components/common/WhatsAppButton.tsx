@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { MessageCircle, X, Send, Phone, Calendar, Wrench } from 'lucide-react';
-import Button from '../ui/Button';
+import { Button } from '@/components/ui';
 
 // WhatsApp business number
 const WHATSAPP_NUMBER = '254799954672'; // Format: country code + number (no + or spaces)

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Home, ArrowLeft } from 'lucide-react';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 
 const NotFound: React.FC = () => {
   return (
@@ -14,7 +14,7 @@ const NotFound: React.FC = () => {
               Page Not Found
             </h2>
             <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">
-              Sorry, we couldn't find the page you're looking for.
+              Sorry, Dumu Waks couldn't find the page you're looking for.
             </p>
           </div>
         </div>
@@ -40,8 +40,8 @@ const NotFound: React.FC = () => {
         <div className="mt-8">
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Need help?{' '}
-            <Link to="/contact" className="text-primary-600 hover:text-primary-700">
-              Contact support
+            <Link to="/support" className="text-primary-600 hover:text-primary-700">
+              Contact Dumu Waks support
             </Link>
           </p>
         </div>

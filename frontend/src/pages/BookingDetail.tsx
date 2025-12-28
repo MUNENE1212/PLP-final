@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchBooking, cancelBooking } from '@/store/slices/bookingSlice';
-import Button from '@/components/ui/Button';
-import Loading from '@/components/ui/Loading';
+import { Button, Loading } from '@/components/ui';
 import BookingFeePaymentModal from '@/components/bookings/BookingFeePaymentModal';
 import TechnicianStatusActions from '@/components/bookings/TechnicianStatusActions';
 import CompletionConfirmation from '@/components/bookings/CompletionConfirmation';
+import { BookingQR } from '@/components/qrcode';
 import {
   ArrowLeft,
   Calendar,
@@ -488,6 +488,19 @@ const BookingDetail: React.FC = () => {
           {/* Customer - Completion Confirmation */}
           {isCustomer && booking.status === 'completed' && (
             <CompletionConfirmation booking={booking} onUpdate={handleUpdate} />
+          )}
+
+          {/* QR Code for Confirmed Bookings */}
+          {['accepted', 'en_route', 'arrived', 'in_progress'].includes(booking.status) && (
+            <BookingQR
+              bookingId={booking._id}
+              bookingRef={`BK-${booking._id.slice(-6).toUpperCase()}`}
+              technicianName={`${booking.technician?.firstName || ''} ${booking.technician?.lastName || ''}`.trim() || 'Technician'}
+              technicianPhoto={booking.technician?.profilePicture}
+              scheduledDate={format(new Date(booking.timeSlot.date), 'MMMM d, yyyy')}
+              service={booking.serviceType.replace('_', ' ')}
+              address={booking.serviceLocation.address}
+            />
           )}
 
           {/* Technician - Status Actions */}

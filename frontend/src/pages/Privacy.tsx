@@ -43,12 +43,12 @@ const Privacy = () => {
             <section>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">3. Information Sharing</h2>
               <p>
-                We do not sell your personal information. We share information only when necessary:
+                Dumu Waks does not sell your personal information. We share information only when necessary for service delivery:
               </p>
               <ul className="list-disc pl-6 space-y-2">
                 <li>With matched technicians (name, location, service details)</li>
-                <li>With payment processors (M-Pesa)</li>
-                <li>When required by law</li>
+                <li>With M-Pesa for payment processing</li>
+                <li>When required by Kenyan law</li>
                 <li>With your explicit consent</li>
               </ul>
             </section>
@@ -56,7 +56,7 @@ const Privacy = () => {
             <section>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">4. Data Security</h2>
               <p>
-                We implement industry-standard security measures including encryption, secure servers, and regular security audits to protect your data.
+                Dumu Waks implements industry-standard security measures including encryption, secure servers, and regular security audits to protect your data. We comply with Kenyan Data Protection Act regulations.
               </p>
             </section>
 
@@ -78,13 +78,15 @@ const Privacy = () => {
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">7. Contact</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">7. Contact Dumu Waks</h2>
               <p>
-                For privacy-related questions or requests:
+                For privacy-related questions or requests under the Kenyan Data Protection Act:
                 <br />
-                Email: support@ementech.co.ke
+                Email: privacy@dumuwaks.co.ke
                 <br />
-                Phone: +254 799 954 672
+                WhatsApp: +254 799 954 672
+                <br />
+                Available: Monday - Saturday, 8 AM - 8 PM EAT
               </p>
             </section>
           </div>

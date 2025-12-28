@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { X, CreditCard, Smartphone, Wallet, DollarSign, Shield, CheckCircle } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
+import { Button, Input } from '@/components/ui';
 import toast from 'react-hot-toast';
 
 interface BookingFeePaymentModalProps {

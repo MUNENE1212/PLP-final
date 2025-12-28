@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Home, RefreshCw } from 'lucide-react';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 
 interface ErrorPageProps {
   error?: string;
@@ -52,8 +52,8 @@ const ErrorPage: React.FC<ErrorPageProps> = ({
         <div className="mt-8">
           <p className="text-sm text-gray-500 dark:text-gray-400">
             If this problem persists, please{' '}
-            <Link to="/contact" className="text-primary-600 hover:text-primary-700">
-              contact support
+            <Link to="/support" className="text-primary-600 hover:text-primary-700">
+              contact Dumu Waks support
             </Link>
           </p>
         </div>

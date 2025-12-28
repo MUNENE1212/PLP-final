@@ -13,9 +13,11 @@ import {
   DollarSign,
   ArrowLeft,
   Shield,
+  Share2,
 } from 'lucide-react';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 import Loading from '@/components/ui/Loading';
+import { TechnicianQRCard, QRConnectionCard, BusinessCardQR } from '@/components/qrcode';
 import { cn } from '@/lib/utils';
 import axios from '@/lib/axios';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
@@ -271,11 +273,11 @@ const TechnicianProfile: React.FC = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="mt-6 flex space-x-3 border-t border-gray-200 dark:border-gray-700 pt-6">
+        <div className="mt-6 flex flex-wrap gap-3 border-t border-gray-200 dark:border-gray-700 pt-6">
           <Button
             variant="primary"
             size="lg"
-            className="flex-1"
+            className="flex-1 min-w-[200px]"
             onClick={() => navigate('/find-technicians')}
           >
             Book This Technician
@@ -294,6 +296,28 @@ const TechnicianProfile: React.FC = () => {
           >
             <MessageCircle className="h-4 w-4" />
             <span>Message</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="lg"
+            className="flex items-center space-x-2"
+            onClick={() => {
+              // Handle share functionality
+              const profileUrl = window.location.href;
+              if (navigator.share) {
+                navigator.share({
+                  title: `${technician.firstName} ${technician.lastName} - Dumu Waks`,
+                  text: `Check out ${technician.firstName}'s profile on Dumu Waks`,
+                  url: profileUrl,
+                });
+              } else {
+                navigator.clipboard.writeText(profileUrl);
+                toast.success('Profile link copied to clipboard');
+              }
+            }}
+          >
+            <Share2 className="h-4 w-4" />
+            <span>Share</span>
           </Button>
         </div>
 
@@ -433,6 +457,45 @@ const TechnicianProfile: React.FC = () => {
             </div>
           </div>
         )}
+      </div>
+
+      {/* QR Code Section */}
+      <div className="mt-8 space-y-6">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Quick Connect</h2>
+
+        {/* Connection Options */}
+        <QRConnectionCard
+          type="profile"
+          data={{
+            id: technician._id,
+            name: `${technician.firstName} ${technician.lastName}`,
+            service: technician.skills[0]?.category.replace('_', ' ') || 'Service Provider',
+            rating: technician.rating
+          }}
+        />
+
+        {/* Business Card QR */}
+        {hasActiveBooking && (
+          <div className="mt-6">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Business Card</h3>
+            <BusinessCardQR
+              technicianName={`${technician.firstName} ${technician.lastName}`}
+              technicianId={technician._id}
+              service={technician.skills[0]?.category.replace('_', ' ') || 'Service Provider'}
+              phone={technician.phoneNumber}
+              email={technician.email}
+              location={technician.location?.address || 'Kenya'}
+            />
+          </div>
+        )}
+
+        {/* Original QR Card (kept for backward compatibility) */}
+        <TechnicianQRCard
+          technicianId={technician._id}
+          technicianName={`${technician.firstName} ${technician.lastName}`}
+          service={technician.skills[0]?.category.replace('_', ' ') || 'Service Provider'}
+          rating={technician.rating}
+        />
       </div>
     </div>
   );

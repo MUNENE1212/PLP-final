@@ -419,7 +419,7 @@ exports.getBookingStats = async (req, res) => {
     // Get unread message count
     const Conversation = require('../models/Conversation');
     const conversations = await Conversation.find({
-      participants: req.user.id,
+      'participants.user': req.user.id,
       deletedFor: { $ne: req.user.id }
     });
 

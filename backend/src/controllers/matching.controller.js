@@ -3,7 +3,8 @@ const MatchingPreference = require('../models/MatchingPreference');
 const MatchingInteraction = require('../models/MatchingInteraction');
 const User = require('../models/User');
 const Booking = require('../models/Booking');
-const { v4: uuidv4 } = require('uuid');
+const uuid = require('uuid');
+const uuidv4 = uuid.v4;
 
 /**
  * @desc    Get smart-matched technician recommendations for a service request

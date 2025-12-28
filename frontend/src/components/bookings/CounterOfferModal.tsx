@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { X, DollarSign, FileText } from 'lucide-react';
-import Button from '../ui/Button';
-import Input from '../ui/Input';
-import Textarea from '../ui/Textarea';
+import { Button, Input, Textarea } from '@/components/ui';
 import { Booking, submitCounterOffer } from '@/store/slices/bookingSlice';
 import { useAppDispatch } from '@/store/hooks';
 import toast from 'react-hot-toast';

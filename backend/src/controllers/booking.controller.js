@@ -816,14 +816,25 @@ exports.resolveDispute = async (req, res) => {
  */
 exports.getBookingStats = async (req, res) => {
   try {
+    console.log('=== BOOKING STATS DEBUG ===');
+    console.log('User ID:', req.user.id);
+    console.log('User Role:', req.user.role);
+    console.log('User ID type:', typeof req.user.id);
+    
+    const mongoose = require('mongoose');
+    
     const query = {};
 
-    // Filter by user role
+    // Filter by user role - Convert string ID to ObjectId for aggregation
     if (req.user.role === 'customer' || req.user.role === 'corporate') {
-      query.customer = req.user.id;
+      query.customer = new mongoose.Types.ObjectId(req.user.id);
+      console.log('Query for customer:', query);
     } else if (req.user.role === 'technician') {
-      query.technician = req.user.id;
+      query.technician = new mongoose.Types.ObjectId(req.user.id);
+      console.log('Query for technician:', query);
     }
+
+    console.log('Final query:', JSON.stringify(query, null, 2));
 
     const stats = await Booking.aggregate([
       { $match: query },
@@ -836,7 +847,19 @@ exports.getBookingStats = async (req, res) => {
       }
     ]);
 
-    const total = await Booking.countDocuments(query);
+    // For countDocuments, string IDs work fine, so no conversion needed there
+    const countQuery = {};
+    if (req.user.role === 'customer' || req.user.role === 'corporate') {
+      countQuery.customer = req.user.id;
+    } else if (req.user.role === 'technician') {
+      countQuery.technician = req.user.id;
+    }
+
+    const total = await Booking.countDocuments(countQuery);
+
+    console.log('Stats result:', stats);
+    console.log('Total count:', total);
+    console.log('=========================');
 
     res.status(200).json({
       success: true,
@@ -845,6 +868,7 @@ exports.getBookingStats = async (req, res) => {
     });
   } catch (error) {
     console.error('Get booking stats error:', error);
+    console.error('Error stack:', error.stack);
     res.status(500).json({
       success: false,
       message: 'Error fetching booking statistics'

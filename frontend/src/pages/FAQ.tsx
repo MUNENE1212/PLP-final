@@ -7,44 +7,52 @@ const FAQ = () => {
 
   const faqs = [
     {
-      question: 'How do I book a technician?',
-      answer: 'Simply search for the service you need, get matched with verified technicians, choose your preferred date/time, and pay the 20% booking fee via M-Pesa. The technician will arrive at your scheduled time.',
+      question: 'How do I book a technician on Dumu Waks?',
+      answer: 'Simply describe your problem, get matched with verified technicians in under 60 seconds, see the exact pricing in KES, choose your preferred date/time, and pay the 20% booking fee via M-Pesa. Your technician will arrive at the scheduled time.',
     },
     {
       question: 'Is the booking fee refundable?',
-      answer: 'Yes! The 20% booking fee is fully refundable if the technician doesn\'t show up or if you\'re not satisfied with the service. We hold the funds in escrow for your protection.',
+      answer: 'Yes! The 20% booking fee is fully refundable if the technician doesn\'t show up or if you\'re not satisfied with the service. Dumu Waks holds funds in escrow for your protection.',
     },
     {
-      question: 'How are technicians verified?',
-      answer: 'All technicians must provide proof of skills/certifications, ID verification, and undergo background checks. They\'re also rated by customers after each job.',
+      question: 'How are technicians verified on Dumu Waks?',
+      answer: 'All technicians undergo background checks, ID verification, and skills assessment. They\'re also continuously rated by customers after each job, ensuring only the best serve you.',
     },
     {
-      question: 'What payment methods do you accept?',
-      answer: 'We currently accept M-Pesa for all payments. It\'s fast, secure, and familiar to all Kenyans.',
+      question: 'What payment methods does Dumu Waks accept?',
+      answer: 'We accept M-Pesa for all payments. It\'s fast, secure, and the most trusted payment method in Kenya. You pay 20% upfront and 80% after satisfactory service completion.',
     },
     {
       question: 'What if I\'m not satisfied with the service?',
-      answer: 'Contact our support team immediately. We\'ll mediate and can refund your payment if the issue isn\'t resolved. Your satisfaction is our priority.',
+      answer: 'Contact Dumu Waks support immediately. We\'ll mediate the dispute and can refund your payment if the issue isn\'t resolved. Your satisfaction is guaranteed - if you\'re not happy, you don\' pay.',
     },
     {
-      question: 'How much does EmEnTech charge?',
-      answer: 'We charge a 10% platform fee on completed jobs. Customers pay 20% upfront (held in escrow) and 80% after service completion.',
+      question: 'How much does Dumu Waks charge?',
+      answer: 'Dumu Waks charges a small 10% platform fee on completed jobs. You\'ll see the exact cost breakdown before booking - no hidden fees or surprises.',
     },
     {
-      question: 'Can I cancel a booking?',
-      answer: 'Yes, you can cancel up to 24 hours before the scheduled time for a full refund. Cancellations within 24 hours may incur a small cancellation fee.',
+      question: 'Can I cancel a booking on Dumu Waks?',
+      answer: 'Yes, you can cancel up to 24 hours before the scheduled time for a full refund. Cancellations within 24 hours may incur a small cancellation fee to compensate the technician\'s time.',
     },
     {
-      question: 'Do you offer emergency services?',
-      answer: 'Yes! We have technicians available 24/7 for emergency services like burst pipes, power outages, etc. Emergency services have higher urgency fees.',
+      question: 'Does Dumu Waks offer emergency services?',
+      answer: 'Yes! We have technicians available 24/7 for emergency plumbing, electrical issues, and other urgent repairs across Kenya. Emergency services may have higher fees due to urgency.',
     },
     {
-      question: 'How do I become a technician on EmEnTech?',
-      answer: 'Register as a technician, verify your skills and ID, complete your profile, and start receiving job requests. It\'s free to join!',
+      question: 'How do I become a technician on Dumu Waks?',
+      answer: 'Register as a technician, verify your skills and national ID, complete your profile with your service areas and rates, and start receiving job requests. It\'s free to join Dumu Waks!',
     },
     {
-      question: 'What areas do you serve?',
-      answer: 'We serve all 47 counties in Kenya. If we don\'t have technicians in your area yet, contact us via WhatsApp and we\'ll help you.',
+      question: 'What areas does Dumu Waks serve in Kenya?',
+      answer: 'Dumu Waks serves all 47 counties in Kenya, including Nairobi, Mombasa, Kisumu, Nakuru, and all major towns. If we don\'t have technicians in your area yet, contact us via WhatsApp and we\'ll work to expand coverage.',
+    },
+    {
+      question: 'How quickly can I get a technician?',
+      answer: 'Our AI-powered matching system connects you with the right technician in under 60 seconds. Many same-day and emergency bookings are completed within 24 hours, depending on your location and service type.',
+    },
+    {
+      question: 'What types of services does Dumu Waks offer?',
+      answer: 'Dumu Waks offers plumbing, electrical work, carpentry, appliance repair, home maintenance, business maintenance, general repairs, and more. We cover 99+ service categories for home and business needs.',
     },
   ];
 
@@ -62,7 +70,7 @@ const FAQ = () => {
             Frequently Asked Questions
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Find answers to common questions about EmEnTech
+            Find answers to common questions about Dumu Waks
           </p>
         </div>
 

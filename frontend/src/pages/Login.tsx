@@ -5,9 +5,7 @@ import { z } from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { login, clearError } from '@/store/slices/authSlice';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Alert from '@/components/ui/Alert';
+import { Button, Input, Alert } from '@/components/ui';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 
 const loginSchema = z.object({
@@ -90,7 +88,7 @@ const Login: React.FC = () => {
               variant="primary"
               size="lg"
               className="w-full"
-              isLoading={isLoading}
+              loading={isLoading}
             >
               Sign In
             </Button>

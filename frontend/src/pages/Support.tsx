@@ -16,7 +16,7 @@ import {
   HelpCircle,
   ChevronRight,
 } from 'lucide-react';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 import Select from '@/components/ui/Select';
 import Textarea from '@/components/ui/Textarea';
 import Loading from '@/components/ui/Loading';

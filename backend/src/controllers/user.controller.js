@@ -391,17 +391,26 @@ exports.toggleFollow = async (req, res) => {
         id => id.toString() !== currentUserId
       );
 
+      // Update counts
+      currentUser.followingCount = currentUser.following.length;
+      targetUser.followersCount = targetUser.followers.length;
+
       await Promise.all([currentUser.save(), targetUser.save()]);
 
       return res.status(200).json({
         success: true,
         message: 'Unfollowed successfully',
-        isFollowing: false
+        isFollowing: false,
+        followersCount: targetUser.followersCount
       });
     } else {
       // Follow
       currentUser.following.push(targetUserId);
       targetUser.followers.push(currentUserId);
+
+      // Update counts
+      currentUser.followingCount = currentUser.following.length;
+      targetUser.followersCount = targetUser.followers.length;
 
       await Promise.all([currentUser.save(), targetUser.save()]);
 
@@ -410,7 +419,8 @@ exports.toggleFollow = async (req, res) => {
       return res.status(200).json({
         success: true,
         message: 'Followed successfully',
-        isFollowing: true
+        isFollowing: true,
+        followersCount: targetUser.followersCount
       });
     }
   } catch (error) {

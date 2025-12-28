@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, MapPin, DollarSign, Zap, Calendar, Loader2 } from 'lucide-react';
-import Button from '../ui/Button';
+import { Button } from '@/components/ui';
 import { FindTechniciansParams } from '@/store/slices/matchingSlice';
 import { geocodeAddress } from '@/services/geocoding.service';
 import toast from 'react-hot-toast';
@@ -313,7 +313,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, isSearching = f
           size="lg"
           className="w-full"
           disabled={isSearching}
-          isLoading={isSearching}
+          loading={isSearching}
         >
           <Search className="mr-2 h-5 w-5" />
           {isSearching ? 'Finding Technicians...' : 'Find Technicians'}

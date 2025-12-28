@@ -50,6 +50,8 @@ export interface Post {
   isLiked: boolean;
   isBookmarked: boolean;
   isPinned: boolean;
+  sharedPost?: Post;
+  shareCaption?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -116,6 +118,21 @@ export const fetchExploreFeed = createAsyncThunk(
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch explore feed');
+    }
+  }
+);
+
+export const fetchBookmarkedPosts = createAsyncThunk(
+  'posts/fetchBookmarkedPosts',
+  async (params: { page?: number; limit?: number } = {}, { rejectWithValue }) => {
+    try {
+      const { page = 1, limit = 20 } = params;
+      const response = await axios.get('/posts/bookmarked', {
+        params: { page, limit },
+      });
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch bookmarked posts');
     }
   }
 );
@@ -198,6 +215,20 @@ export const addReply = createAsyncThunk(
       return { postId, commentId, ...response.data };
     } catch (error: any) {
       const message = error.response?.data?.message || 'Failed to add reply';
+      toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const toggleCommentLike = createAsyncThunk(
+  'posts/toggleCommentLike',
+  async ({ postId, commentId }: { postId: string; commentId: string }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`/posts/${postId}/comment/${commentId}/like`);
+      return { postId, commentId, ...response.data };
+    } catch (error: any) {
+      const message = error.response?.data?.message || 'Failed to toggle comment like';
       toast.error(message);
       return rejectWithValue(message);
     }
@@ -311,6 +342,27 @@ const postSlice = createSlice({
         state.error = action.payload as string;
       });
 
+    // Fetch bookmarked posts
+    builder
+      .addCase(fetchBookmarkedPosts.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchBookmarkedPosts.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.posts = action.payload.posts || [];
+        state.pagination = {
+          page: action.payload.page || 1,
+          limit: action.payload.limit || 20,
+          total: action.payload.total || 0,
+          pages: action.payload.pages || 0,
+        };
+      })
+      .addCase(fetchBookmarkedPosts.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      });
+
     // Fetch single post
     builder
       .addCase(fetchPost.pending, (state) => {
@@ -394,6 +446,17 @@ const postSlice = createSlice({
       }
     });
 
+    // Toggle comment like
+    builder.addCase(toggleCommentLike.fulfilled, (state, action) => {
+      const post = state.posts.find((p) => p._id === action.payload.postId);
+      if (post) {
+        const comment = post.comments.find((c) => c._id === action.payload.commentId);
+        if (comment) {
+          comment.likesCount = action.payload.likesCount;
+        }
+      }
+    });
+
     // Delete comment
     builder.addCase(deleteComment.fulfilled, (state, action) => {
       const post = state.posts.find((p) => p._id === action.payload.postId);
@@ -408,6 +471,10 @@ const postSlice = createSlice({
       const post = state.posts.find((p) => p._id === action.payload.postId);
       if (post) {
         post.sharesCount = action.payload.sharesCount;
+      }
+      // Add the new shared post to the beginning of the feed
+      if (action.payload.sharedPost) {
+        state.posts.unshift(action.payload.sharedPost);
       }
     });
 

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { Booking, confirmCompletion } from '@/store/slices/bookingSlice';
 import { useAppDispatch } from '@/store/hooks';
-import Button from '../ui/Button';
+import { Button } from '@/components/ui';
 
 interface CompletionConfirmationProps {
   booking: Booking;

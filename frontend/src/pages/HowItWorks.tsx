@@ -1,37 +1,37 @@
-import { Search, UserCheck, Calendar, CreditCard, Wrench, Star, MessageCircle, Shield } from 'lucide-react';
+import { Search, UserCheck, Calendar, CreditCard, Wrench, Star, MessageCircle, Shield, DollarSign } from 'lucide-react';
 import { Card } from '../components/ui/Card';
 
 const HowItWorks = () => {
   const customerSteps = [
     {
       icon: Search,
-      title: 'Search for Service',
-      description: 'Tell us what you need - from plumbing to solar installation, we have 99+ services.',
+      title: 'Describe Your Problem',
+      description: 'Tell Dumu Waks what you need - plumbing, electrical, carpentry, appliance repair, or any maintenance service.',
     },
     {
       icon: UserCheck,
-      title: 'Get Matched',
-      description: 'Our AI finds the best technicians near you based on skills, ratings, and availability.',
+      title: 'Get Matched Instantly',
+      description: 'Our AI matches you with the RIGHT technician in under 60 seconds based on skills, location, and availability.',
+    },
+    {
+      icon: DollarSign,
+      title: 'See Exact Pricing',
+      description: 'View the exact cost in KES before booking. No hidden fees or surprises with Dumu Waks transparent pricing.',
     },
     {
       icon: Calendar,
-      title: 'Schedule Service',
-      description: 'Choose your preferred date and time. Emergency services available 24/7.',
-    },
-    {
-      icon: CreditCard,
-      title: 'Pay Booking Fee',
-      description: 'Pay 20% booking fee via M-Pesa. Funds held securely until job completion.',
+      title: 'Book Your Service',
+      description: 'Choose your preferred date and time. Pay 20% booking fee via M-Pesa. Emergency services available 24/7.',
     },
     {
       icon: Wrench,
-      title: 'Service Delivered',
-      description: 'Technician arrives on time and completes the work professionally.',
+      title: 'Technician Arrives',
+      description: 'Your verified technician arrives on time and completes the work professionally.',
     },
     {
       icon: Star,
-      title: 'Rate & Review',
-      description: 'Leave feedback and pay the remaining 80%. Simple and secure.',
+      title: 'Rate & Pay Balance',
+      description: 'Review the work, rate your technician, and pay the remaining 80% via M-Pesa only if satisfied.',
     },
   ];
 
@@ -96,9 +96,9 @@ const HowItWorks = () => {
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-primary-600 to-primary-800 text-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">How It Works</h1>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">How Dumu Waks Works</h1>
           <p className="text-xl text-primary-100 max-w-3xl mx-auto">
-            Get quality technical services in 3 simple steps. No hassle, no surprises.
+            Get professional maintenance and repair services in 6 simple steps. Quality guaranteed or your money back.
           </p>
         </div>
       </div>
@@ -185,10 +185,10 @@ const HowItWorks = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-            Why Choose EmEnTech?
+            Why Choose Dumu Waks?
           </h2>
           <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            Features that make us the best platform for technical services in Kenya
+            Features that make Dumu Waks the best platform for maintenance and repair services in Kenya
           </p>
         </div>
 
@@ -265,7 +265,7 @@ const HowItWorks = () => {
             Ready to Get Started?
           </h2>
           <p className="text-xl text-primary-100 mb-8">
-            Join thousands of satisfied customers and technicians on EmEnTech
+            Join thousands of satisfied customers and technicians on Dumu Waks
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a

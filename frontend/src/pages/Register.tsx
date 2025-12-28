@@ -5,9 +5,7 @@ import { z } from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { register as registerUser, clearError } from '@/store/slices/authSlice';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Alert from '@/components/ui/Alert';
+import { Button, Input, Alert } from '@/components/ui';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 
 const registerSchema = z.object({
@@ -59,9 +57,9 @@ const Register: React.FC = () => {
     <div className="flex min-h-screen items-center justify-center bg-gray-100 px-4 py-12">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-center text-3xl font-bold">Create Account</CardTitle>
+          <CardTitle className="text-center text-3xl font-bold">Create Your Dumu Waks Account</CardTitle>
           <CardDescription className="text-center">
-            Get started with EmEnTech today
+            Join Kenya's trusted platform for professional maintenance and repair services
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -169,7 +167,7 @@ const Register: React.FC = () => {
               variant="primary"
               size="lg"
               className="w-full"
-              isLoading={isLoading}
+              loading={isLoading}
             >
               Create Account
             </Button>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAppSelector } from '@/store/hooks';
 import { useNavigate } from 'react-router-dom';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 import ProBadge from '@/components/common/ProBadge';
 import {
   Crown,
@@ -31,7 +31,7 @@ const Subscription: React.FC = () => {
           Technicians Only
         </h2>
         <p className="mt-2 text-gray-600 dark:text-gray-400">
-          Pro features are only available for technicians.
+          Dumu Waks Pro features are only available for technicians.
         </p>
         <Button
           variant="primary"

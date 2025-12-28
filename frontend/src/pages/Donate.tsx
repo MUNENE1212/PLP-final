@@ -73,8 +73,8 @@ const Donate = () => {
             Why We Need Your Support
           </h2>
           <p className="text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-            EmEnTech is a community-driven platform built to serve Kenyans. While we charge
-            a small commission on completed jobs, donations help us grow faster and serve more people.
+            Dumu Waks is Kenya's leading platform for professional maintenance and repair services.
+            Partner with us to transform how Kenyans access quality technical services.
           </p>
         </div>
 
@@ -165,7 +165,7 @@ const Donate = () => {
             </h3>
             <div className="space-y-2 text-gray-700 dark:text-gray-300">
               <p className="font-semibold">Paybill: 400200</p>
-              <p className="text-sm">Account: EMENTECH</p>
+              <p className="text-sm">Account: DUMUWAKS</p>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-4">
                 Most popular payment method
               </p>
@@ -183,9 +183,9 @@ const Donate = () => {
             <div className="space-y-2 text-gray-700 dark:text-gray-300 text-sm">
               <p>Bank: Equity Bank</p>
               <p>Account: 0123456789</p>
-              <p>Name: EmEnTech Ltd</p>
+              <p>Name: Dumu Waks Ltd</p>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-4">
-                For larger donations
+                For partnerships and investments
               </p>
             </div>
           </Card>
@@ -284,18 +284,18 @@ const Donate = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
-              href="mailto:support@ementech.co.ke?subject=Donation Inquiry"
+              href="mailto:partnerships@dumuwaks.co.ke?subject=Partnership Inquiry"
               className="bg-white text-primary-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
             >
               Contact Us
             </a>
             <a
-              href="https://wa.me/254799954672?text=Hi! I'd like to donate to EmEnTech"
+              href="https://wa.me/254799954672?text=Hi! I'd like to partner with Dumu Waks"
               target="_blank"
               rel="noopener noreferrer"
               className="bg-green-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors"
             >
-              Donate via WhatsApp
+              Partner via WhatsApp
             </a>
           </div>
         </div>

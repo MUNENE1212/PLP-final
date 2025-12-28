@@ -4,6 +4,28 @@ const crypto = require('crypto');
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || crypto.randomBytes(32); // Must be 32 bytes for AES-256
 const IV_LENGTH = 16; // For AES, this is always 16
 
+// Convert to buffer if it's a hex string and ensure consistent usage
+let encryptionKeyBuffer;
+if (typeof ENCRYPTION_KEY === 'string') {
+  try {
+    encryptionKeyBuffer = Buffer.from(ENCRYPTION_KEY, 'hex');
+
+    // Validate key length is exactly 32 bytes for AES-256
+    if (encryptionKeyBuffer.length !== 32) {
+      console.warn('⚠️  Encryption key must be 32 bytes (64 hex chars), using fallback key');
+      encryptionKeyBuffer = crypto.randomBytes(32);
+    }
+  } catch (error) {
+    console.warn('⚠️  Error with encryption key, using fallback key');
+    encryptionKeyBuffer = crypto.randomBytes(32);
+  }
+} else {
+  encryptionKeyBuffer = ENCRYPTION_KEY;
+}
+
+// Export the key buffer for consistent usage
+module.exports.encryptionKeyBuffer = encryptionKeyBuffer;
+
 /**
  * Encrypt text using AES-256-CBC
  * @param {string} text - Text to encrypt
@@ -16,10 +38,13 @@ function encrypt(text) {
     // Generate a random IV for each encryption
     const iv = crypto.randomBytes(IV_LENGTH);
 
+    // Use the properly prepared key buffer
+    const keyBuffer = encryptionKeyBuffer || (typeof ENCRYPTION_KEY === 'string' ? Buffer.from(ENCRYPTION_KEY, 'hex') : ENCRYPTION_KEY);
+
     // Create cipher
     const cipher = crypto.createCipheriv(
       'aes-256-cbc',
-      Buffer.from(ENCRYPTION_KEY),
+      keyBuffer,
       iv
     );
 
@@ -52,10 +77,13 @@ function decrypt(text) {
     const iv = Buffer.from(textParts.shift(), 'hex');
     const encryptedText = textParts.join(':');
 
+    // Use the properly prepared key buffer
+    const keyBuffer = encryptionKeyBuffer || (typeof ENCRYPTION_KEY === 'string' ? Buffer.from(ENCRYPTION_KEY, 'hex') : ENCRYPTION_KEY);
+
     // Create decipher
     const decipher = crypto.createDecipheriv(
       'aes-256-cbc',
-      Buffer.from(ENCRYPTION_KEY),
+      keyBuffer,
       iv
     );
 
@@ -65,8 +93,14 @@ function decrypt(text) {
 
     return decrypted;
   } catch (error) {
-    console.error('Decryption error:', error);
-    // Return original text if decryption fails (backward compatibility)
+    // Silently handle decryption failures (likely due to key mismatch)
+    // This happens when messages were encrypted with a different key
+    // Return a placeholder to indicate the message is encrypted with old key
+    if (error.code === 'ERR_OSSL_BAD_DECRYPT') {
+      return '[Message encrypted with different key]';
+    }
+    // For other errors, log and return original text
+    console.error('Unexpected decryption error:', error.code);
     return text;
   }
 }

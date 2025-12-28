@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { getPreferences, updatePreferences } from '@/store/slices/matchingSlice';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 import Loading from '@/components/ui/Loading';
 import {
   Settings,

@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { X, Image, Video, Trash2 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { updatePost, Post } from '@/store/slices/postSlice';
-import Button from '../ui/Button';
+import { Button } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import axios from '@/lib/axios';
 import toast from 'react-hot-toast';
@@ -238,7 +238,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({ post, isOpen, onClose }) 
             <Button
               type="submit"
               variant="primary"
-              isLoading={isCreating}
+              loading={isCreating}
               disabled={isCreating || (!caption.trim() && selectedMedia.length === 0)}
             >
               Save Changes

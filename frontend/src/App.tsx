@@ -4,6 +4,8 @@ import { Toaster } from 'react-hot-toast';
 import ErrorBoundary from './components/ErrorBoundary';
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
+import { PWAInstallPrompt } from './components/pwa/PWAInstallPrompt';
+import { OfflineIndicator } from './components/pwa/OfflineIndicator';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -20,6 +22,7 @@ import Messages from './pages/Messages';
 import Support from './pages/Support';
 import WhatsAppSupport from './pages/WhatsAppSupport';
 import PostDetail from './pages/PostDetail';
+import SavedPosts from './pages/SavedPosts';
 import About from './pages/About';
 import Careers from './pages/Careers';
 import Donate from './pages/Donate';
@@ -27,12 +30,15 @@ import HowItWorks from './pages/HowItWorks';
 import FAQ from './pages/FAQ';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
+import InstallPWA from './pages/InstallPWA';
+import InstallApp from './pages/InstallApp';
 import NotFound from './pages/NotFound';
 import AdminDashboard from './pages/AdminDashboard';
 import UserManagement from './pages/UserManagement';
 import SystemSettings from './pages/SystemSettings';
 import ReportsPage from './pages/ReportsPage';
 import SupportDashboard from './pages/SupportDashboard';
+import { AIDiagnosticBot } from './components/bot/AIDiagnosticBot';
 import { useAppSelector } from './store/hooks';
 import { useSocket } from './hooks/useSocket';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -54,6 +60,14 @@ const App: React.FC = () => {
           }}
         >
           <ScrollToTop />
+
+          {/* PWA Components */}
+          <OfflineIndicator />
+          <PWAInstallPrompt />
+
+          {/* AI Diagnostic Bot */}
+          <AIDiagnosticBot />
+
           <Toaster
             position="top-right"
             toastOptions={{
@@ -95,6 +109,8 @@ const App: React.FC = () => {
             <Route path="faq" element={<FAQ />} />
             <Route path="terms" element={<Terms />} />
             <Route path="privacy" element={<Privacy />} />
+            <Route path="install-pwa" element={<InstallPWA />} />
+            <Route path="install-app" element={<InstallApp />} />
             <Route path="whatsapp-support" element={<WhatsAppSupport />} />
 
             {/* Protected Routes */}
@@ -108,6 +124,7 @@ const App: React.FC = () => {
               <Route path="bookings" element={<MyBookings />} />
               <Route path="messages" element={<Messages />} />
               <Route path="posts/:postId" element={<PostDetail />} />
+              <Route path="saved-posts" element={<SavedPosts />} />
               <Route path="support" element={<Support />} />
               <Route path="preferences" element={<MatchingPreferences />} />
               <Route path="settings" element={<ProfileSettings />} />

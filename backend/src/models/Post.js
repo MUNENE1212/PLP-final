@@ -296,6 +296,16 @@ const PostSchema = new Schema({
     }
   }],
 
+  // Shared Post (if this is a repost/share)
+  sharedPost: {
+    type: Schema.Types.ObjectId,
+    ref: 'Post'
+  },
+  shareCaption: {
+    type: String,
+    maxlength: 500
+  },
+
   // Related Booking (if showcasing completed work)
   relatedBooking: {
     type: Schema.Types.ObjectId,

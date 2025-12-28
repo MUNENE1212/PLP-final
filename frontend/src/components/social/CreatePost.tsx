@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Image, Video, Smile, Send, X } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { createPost } from '@/store/slices/postSlice';
-import Button from '../ui/Button';
+import { Button } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import axios from '@/lib/axios';
 import toast from 'react-hot-toast';
@@ -248,7 +248,7 @@ const CreatePost: React.FC = () => {
             variant="primary"
             size="sm"
             disabled={(!caption.trim() && selectedMedia.length === 0) || isCreating || isUploadingMedia}
-            isLoading={isCreating}
+            loading={isCreating}
             className="flex items-center space-x-2"
           >
             <Send className="h-4 w-4" />

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { MessageCircle, Send, Clock, CheckCircle, Wrench, Calendar, Phone, MessageSquare } from 'lucide-react';
-import Button from '../components/ui/Button';
-import { Card } from '../components/ui/Card';
+import { Button, Card } from '@/components/ui';
 
 const WHATSAPP_NUMBER = '254799954672';
 

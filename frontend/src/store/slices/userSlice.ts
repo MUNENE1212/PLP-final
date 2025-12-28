@@ -182,11 +182,9 @@ const userSlice = createSlice({
         state.loading = false;
         state.isFollowing = action.payload.isFollowing;
 
-        // Update followers count
-        if (state.currentProfile) {
-          state.currentProfile.followersCount = action.payload.isFollowing
-            ? state.currentProfile.followersCount + 1
-            : state.currentProfile.followersCount - 1;
+        // Update followers count from server response
+        if (state.currentProfile && action.payload.followersCount !== undefined) {
+          state.currentProfile.followersCount = action.payload.followersCount;
         }
       })
       .addCase(toggleFollow.rejected, (state, action) => {

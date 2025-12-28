@@ -21,14 +21,14 @@ const Terms = () => {
             <section>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">1. Acceptance of Terms</h2>
               <p>
-                By accessing and using EmEnTech's platform, you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to these Terms of Service, please do not use our services.
+                By accessing and using Dumu Waks platform, you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to these Terms of Service, please do not use our services.
               </p>
             </section>
 
             <section>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">2. Service Description</h2>
               <p>
-                EmEnTech provides a platform connecting customers with skilled technicians for various technical services across Kenya. We facilitate bookings, payments, and communications but do not directly provide the technical services.
+                Dumu Waks provides a platform connecting customers with skilled technicians for professional maintenance and repair services across Kenya. We facilitate bookings, secure M-Pesa payments, and communications but do not directly provide the technical services.
               </p>
             </section>
 
@@ -56,7 +56,7 @@ const Terms = () => {
             <section>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">5. Cancellations and Refunds</h2>
               <p>
-                Customers may cancel bookings up to 24 hours before scheduled service for a full refund. Cancellations within 24 hours may incur a cancellation fee.  EmEnTech reserves the right to cancel any booking and issue a full refund.
+                Customers may cancel bookings up to 24 hours before scheduled service for a full refund. Cancellations within 24 hours may incur a cancellation fee. Dumu Waks reserves the right to cancel any booking and issue a full refund if service quality standards are not met.
               </p>
             </section>
 
@@ -75,18 +75,20 @@ const Terms = () => {
             <section>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">7. Limitation of Liability</h2>
               <p>
-                EmEnTech acts as an intermediary platform. We are not liable for the quality of services provided by technicians or disputes between users. Our maximum liability is limited to the amount paid for the specific service in question.
+                Dumu Waks acts as an intermediary platform. We are not liable for the quality of services provided by technicians or disputes between users. Our maximum liability is limited to the amount paid for the specific service in question. However, we mediate all disputes to ensure fair resolution.
               </p>
             </section>
 
             <section>
               <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">8. Contact</h2>
               <p>
-                For questions about these Terms, contact us at:
+                For questions about these Terms, contact Dumu Waks support:
                 <br />
-                Email: support@ementech.co.ke
+                Email: support@dumuwaks.co.ke
                 <br />
-                Phone: +254 799 954 672
+                WhatsApp: +254 799 954 672
+                <br />
+                Available: Monday - Saturday, 8 AM - 8 PM EAT
               </p>
             </section>
           </div>

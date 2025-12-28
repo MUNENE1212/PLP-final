@@ -94,6 +94,13 @@ exports.getPosts = async (req, res) => {
         match: { deletedAt: null } // Only populate if author exists and not deleted
       })
       .populate('comments.user', '_id firstName lastName profilePicture')
+      .populate({
+        path: 'sharedPost',
+        populate: {
+          path: 'author',
+          select: 'firstName lastName profilePicture role rating'
+        }
+      })
       .sort(sort)
       .limit(fetchLimit);
 
@@ -112,10 +119,10 @@ exports.getPosts = async (req, res) => {
       const recencyBonus = Math.max(0, 100 - ((Date.now() - post.createdAt) / (1000 * 60 * 60 * 24))); // Decay over 100 days
 
       // Safely access engagement fields with defaults
-      const likesCount = post.engagement?.likes?.length || 0;
+      const likesCount = post.likes?.length || 0;
       const commentsCount = post.comments?.length || 0;
       const sharesCount = post.sharesCount || 0;
-      const viewsCount = post.engagement?.views || 0;
+      const viewsCount = post.views || 0;
 
       const engagementScore =
         (likesCount * likesWeight) +
@@ -166,16 +173,16 @@ exports.getPosts = async (req, res) => {
     const postsWithFlags = paginatedScores.map(({ post, boostApplied, boostMultiplier }) => {
       const postObj = post.toObject();
       if (userId) {
-        postObj.isLiked = post.engagement?.likes?.some(id => id.toString() === userId) || false;
+        postObj.isLiked = post.likes?.some(id => id.toString() === userId) || false;
         postObj.isBookmarked = post.bookmarks?.some(id => id.toString() === userId) || false;
       } else {
         postObj.isLiked = false;
         postObj.isBookmarked = false;
       }
-      postObj.likesCount = post.engagement?.likes?.length || 0;
+      postObj.likesCount = post.likes?.length || 0;
       postObj.commentsCount = post.comments?.length || 0;
       postObj.sharesCount = post.sharesCount || 0;
-      postObj.views = post.engagement?.views || 0;
+      postObj.views = post.views || 0;
       postObj.isBoosted = boostApplied;
       postObj.boostLevel = boostMultiplier > 1.0 ? (boostMultiplier === 2.0 ? 'premium' : 'pro') : null;
       return postObj;
@@ -207,7 +214,14 @@ exports.getPost = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id)
       .populate('author', 'firstName lastName profilePicture role rating')
-      .populate('comments.user', '_id firstName lastName profilePicture');
+      .populate('comments.user', '_id firstName lastName profilePicture')
+      .populate({
+        path: 'sharedPost',
+        populate: {
+          path: 'author',
+          select: 'firstName lastName profilePicture role rating'
+        }
+      });
 
     if (!post) {
       return res.status(404).json({
@@ -217,10 +231,7 @@ exports.getPost = async (req, res) => {
     }
 
     // Increment views
-    if (!post.engagement) {
-      post.engagement = { likes: [], views: 0, shares: [] };
-    }
-    post.engagement.views = (post.engagement.views || 0) + 1;
+    post.views = (post.views || 0) + 1;
     await post.save();
 
     res.status(200).json({
@@ -340,23 +351,23 @@ exports.toggleLike = async (req, res) => {
       });
     }
 
-    // Ensure engagement object exists
-    if (!post.engagement) {
-      post.engagement = { likes: [], views: 0, shares: [] };
-    }
-    if (!post.engagement.likes) {
-      post.engagement.likes = [];
+    // Ensure likes array exists
+    if (!post.likes) {
+      post.likes = [];
     }
 
-    const isLiked = post.engagement.likes.includes(req.user.id);
+    const isLiked = post.likes.some(id => id.toString() === req.user.id);
 
     if (isLiked) {
-      post.engagement.likes = post.engagement.likes.filter(
+      post.likes = post.likes.filter(
         id => id.toString() !== req.user.id
       );
     } else {
-      post.engagement.likes.push(req.user.id);
+      post.likes.push(req.user.id);
     }
+
+    // Update likes count
+    post.likesCount = post.likes.length;
 
     await post.save();
 
@@ -364,7 +375,7 @@ exports.toggleLike = async (req, res) => {
       success: true,
       message: isLiked ? 'Post unliked' : 'Post liked',
       isLiked: !isLiked,
-      likesCount: post.engagement.likes.length
+      likesCount: post.likesCount
     });
   } catch (error) {
     console.error('Toggle like error:', error);
@@ -561,27 +572,65 @@ exports.deleteComment = async (req, res) => {
 };
 
 /**
- * @desc    Share post
+ * @desc    Share post (creates a new post on user's profile)
  * @route   POST /api/v1/posts/:id/share
  * @access  Private
  */
 exports.sharePost = async (req, res) => {
   try {
-    const post = await Post.findById(req.params.id);
+    const { caption } = req.body; // Optional caption when sharing
 
-    if (!post) {
+    const originalPost = await Post.findById(req.params.id);
+
+    if (!originalPost) {
       return res.status(404).json({
         success: false,
         message: 'Post not found'
       });
     }
 
-    await post.share(req.user.id);
+    // Check if user already shared this post
+    const existingShare = await Post.findOne({
+      author: req.user.id,
+      sharedPost: originalPost._id
+    });
 
-    res.status(200).json({
+    if (existingShare) {
+      return res.status(400).json({
+        success: false,
+        message: 'You have already shared this post'
+      });
+    }
+
+    // Increment share count on original post
+    await originalPost.share(req.user.id);
+
+    // Create a new post that references the original
+    const sharedPost = await Post.create({
+      author: req.user.id,
+      type: 'text',
+      sharedPost: originalPost._id,
+      shareCaption: caption || '',
+      status: 'published',
+      visibility: 'public'
+    });
+
+    await sharedPost.populate([
+      { path: 'author', select: 'firstName lastName profilePicture role rating' },
+      {
+        path: 'sharedPost',
+        populate: {
+          path: 'author',
+          select: 'firstName lastName profilePicture role rating'
+        }
+      }
+    ]);
+
+    res.status(201).json({
       success: true,
       message: 'Post shared successfully',
-      sharesCount: post.sharesCount
+      sharesCount: originalPost.sharesCount,
+      sharedPost
     });
   } catch (error) {
     console.error('Share post error:', error);
@@ -627,6 +676,121 @@ exports.toggleBookmark = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error toggling bookmark'
+    });
+  }
+};
+
+/**
+ * @desc    Get bookmarked/saved posts
+ * @route   GET /api/v1/posts/bookmarked
+ * @access  Private
+ */
+exports.getBookmarkedPosts = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    // Find all posts where the current user has bookmarked them
+    const posts = await Post.find({
+      bookmarks: req.user.id,
+      status: 'published'
+    })
+      .sort({ updatedAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate('author', 'firstName lastName profilePicture role rating')
+      .populate({
+        path: 'sharedPost',
+        populate: {
+          path: 'author',
+          select: 'firstName lastName profilePicture role rating'
+        }
+      });
+
+    const total = await Post.countDocuments({
+      bookmarks: req.user.id,
+      status: 'published'
+    });
+
+    const userId = req.user.id;
+    const processedPosts = posts.map(post => {
+      const postObj = post.toObject();
+      postObj.isLiked = post.likes?.some(id => id.toString() === userId) || false;
+      postObj.isBookmarked = true; // Always true for bookmarked posts
+      postObj.likesCount = post.likes?.length || 0;
+      postObj.commentsCount = post.comments?.length || 0;
+      postObj.sharesCount = post.shares?.length || 0;
+      return postObj;
+    });
+
+    res.status(200).json({
+      success: true,
+      posts: processedPosts,
+      page,
+      limit,
+      total,
+      pages: Math.ceil(total / limit)
+    });
+  } catch (error) {
+    console.error('Get bookmarked posts error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching bookmarked posts'
+    });
+  }
+};
+
+/**
+ * @desc    Like/Unlike comment
+ * @route   POST /api/v1/posts/:id/comment/:commentId/like
+ * @access  Private
+ */
+exports.toggleCommentLike = async (req, res) => {
+  try {
+    const { id: postId, commentId } = req.params;
+
+    const post = await Post.findById(postId);
+
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: 'Post not found'
+      });
+    }
+
+    const comment = post.comments.id(commentId);
+
+    if (!comment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Comment not found'
+      });
+    }
+
+    const isLiked = comment.likes.includes(req.user.id);
+
+    if (isLiked) {
+      comment.likes = comment.likes.filter(id => id.toString() !== req.user.id);
+      comment.likesCount = comment.likes.length;
+    } else {
+      comment.likes.push(req.user.id);
+      comment.likesCount = comment.likes.length;
+    }
+
+    await post.save();
+
+    res.status(200).json({
+      success: true,
+      message: isLiked ? 'Comment unliked' : 'Comment liked',
+      isLiked: !isLiked,
+      likesCount: comment.likesCount
+    });
+  } catch (error) {
+    console.error('Toggle comment like error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error toggling comment like'
     });
   }
 };

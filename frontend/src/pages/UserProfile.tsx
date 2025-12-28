@@ -8,7 +8,7 @@ import {
   clearProfile,
 } from '@/store/slices/userSlice';
 import { MapPin, Calendar, Briefcase, Star, Users, FileText, UserPlus, UserMinus } from 'lucide-react';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 import PostCard from '@/components/social/PostCard';
 import toast from 'react-hot-toast';
 import { formatRating, getRatingCount } from '@/utils/rating';
