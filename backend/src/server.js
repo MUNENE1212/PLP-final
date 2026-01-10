@@ -165,6 +165,10 @@ app.use('/api/v1/upload', require('./routes/upload.routes'));
 app.use('/api/v1/payments/mpesa', require('./routes/mpesa.routes'));
 app.use('/api/v1/payments/payouts', require('./routes/payout.routes'));
 app.use('/api/v1/pricing', require('./routes/pricing.routes'));
+app.use('/api/v1/portfolio', require('./routes/portfolio.routes'));
+
+// Public Routes (no authentication required - for honest frontend)
+app.use('/api/v1/public', require('./routes/public.routes'));
 
 // 404 Handler
 app.use((req, res) => {

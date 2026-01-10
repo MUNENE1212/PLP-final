@@ -3,9 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui';
 import { Input } from '@/components/ui/Input';
-import { Search, Users, Shield, Zap, Clock, DollarSign, ArrowRight, CheckCircle, Star, MapPin } from 'lucide-react';
+import { Search, Users, Shield, Zap, Clock, DollarSign, ArrowRight, CheckCircle, Star, MapPin, Wrench, Bolt, Hammer, Plug, Paintbrush, Brush } from 'lucide-react';
 import { Card } from '@/components/ui';
 import { VoiceSearchButton } from '@/components/voice';
+import { HonestStats } from '@/components/ui/HonestStats';
+import { HonestTestimonials } from '@/components/ui/HonestTestimonials';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -60,19 +62,12 @@ const Home: React.FC = () => {
   ];
 
   const services = [
-    { name: 'Plumbing', icon: '🔧' },
-    { name: 'Electrical', icon: '⚡' },
-    { name: 'Carpentry', icon: '🪵' },
-    { name: 'Appliance Repair', icon: '🔌' },
-    { name: 'Painting', icon: '🎨' },
-    { name: 'Cleaning', icon: '🧹' },
-  ];
-
-  const stats = [
-    { value: '10,000+', label: 'Verified Technicians' },
-    { value: '50,000+', label: 'Happy Customers' },
-    { value: '100,000+', label: 'Jobs Completed' },
-    { value: '4.8★', label: 'Average Rating' },
+    { name: 'Plumbing', icon: Wrench, color: 'from-blue-500 to-cyan-500' },
+    { name: 'Electrical', icon: Bolt, color: 'from-yellow-500 to-orange-500' },
+    { name: 'Carpentry', icon: Hammer, color: 'from-amber-600 to-amber-800' },
+    { name: 'Appliance Repair', icon: Plug, color: 'from-purple-500 to-pink-500' },
+    { name: 'Painting', icon: Paintbrush, color: 'from-indigo-500 to-purple-500' },
+    { name: 'Cleaning', icon: Brush, color: 'from-green-500 to-emerald-500' },
   ];
 
   return (
@@ -157,23 +152,14 @@ const Home: React.FC = () => {
               </Link>
             </motion.div>
 
-            {/* Quick Stats */}
+            {/* Real Statistics - Live from Database */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-6"
+              className="mt-12"
             >
-              {stats.map((stat, index) => (
-                <div key={index} className="text-center">
-                  <p className="text-2xl md:text-3xl font-bold text-primary-600 dark:text-primary-400">
-                    {stat.value}
-                  </p>
-                  <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
-                    {stat.label}
-                  </p>
-                </div>
-              ))}
+              <HonestStats />
             </motion.div>
 
             {/* Search Section with Voice */}
@@ -239,7 +225,9 @@ const Home: React.FC = () => {
                 className="cursor-pointer"
               >
                 <Card className="p-6 text-center hover:shadow-lg transition-all duration-300">
-                  <div className="text-4xl mb-2">{service.icon}</div>
+                  <div className={`inline-flex p-3 rounded-xl bg-gradient-to-br ${service.color} mb-3`}>
+                    <service.icon className="w-8 h-8 text-white" />
+                  </div>
                   <p className="text-sm font-medium text-neutral-900 dark:text-white">{service.name}</p>
                 </Card>
               </motion.div>
@@ -366,72 +354,8 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section className="py-16 px-4 bg-neutral-50 dark:bg-neutral-900/50">
-        <div className="container mx-auto">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-3xl md:text-4xl font-bold font-display text-center mb-12 text-neutral-900 dark:text-white"
-          >
-            Trusted by Thousands
-          </motion.h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              {
-                name: 'Sarah W.',
-                location: 'Nairobi',
-                rating: 5,
-                text: 'Found a plumber within 2 minutes. He arrived in 30 minutes and fixed the issue perfectly. Amazing service!',
-              },
-              {
-                name: 'James K.',
-                location: 'Mombasa',
-                rating: 5,
-                text: 'The AI matching is incredible. The electrician knew exactly what to do. Fair price and professional work.',
-              },
-              {
-                name: 'Mary A.',
-                location: 'Kisumu',
-                rating: 5,
-                text: 'I\'ve used Dumu Waks 5 times now. Every technician has been skilled and reliable. Highly recommend!',
-              },
-            ].map((testimonial, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                whileHover={{ y: -4 }}
-              >
-                <Card className="p-6 hover:shadow-xl transition-all duration-300">
-                  <div className="flex items-center mb-4">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                    ))}
-                  </div>
-                  <p className="text-neutral-700 dark:text-neutral-300 mb-4 italic">"{testimonial.text}"</p>
-                  <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center text-white font-semibold">
-                      {testimonial.name[0]}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-neutral-900 dark:text-white">{testimonial.name}</p>
-                      <p className="text-sm text-neutral-500 dark:text-neutral-400 flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        {testimonial.location}
-                      </p>
-                    </div>
-                  </div>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Real Reviews Section - Only from verified bookings */}
+      <HonestTestimonials />
 
       {/* CTA Section */}
       <section className="py-20 px-4 bg-gradient-to-br from-primary-500 to-secondary-500">
