@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, Minimize2, Maximize2, Bot, User, Calendar, Search, MessageCircle, ChevronRight } from 'lucide-react';
+import { X, Send, Minimize2, Maximize2, Bot, User, Calendar, Search, MessageCircle, ChevronRight, Wrench } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { DiagnosticFlow } from '../diagnostic/DiagnosticFlow';
 
 interface Message {
   id: string;
@@ -39,6 +40,7 @@ export const AIDiagnosticBot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [showQuickActions, setShowQuickActions] = useState(false);
+  const [diagnosticMode, setDiagnosticMode] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -70,10 +72,20 @@ export const AIDiagnosticBot: React.FC = () => {
 
   const quickActions: QuickAction[] = [
     {
+      icon: '🔧',
+      label: 'Diagnose',
+      description: 'Diagnose a problem',
+      action: () => {
+        setDiagnosticMode(true);
+        setIsOpen(true);
+      }
+    },
+    {
       icon: '📅',
       label: 'Book Now',
       description: 'Schedule a technician',
       action: () => {
+        setDiagnosticMode(false);
         setBookingFlow({ active: true, step: 1, data: { service: '', problem: '', date: '', time: '', location: '', description: '' } });
         const response: Message = {
           id: Date.now().toString(),
@@ -91,6 +103,7 @@ export const AIDiagnosticBot: React.FC = () => {
       label: 'Find Technicians',
       description: 'Browse available pros',
       action: () => {
+        setDiagnosticMode(false);
         navigate('/find-technicians');
         setIsOpen(false);
       }
@@ -100,6 +113,7 @@ export const AIDiagnosticBot: React.FC = () => {
       label: 'Get Support',
       description: 'Talk to support',
       action: () => {
+        setDiagnosticMode(false);
         navigate('/support');
         setIsOpen(false);
       }
@@ -280,20 +294,57 @@ export const AIDiagnosticBot: React.FC = () => {
     setInputValue('');
     setIsTyping(true);
 
-    // Simulate AI response (replace with actual API call)
-    setTimeout(() => {
-      let botResponse: Message;
+    // Check if booking flow is active first
+    if (bookingFlow.active && bookingFlow.step > 0) {
+      setTimeout(() => {
+        const botResponse = handleBookingFlow(messageText);
+        setMessages(prev => [...prev, botResponse]);
+        setIsTyping(false);
+      }, 500);
+      return;
+    }
 
-      // Check if booking flow is active
-      if (bookingFlow.active && bookingFlow.step > 0) {
-        botResponse = handleBookingFlow(messageText);
-      } else {
-        botResponse = generateBotResponse(messageText, messages);
+    // Call DumuBot API
+    try {
+      const token = localStorage.getItem('token');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      };
+
+      // Only add Authorization header if token exists
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
       }
 
+      const response = await fetch('http://localhost:5000/api/v1/dumubot/chat', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ message: messageText })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        const botResponse: Message = {
+          id: Date.now().toString(),
+          role: 'bot',
+          content: data.response,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, botResponse]);
+      } else {
+        // Fallback to local response if API fails
+        const botResponse = generateBotResponse(messageText, messages);
+        setMessages(prev => [...prev, botResponse]);
+      }
+    } catch (error) {
+      console.error('DumuBot API error:', error);
+      // Fallback to local response on error
+      const botResponse = generateBotResponse(messageText, messages);
       setMessages(prev => [...prev, botResponse]);
+    } finally {
       setIsTyping(false);
-    }, 1000);
+    }
   };
 
   const handleOptionClick = (option: string, message: Message) => {
@@ -356,6 +407,27 @@ export const AIDiagnosticBot: React.FC = () => {
         role: 'bot',
         content: "Great choice! Let's book an Electrician for you.\n\n**Step 2/5:** Please describe the electrical issue in detail.",
         timestamp: new Date()
+      };
+      setMessages(prev => [...prev, response]);
+      return;
+    }
+
+    // Handle diagnostic option
+    if (option === '🔧 Diagnose Problem') {
+      setDiagnosticMode(true);
+      return;
+    }
+
+    // Handle booking option
+    if (option === '📅 Book Appointment') {
+      setDiagnosticMode(false);
+      setBookingFlow({ active: true, step: 1, data: { service: '', problem: '', date: '', time: '', location: '', description: '' } });
+      const response: Message = {
+        id: Date.now().toString(),
+        role: 'bot',
+        content: "Great! Let's book an appointment for you.\n\n**Step 1/5:** What type of service do you need?",
+        timestamp: new Date(),
+        options: ['🔧 Plumbing', '⚡ Electrical', '🪵 Carpentry', '🔌 Appliance Repair', '🏠 General Maintenance']
       };
       setMessages(prev => [...prev, response]);
       return;
@@ -456,6 +528,7 @@ export const AIDiagnosticBot: React.FC = () => {
                 <button
                   onClick={() => {
                     setIsOpen(false);
+                    setDiagnosticMode(false);
                     setBookingFlow({ active: false, step: 0, data: { service: '', problem: '', date: '', time: '', location: '', description: '' } });
                   }}
                   className="p-2 hover:bg-white/20 rounded-full transition-colors"
@@ -468,8 +541,27 @@ export const AIDiagnosticBot: React.FC = () => {
 
             {!isMinimized && (
               <>
-                {/* Messages Area */}
-                <div className="h-[calc(600px-180px)] overflow-y-auto p-4 space-y-4">
+                {/* Diagnostic Mode OR Messages Area */}
+                {diagnosticMode ? (
+                  <div className="h-[calc(600px-140px)] overflow-y-auto p-4">
+                    <DiagnosticFlow
+                      embedded={true}
+                      onClose={() => setDiagnosticMode(false)}
+                      onComplete={(result) => {
+                        // Add a message summarizing the diagnosis
+                        const summaryMsg: Message = {
+                          id: Date.now().toString(),
+                          role: 'bot',
+                          content: `📊 Diagnosis Complete!\n\n${result.hasDIYSolution ? '✅ DIY Solution Available' : '👷 Professional Help Recommended'}\n\n${result.needsProfessional ? 'I can connect you with a prepared technician.' : 'You can fix this yourself!'}`,
+                          timestamp: new Date()
+                        };
+                        setMessages(prev => [...prev, summaryMsg]);
+                        setDiagnosticMode(false);
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="h-[calc(600px-180px)] overflow-y-auto p-4 space-y-4">
                   {messages.map((message) => (
                     <motion.div
                       key={message.id}
@@ -551,9 +643,10 @@ export const AIDiagnosticBot: React.FC = () => {
                   )}
                   <div ref={messagesEndRef} />
                 </div>
-
-                {/* Input Area */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-b-2xl">
+                )}
+                {/* Input Area - hide during diagnostic or booking flow */}
+                {!diagnosticMode && !bookingFlow.active && (
+                  <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-b-2xl">
                   <div className="flex gap-2">
                     <input
                       type="text"
@@ -576,6 +669,7 @@ export const AIDiagnosticBot: React.FC = () => {
                     </motion.button>
                   </div>
                 </div>
+                )}
               </>
             )}
           </motion.div>

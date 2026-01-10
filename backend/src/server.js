@@ -166,6 +166,8 @@ app.use('/api/v1/payments/mpesa', require('./routes/mpesa.routes'));
 app.use('/api/v1/payments/payouts', require('./routes/payout.routes'));
 app.use('/api/v1/pricing', require('./routes/pricing.routes'));
 app.use('/api/v1/portfolio', require('./routes/portfolio.routes'));
+app.use('/api/v1/dumubot', require('./routes/dumubot.routes'));
+app.use('/api/v1/diagnostic', require('./routes/diagnostic.routes'));
 
 // Public Routes (no authentication required - for honest frontend)
 app.use('/api/v1/public', require('./routes/public.routes'));
