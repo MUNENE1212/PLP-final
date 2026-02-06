@@ -1,0 +1,322 @@
+/**
+ * Dumu Waks Design Tokens
+ * X/Twitter-inspired dark theme with orange brand accent
+ * Follows DESIGN_SYSTEM_ARCHITECTURE.md specifications
+ */
+
+:root {
+  /* ============================================
+     COLOR TOKENS
+     ============================================ */
+
+  /* Base Colors (X-Inspired) */
+  --dw-color-black: #000000;
+  --dw-color-dark-gray: #16181c;
+  --dw-color-medium-gray: #2f3336;
+  --dw-color-light-gray: #71767b;
+  --dw-color-off-white: #e7e9ea;
+
+  /* Background Hierarchy */
+  --dw-bg-primary: #000000;
+  --dw-bg-secondary: #16181c;
+  --dw-bg-tertiary: #2f3336;
+  --dw-bg-elevated: #272727;
+  --dw-bg-hover: rgba(255, 255, 255, 0.03);
+  --dw-bg-active: rgba(249, 115, 22, 0.15);
+
+  /* Text Hierarchy */
+  --dw-text-primary: #e7e9ea;
+  --dw-text-secondary: #71767b;
+  --dw-text-tertiary: #9ca3af;
+  --dw-text-disabled: #536471;
+  --dw-text-link: #1d9bf0;
+
+  /* Brand Colors (Dumu Waks Orange) */
+  --dw-color-orange-50: #fff7ed;
+  --dw-color-orange-100: #ffedd5;
+  --dw-color-orange-200: #fed7aa;
+  --dw-color-orange-300: #fdba74;
+  --dw-color-orange-400: #fb923c;
+  --dw-color-orange-500: #f97316;
+  --dw-color-orange-600: #ea580c;
+  --dw-color-orange-700: #c2410c;
+  --dw-color-orange-800: #9a3412;
+  --dw-color-orange-900: #7c2d12;
+
+  /* Brand Accent */
+  --dw-accent-primary: #f97316;
+  --dw-accent-hover: #ea580c;
+  --dw-accent-light: #fdba74;
+
+  /* Semantic Colors */
+  --dw-color-success: #00ba7c;
+  --dw-color-success-bg: rgba(0, 186, 124, 0.15);
+  --dw-color-warning: #f9c74f;
+  --dw-color-warning-bg: rgba(249, 199, 79, 0.15);
+  --dw-color-error: #f4212e;
+  --dw-color-error-bg: rgba(244, 33, 46, 0.15);
+  --dw-color-info: #1d9bf0;
+  --dw-color-info-bg: rgba(29, 155, 240, 0.15);
+
+  /* Border Colors */
+  --dw-border-subtle: rgba(255, 255, 255, 0.08);
+  --dw-border-default: rgba(255, 255, 255, 0.12);
+  --dw-border-strong: rgba(255, 255, 255, 0.2);
+  --dw-border-focus: #f97316;
+
+  /* Overlay Colors */
+  --dw-overlay-subtle: rgba(0, 0, 0, 0.5);
+  --dw-overlay-medium: rgba(0, 0, 0, 0.7);
+  --dw-overlay-strong: rgba(0, 0, 0, 0.85);
+
+  /* ============================================
+     TYPOGRAPHY TOKENS
+     ============================================ */
+
+  /* Font Families */
+  --dw-font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  --dw-font-family-mono: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+  --dw-font-family-display: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* Font Sizes - Display */
+  --dw-text-display-xl: 48px;
+  --dw-text-display-lg: 40px;
+  --dw-text-display-md: 32px;
+
+  /* Font Sizes - Headings */
+  --dw-text-heading-xl: 24px;
+  --dw-text-heading-lg: 20px;
+  --dw-text-heading-md: 18px;
+  --dw-text-heading-sm: 16px;
+
+  /* Font Sizes - Body */
+  --dw-text-body-lg: 16px;
+  --dw-text-body-md: 15px;
+  --dw-text-body-sm: 14px;
+
+  /* Font Sizes - Meta */
+  --dw-text-meta: 13px;
+  --dw-text-caption: 12px;
+  --dw-text-tiny: 11px;
+
+  /* Line Heights */
+  --dw-leading-tight: 1.2;
+  --dw-leading-snug: 1.35;
+  --dw-leading-normal: 1.5;
+  --dw-leading-relaxed: 1.65;
+
+  /* Font Weights */
+  --dw-weight-light: 300;
+  --dw-weight-regular: 400;
+  --dw-weight-medium: 500;
+  --dw-weight-semibold: 600;
+  --dw-weight-bold: 700;
+
+  /* Letter Spacing */
+  --dw-tracking-tight: -0.02em;
+  --dw-tracking-normal: 0;
+  --dw-tracking-wide: 0.05em;
+
+  /* ============================================
+     SPACING TOKENS
+     ============================================ */
+
+  --dw-spacing-0: 0;
+  --dw-spacing-1: 4px;
+  --dw-spacing-2: 8px;
+  --dw-spacing-3: 12px;
+  --dw-spacing-4: 16px;
+  --dw-spacing-5: 20px;
+  --dw-spacing-6: 24px;
+  --dw-spacing-8: 32px;
+  --dw-spacing-10: 40px;
+  --dw-spacing-12: 48px;
+  --dw-spacing-16: 64px;
+  --dw-spacing-20: 80px;
+  --dw-spacing-24: 96px;
+
+  /* ============================================
+     BREAKPOINT TOKENS
+     ============================================ */
+
+  --dw-breakpoint-xs: 375px;
+  --dw-breakpoint-sm: 640px;
+  --dw-breakpoint-md: 768px;
+  --dw-breakpoint-lg: 1024px;
+  --dw-breakpoint-xl: 1280px;
+  --dw-breakpoint-2xl: 1536px;
+
+  /* Container Widths */
+  --dw-container-xs: 100%;
+  --dw-container-sm: 640px;
+  --dw-container-md: 768px;
+  --dw-container-lg: 1024px;
+  --dw-container-xl: 1280px;
+  --dw-container-2xl: 1536px;
+
+  /* ============================================
+     BORDER TOKENS
+     ============================================ */
+
+  --dw-radius-none: 0;
+  --dw-radius-sm: 4px;
+  --dw-radius-md: 8px;
+  --dw-radius-lg: 12px;
+  --dw-radius-xl: 16px;
+  --dw-radius-2xl: 24px;
+  --dw-radius-full: 9999px;
+
+  --dw-border-width-thin: 1px;
+  --dw-border-width-medium: 2px;
+  --dw-border-width-thick: 3px;
+
+  /* ============================================
+     SHADOW TOKENS
+     ============================================ */
+
+  --dw-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --dw-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.5);
+  --dw-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.6);
+  --dw-shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.7);
+  --dw-shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.8);
+
+  /* Glassmorphism Shadows */
+  --dw-shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --dw-shadow-glass-lg: 0 20px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+
+  /* Brand Shadows */
+  --dw-shadow-brand: 0 4px 16px rgba(249, 115, 22, 0.3);
+  --dw-shadow-brand-lg: 0 6px 24px rgba(249, 115, 22, 0.4);
+
+  /* ============================================
+     EFFECT TOKENS
+     ============================================ */
+
+  /* Blur Values */
+  --dw-blur-xs: 2px;
+  --dw-blur-sm: 4px;
+  --dw-blur-md: 8px;
+  --dw-blur-lg: 16px;
+  --dw-blur-xl: 24px;
+
+  /* Transition Durations */
+  --dw-duration-instant: 100ms;
+  --dw-duration-fast: 200ms;
+  --dw-duration-normal: 300ms;
+  --dw-duration-slow: 500ms;
+
+  /* Transition Easing */
+  --dw-ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --dw-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --dw-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --dw-ease-in-out: cubic-bezier(0.4, 0, 0.6, 1);
+  --dw-ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+  /* ============================================
+     Z-INDEX TOKENS
+     ============================================ */
+
+  --dw-z-dropdown: 1000;
+  --dw-z-sticky: 1020;
+  --dw-z-fixed: 1030;
+  --dw-z-modal-backdrop: 1040;
+  --dw-z-modal: 1050;
+  --dw-z-popover: 1060;
+  --dw-z-tooltip: 1070;
+}
+
+/* ============================================
+   GLASSMORPHISM UTILITIES
+   ============================================ */
+
+.glass {
+  background: rgba(22, 24, 28, 0.6);
+  backdrop-filter: blur(var(--dw-blur-lg)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--dw-blur-lg)) saturate(180%);
+  border: 1px solid var(--dw-border-subtle);
+}
+
+.glass-nav {
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--dw-border-subtle);
+}
+
+.glass-card {
+  background: rgba(22, 24, 28, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--dw-border-subtle);
+  box-shadow: var(--dw-shadow-glass);
+}
+
+.glass-modal {
+  background: rgba(22, 24, 28, 0.95);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: var(--dw-shadow-glass-lg);
+}
+
+.glass-button {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.8), rgba(234, 88, 12, 0.9));
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: var(--dw-shadow-brand);
+}
+
+/* ============================================
+   REDUCED MOTION SUPPORT
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================
+   ACCESSIBILITY UTILITIES
+   ============================================ */
+
+/* Screen reader only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Focus visible styles */
+*:focus-visible {
+  outline: 2px solid var(--dw-accent-primary);
+  outline-offset: 2px;
+  border-radius: var(--dw-radius-sm);
+}
+
+/* Skip to content link */
+.skip-to-content {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--dw-accent-primary);
+  color: white;
+  padding: 8px 16px;
+  z-index: var(--dw-z-tooltip);
+  transition: top var(--dw-duration-fast);
+}
+
+.skip-to-content:focus {
+  top: 0;
+}

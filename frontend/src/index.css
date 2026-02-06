@@ -1,118 +1,443 @@
+/**
+ * Dumu Waks Global Styles
+ * X/Twitter-inspired dark theme (dark-first approach)
+ */
+
+@import './styles/tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  /* ============================================
+     DARK-FIRST BASE STYLES
+     ============================================ */
+
   * {
-    @apply border-gray-200 dark:border-gray-700;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    /* Smooth scrolling */
+    scroll-behavior: smooth;
+
+    /* Dark theme as default - no toggle needed */
+    color-scheme: dark;
+
+    /* Prevent iOS text size adjust */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   body {
-    @apply bg-gray-50 text-gray-900 antialiased transition-colors duration-200;
-    @apply dark:bg-gray-900 dark:text-gray-100;
+    /* X/Twitter dark theme colors */
+    background-color: var(--dw-bg-primary);
+    color: var(--dw-text-primary);
+
+    /* Typography */
+    font-family: var(--dw-font-family-base);
+    font-size: var(--dw-text-body-md);
+    line-height: var(--dw-leading-normal);
+    font-weight: var(--dw-weight-regular);
+    letter-spacing: var(--dw-tracking-normal);
+
+    /* Anti-aliasing */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+
+    /* Min height to fill viewport */
+    min-height: 100vh;
   }
 
-  /* Smooth dark mode transition */
-  html {
-    @apply transition-colors duration-200;
+  /* ============================================
+     TYPOGRAPHY BASE STYLES
+     ============================================ */
+
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--dw-text-primary);
+    font-weight: var(--dw-weight-bold);
+    line-height: var(--dw-leading-tight);
+    letter-spacing: var(--dw-tracking-tight);
+  }
+
+  h1 {
+    font-size: var(--dw-text-display-md);
+  }
+
+  h2 {
+    font-size: var(--dw-text-heading-xl);
+  }
+
+  h3 {
+    font-size: var(--dw-text-heading-lg);
+  }
+
+  h4 {
+    font-size: var(--dw-text-heading-md);
+  }
+
+  h5 {
+    font-size: var(--dw-text-heading-sm);
+  }
+
+  h6 {
+    font-size: var(--dw-text-body-lg);
+    font-weight: var(--dw-weight-semibold);
+  }
+
+  p {
+    color: var(--dw-text-primary);
+    margin-bottom: var(--dw-spacing-4);
+  }
+
+  a {
+    color: var(--dw-text-link);
+    text-decoration: none;
+    transition: color var(--dw-duration-fast) var(--dw-ease-default);
+  }
+
+  a:hover {
+    color: var(--dw-color-info);
+    text-decoration: underline;
+  }
+
+  a:focus-visible {
+    outline: 2px solid var(--dw-accent-primary);
+    outline-offset: 2px;
+    border-radius: var(--dw-radius-sm);
+    text-decoration: underline;
+  }
+
+  /* ============================================
+     SELECTION STYLES
+     ============================================ */
+
+  ::selection {
+    background-color: var(--dw-accent-primary);
+    color: white;
+  }
+
+  ::-moz-selection {
+    background-color: var(--dw-accent-primary);
+    color: white;
+  }
+
+  /* ============================================
+     SCROLLBAR STYLES
+     ============================================ */
+
+  /* WebKit browsers (Chrome, Safari, Edge) */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--dw-bg-secondary);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--dw-color-medium-gray);
+    border-radius: var(--dw-radius-full);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--dw-color-light-gray);
+  }
+
+  /* Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--dw-color-medium-gray) var(--dw-bg-secondary);
   }
 }
 
 @layer components {
+  /* ============================================
+     BUTTON COMPONENTS
+     Using Dumu Waks orange accent
+     ============================================ */
+
   .btn {
-    @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
+    @apply inline-flex items-center justify-center rounded-full text-sm font-medium transition-all duration-200;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+    @apply disabled:pointer-events-none disabled:opacity-50;
+    min-height: 44px; /* Touch target minimum */
+    padding: 0 var(--dw-spacing-6);
   }
 
   .btn-primary {
-    @apply bg-primary-600 text-white hover:bg-primary-700 active:bg-primary-800;
-    @apply dark:bg-primary-500 dark:hover:bg-primary-600 dark:active:bg-primary-700;
+    background: var(--dw-accent-primary);
+    color: white;
+    font-weight: var(--dw-weight-semibold);
+  }
+
+  .btn-primary:hover {
+    background: var(--dw-accent-hover);
+  }
+
+  .btn-primary:active {
+    transform: scale(0.98);
   }
 
   .btn-secondary {
-    @apply bg-gray-200 text-gray-900 hover:bg-gray-300 active:bg-gray-400;
-    @apply dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600 dark:active:bg-gray-500;
+    background: transparent;
+    color: var(--dw-text-primary);
+    border: 1px solid var(--dw-border-default);
+    font-weight: var(--dw-weight-semibold);
   }
 
-  .btn-outline {
-    @apply border border-gray-300 bg-transparent hover:bg-gray-100 active:bg-gray-200;
-    @apply dark:border-gray-600 dark:hover:bg-gray-800 dark:active:bg-gray-700;
+  .btn-secondary:hover {
+    background: var(--dw-bg-hover);
+    border-color: var(--dw-border-strong);
   }
 
+  .btn-ghost {
+    background: transparent;
+    color: var(--dw-accent-primary);
+  }
+
+  .btn-ghost:hover {
+    background: var(--dw-bg-active);
+  }
+
+  .btn-glass {
+    background: rgba(22, 24, 28, 0.6);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--dw-border-subtle);
+    color: var(--dw-text-primary);
+  }
+
+  .btn-glass:hover {
+    background: rgba(22, 24, 28, 0.8);
+    border-color: var(--dw-border-default);
+  }
+
+  /* Button Sizes */
   .btn-sm {
-    @apply h-9 px-3;
-  }
-
-  .btn-md {
-    @apply h-10 px-4 py-2;
+    min-height: 36px;
+    padding: 0 var(--dw-spacing-4);
+    font-size: var(--dw-text-body-sm);
   }
 
   .btn-lg {
-    @apply h-11 px-8;
+    min-height: 52px;
+    padding: 0 var(--dw-spacing-8);
+    font-size: var(--dw-text-body-lg);
   }
+
+  /* ============================================
+     INPUT COMPONENTS
+     ============================================ */
 
   .input {
-    @apply flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm;
-    @apply file:border-0 file:bg-transparent file:text-sm file:font-medium;
-    @apply placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2;
+    @apply flex w-full rounded-lg text-sm transition-colors;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background;
     @apply disabled:cursor-not-allowed disabled:opacity-50;
-    @apply dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500;
-    @apply dark:focus-visible:ring-primary-400 dark:focus-visible:ring-offset-gray-900;
+
+    background: var(--dw-bg-primary);
+    border: 1px solid var(--dw-border-default);
+    color: var(--dw-text-primary);
+    min-height: 44px;
+    padding: 0 var(--dw-spacing-4);
   }
 
-  .label {
-    @apply text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70;
-    @apply dark:text-gray-200;
+  .input::placeholder {
+    color: var(--dw-text-tertiary);
   }
+
+  .input:focus {
+    border-color: var(--dw-accent-primary);
+  }
+
+  .input-error {
+    border-color: var(--dw-color-error);
+  }
+
+  .input-error:focus {
+    border-color: var(--dw-color-error);
+    --tw-ring-color: var(--dw-color-error);
+  }
+
+  /* ============================================
+     CARD COMPONENTS
+     ============================================ */
 
   .card {
-    @apply rounded-lg border bg-white shadow-sm;
-    @apply dark:bg-gray-800 dark:border-gray-700;
+    background: var(--dw-bg-secondary);
+    border: 1px solid var(--dw-border-subtle);
+    border-radius: var(--dw-radius-xl);
+    overflow: hidden;
+    transition: background-color var(--dw-duration-fast), border-color var(--dw-duration-fast);
+  }
+
+  .card:hover {
+    background: var(--dw-bg-elevated);
+    border-color: var(--dw-border-default);
   }
 
   .card-header {
-    @apply flex flex-col space-y-1.5 p-6;
+    padding: var(--dw-spacing-6);
+    border-bottom: 1px solid var(--dw-border-subtle);
   }
 
   .card-title {
-    @apply text-2xl font-semibold leading-none tracking-tight;
-    @apply dark:text-gray-100;
+    font-size: var(--dw-text-heading-lg);
+    font-weight: var(--dw-weight-semibold);
+    color: var(--dw-text-primary);
   }
 
   .card-content {
-    @apply p-6 pt-0;
+    padding: var(--dw-spacing-6);
+  }
+
+  .card-footer {
+    padding: var(--dw-spacing-6);
+    border-top: 1px solid var(--dw-border-subtle);
+  }
+
+  /* ============================================
+     UTILITY CLASSES
+     ============================================ */
+
+  /* Glassmorphism utilities */
+  .glass {
+    background: rgba(22, 24, 28, 0.6);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--dw-border-subtle);
+  }
+
+  .glass-nav {
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--dw-border-subtle);
+  }
+
+  /* Text styles */
+  .text-gradient {
+    background: linear-gradient(135deg, var(--dw-accent-primary), #fb923c);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Shimmer loading effect */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      var(--dw-bg-secondary) 0%,
+      var(--dw-color-medium-gray) 50%,
+      var(--dw-bg-secondary) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* Loading spinner */
+  .spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid var(--dw-border-subtle);
+    border-top-color: var(--dw-accent-primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
 }
 
-/* Custom scrollbar - Dark theme support */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
+/* ============================================
+   ANIMATIONS
+   ============================================ */
 
-::-webkit-scrollbar-track {
-  @apply bg-gray-100 dark:bg-gray-800;
-}
-
-::-webkit-scrollbar-thumb {
-  @apply bg-gray-400 dark:bg-gray-600 rounded;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-500 dark:bg-gray-500;
-}
-
-/* Loading spinner */
-@keyframes spin {
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
   to {
-    transform: rotate(360deg);
+    opacity: 1;
   }
 }
 
-.animate-spin {
-  animation: spin 1s linear infinite;
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* Dark mode utilities */
-.dark-mode-transition {
-  @apply transition-colors duration-200;
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 300ms ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 300ms ease-out;
+}
+
+.animate-scale-in {
+  animation: scaleIn 200ms ease-out;
+}
+
+/* ============================================
+   RESPONSIVE UTILITIES
+   ============================================ */
+
+/* Mobile-first container */
+.container {
+  width: 100%;
+  padding: 0 var(--dw-spacing-4);
+  margin: 0 auto;
+}
+
+@media (min-width: 640px) {
+  .container {
+    max-width: var(--dw-container-sm);
+    padding: 0 var(--dw-spacing-6);
+  }
+}
+
+@media (min-width: 768px) {
+  .container {
+    max-width: var(--dw-container-md);
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    max-width: var(--dw-container-lg);
+  }
+}
+
+@media (min-width: 1280px) {
+  .container {
+    max-width: var(--dw-container-xl);
+  }
 }
