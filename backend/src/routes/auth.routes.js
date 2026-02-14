@@ -14,12 +14,26 @@ const {
 } = require('../controllers/auth.controller');
 const { protect } = require('../middleware/auth');
 const { validate } = require('../middleware/validation');
+const {
+  authLimiter,
+  registerLimiter,
+  passwordResetLimiter,
+  twoFactorLimiter
+} = require('../middleware/rateLimiter');
 
 const router = express.Router();
 
 // Public routes
+
+/**
+ * @route   POST /api/v1/auth/register
+ * @desc    Register a new user
+ * @access  Public
+ * @rateLimit 3 requests per hour per IP
+ */
 router.post(
   '/register',
+  registerLimiter,
   [
     body('firstName').trim().notEmpty().withMessage('First name is required'),
     body('lastName').trim().notEmpty().withMessage('Last name is required'),
@@ -41,8 +55,15 @@ router.post(
   register
 );
 
+/**
+ * @route   POST /api/v1/auth/login
+ * @desc    Authenticate user and get token
+ * @access  Public
+ * @rateLimit 5 requests per 15 minutes per IP+email
+ */
 router.post(
   '/login',
+  authLimiter,
   [
     body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
     body('password').notEmpty().withMessage('Password is required'),
@@ -51,8 +72,15 @@ router.post(
   login
 );
 
+/**
+ * @route   POST /api/v1/auth/verify-2fa
+ * @desc    Verify 2FA code during login
+ * @access  Public
+ * @rateLimit 5 requests per 15 minutes per IP
+ */
 router.post(
   '/verify-2fa',
+  twoFactorLimiter,
   [
     body('tempToken').notEmpty().withMessage('Temp token is required'),
     body('code').isLength({ min: 6, max: 6 }).withMessage('Invalid 2FA code'),
@@ -61,8 +89,15 @@ router.post(
   verify2FA
 );
 
+/**
+ * @route   POST /api/v1/auth/forgot-password
+ * @desc    Request password reset email
+ * @access  Public
+ * @rateLimit 3 requests per hour per email
+ */
 router.post(
   '/forgot-password',
+  passwordResetLimiter,
   [
     body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
     validate
@@ -70,8 +105,15 @@ router.post(
   forgotPassword
 );
 
+/**
+ * @route   POST /api/v1/auth/reset-password/:resetToken
+ * @desc    Reset password using token
+ * @access  Public
+ * @rateLimit Uses general API limiter
+ */
 router.post(
   '/reset-password/:resetToken',
+  authLimiter,
   [
     body('password')
       .isLength({ min: 8 })
@@ -83,13 +125,34 @@ router.post(
   resetPassword
 );
 
+/**
+ * @route   GET /api/v1/auth/verify-email/:token
+ * @desc    Verify email address
+ * @access  Public
+ */
 router.get('/verify-email/:token', verifyEmail);
 
 // Protected routes
+
+/**
+ * @route   GET /api/v1/auth/me
+ * @desc    Get current authenticated user
+ * @access  Private
+ */
 router.get('/me', protect, getMe);
 
+/**
+ * @route   POST /api/v1/auth/setup-2fa
+ * @desc    Setup 2FA for authenticated user
+ * @access  Private
+ */
 router.post('/setup-2fa', protect, setup2FA);
 
+/**
+ * @route   POST /api/v1/auth/enable-2fa
+ * @desc    Enable 2FA after verification
+ * @access  Private
+ */
 router.post(
   '/enable-2fa',
   protect,
@@ -100,6 +163,11 @@ router.post(
   enable2FA
 );
 
+/**
+ * @route   POST /api/v1/auth/disable-2fa
+ * @desc    Disable 2FA for authenticated user
+ * @access  Private
+ */
 router.post(
   '/disable-2fa',
   protect,
