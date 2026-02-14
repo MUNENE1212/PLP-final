@@ -1,84 +1,87 @@
-# Dumu Waks Platform - Quick Start Guide
+# Dumu Waks - Quick Start & Deployment Guide
 
-## 🎉 Database Schemas Initialized Successfully!
+Complete guide for local development, Docker setup, and production deployment.
 
-Your MERN stack database schemas are now ready for both **web application (Phase 1)** and **mobile application (Phase 2)** implementation.
+## Table of Contents
 
-## 📁 Files Created
+- [Prerequisites](#prerequisites)
+- [Local Development](#local-development)
+- [Docker Development](#docker-development)
+- [Production Deployment (Render.com)](#production-deployment-rendercom)
+- [Cloudinary Media Storage](#cloudinary-media-storage)
+- [Environment Variables](#environment-variables)
+- [Security Best Practices](#security-best-practices)
+- [Troubleshooting](#troubleshooting)
 
-```
-backend/
-├── src/
-│   ├── config/
-│   │   └── db.js                    # Database configuration & utilities
-│   ├── models/
-│   │   ├── User.js                  # User model (multi-role)
-│   │   ├── Booking.js               # Booking model with FSM
-│   │   ├── Transaction.js           # Payment & transaction model
-│   │   ├── Post.js                  # Social post model
-│   │   ├── Review.js                # Review & rating model
-│   │   ├── Message.js               # Chat message model
-│   │   ├── Conversation.js          # Conversation model
-│   │   └── Notification.js          # Notification model
-│   ├── routes/                      # (To be implemented)
-│   ├── controllers/                 # (To be implemented)
-│   ├── middleware/                  # (To be implemented)
-│   ├── services/                    # (To be implemented)
-│   ├── utils/                       # (To be implemented)
-│   ├── sockets/                     # (To be implemented)
-│   └── server.js                    # Express server entry point
-├── .env.example                     # Environment variables template
-├── package.json                     # Dependencies
-├── README.md                        # Complete documentation
-└── DATABASE_SCHEMA_SUMMARY.md       # Visual schema overview
+---
 
-frontend/                            # (To be implemented)
-└── src/
-```
+## Prerequisites
 
-## 🚀 Next Steps
+- Node.js 18+ and npm
+- MongoDB 7.0+ (or MongoDB Atlas account)
+- Redis (optional, for caching)
+- Docker & Docker Compose (for containerized setup)
+- M-Pesa Developer Account (for payments)
+- Cloudinary Account (for media storage)
+- Git
 
-### 1. Install Dependencies
+---
+
+## Local Development
+
+### Backend Setup
 
 ```bash
 cd backend
+
+# Install dependencies
 npm install
+
+# Configure environment
+cp .env.example .env
+nano .env  # Configure your credentials
+
+# Seed pricing data
+npm run seed:pricing
+
+# Start development server
+npm run dev
 ```
 
-This will install all required packages:
-- Express.js, Mongoose, Socket.io
-- JWT, Bcrypt, Redis
-- Cloudinary, Multer, Sharp
-- M-Pesa, Stripe, Firebase
-- And more...
-
-### 2. Configure Environment
+### Frontend Setup
 
 ```bash
-# Copy environment template
+cd frontend
+
+# Install dependencies
+npm install
+
+# Configure environment
 cp .env.example .env
-
-# Edit with your credentials
 nano .env
+
+# Start development server
+npm run dev
 ```
 
-**Minimum required for local development:**
-```env
-MONGODB_URI=mongodb://localhost:27017/dumuwaks
-JWT_SECRET=your-secret-key-at-least-32-characters
-JWT_REFRESH_SECRET=your-refresh-secret-key
-```
+### Access the Application
 
-### 3. Start MongoDB
+- **Frontend:** http://localhost:3000
+- **Backend API:** http://localhost:5000
+- **API Docs:** http://localhost:5000/api-docs
+- **Health Check:** http://localhost:5000/api/v1/health
+
+### MongoDB Setup
 
 **Option A: Local MongoDB**
 ```bash
-# Install MongoDB
-brew install mongodb-community  # macOS
-sudo apt install mongodb         # Ubuntu
-
-# Start MongoDB
+# macOS
+brew install mongodb-community
 mongod --dbpath=/path/to/data
+
+# Ubuntu
+sudo apt install mongodb
+sudo systemctl start mongodb
 ```
 
 **Option B: Docker**
@@ -86,263 +89,372 @@ mongod --dbpath=/path/to/data
 docker run -d -p 27017:27017 --name mongodb mongo:7
 ```
 
-**Option C: MongoDB Atlas (Recommended)**
+**Option C: MongoDB Atlas (Recommended for Production)**
 1. Go to https://www.mongodb.com/cloud/atlas
-2. Create free cluster
+2. Create a free M0 cluster (512MB)
 3. Get connection string
 4. Update `MONGODB_URI` in `.env`
 
-### 4. Start Redis (Optional but Recommended)
+### Redis Setup (Optional)
 
-**Option A: Docker**
 ```bash
+# Docker
 docker run -d -p 6379:6379 --name redis redis:7
-```
 
-**Option B: Local Redis**
-```bash
+# Local
 brew install redis  # macOS
 sudo apt install redis-server  # Ubuntu
 redis-server
 ```
 
-### 5. Start the Server
+---
+
+## Docker Development
+
+### Quick Start
 
 ```bash
-# Development mode (with auto-reload)
-npm run dev
+# Copy environment template
+cp .env.docker.example .env.docker
+nano .env.docker  # Configure your credentials
 
-# Production mode
-npm start
+# Start all services
+./scripts/docker-dev.sh
+
+# Or manually
+docker-compose up -d
+docker-compose logs -f
 ```
 
-You should see:
-```
-╔═══════════════════════════════════════╗
-║     🚀 BaiTech Server Started        ║
-╠═══════════════════════════════════════╣
-║  Environment: development             ║
-║  Port: 5000                           ║
-║  URL: http://localhost:5000           ║
-╚═══════════════════════════════════════╝
+### Docker Services
 
-✅ MongoDB Connected: localhost
-📦 Database: baitech
-🔨 Creating database indexes...
-✅ Database indexes created successfully
-```
+| Service | Port | Description |
+|---------|------|-------------|
+| Frontend | 3000 | React/TypeScript app |
+| Backend | 5000 | Node.js/Express API |
+| MongoDB | 27017 | Database |
+| Redis | 6379 | Cache |
 
-### 6. Test the Server
+### Production Docker
 
 ```bash
-# Health check
-curl http://localhost:5000/health
+# Configure production environment
+cp .env.docker.example .env.docker
+nano .env.docker  # Set production values
 
-# API info
-curl http://localhost:5000/
+# Deploy
+./scripts/docker-prod.sh
+
+# Verify
+docker-compose -f docker-compose.prod.yml ps
+docker-compose -f docker-compose.prod.yml logs -f
 ```
 
-## 🎯 What's Been Set Up
+---
 
-### ✅ Database Models (8 Models)
+## Production Deployment (Render.com)
 
-| Model          | Purpose                              | Key Features                          |
-|----------------|--------------------------------------|---------------------------------------|
-| User           | Authentication & profiles            | Multi-role, Geospatial, KYC, FCM      |
-| Booking        | Service bookings                     | FSM states, Location, AI matching     |
-| Transaction    | Payments & payouts                   | Multi-gateway, Escrow, Refunds        |
-| Post           | Social feed & portfolio              | Engagement, Hashtags, Media           |
-| Review         | Ratings & testimonials               | 5-star system, Sentiment analysis     |
-| Message        | Real-time chat                       | Text/Media, Read receipts, Reactions  |
-| Conversation   | Chat rooms                           | Direct, Group, Booking, Support       |
-| Notification   | Multi-channel notifications          | Push, Email, SMS, Deep links          |
+Render.com is the recommended platform for production deployment.
 
-### ✅ Mobile-Ready Features
+### Prerequisites
 
-- **Push Notifications**: FCM token management in User model
-- **Deep Linking**: All notifications include deep links
-- **Real-time**: Socket.io support for chat and updates
-- **Offline-First**: Timestamp-based sync support
-- **Geolocation**: 2dsphere indexes for proximity searches
+- [ ] GitHub account with repository pushed
+- [ ] Render.com account (sign up free at https://render.com)
+- [ ] MongoDB Atlas account
+- [ ] M-Pesa developer credentials
+- [ ] Cloudinary account
 
-### ✅ Performance Optimizations
+### Step 1: MongoDB Atlas (5 minutes)
 
-- **Strategic Indexing**: 30+ indexes across all collections
-- **Geospatial Queries**: Find nearby technicians in milliseconds
-- **Text Search**: Full-text search on users, posts, reviews
-- **Compound Indexes**: Optimized for common query patterns
-- **Redis Caching**: Ready for session and data caching
+1. Go to https://www.mongodb.com/cloud/atlas
+2. Create a free M0 cluster (512MB)
+3. Choose AWS provider, closest region
+4. **Database Access:** Create user with password
+5. **Network Access:** Allow access from anywhere (0.0.0.0/0)
+6. Get connection string:
+   ```
+   mongodb+srv://dumuwaks_admin:PASSWORD@cluster.mongodb.net/dumuwaks?retryWrites=true&w=majority
+   ```
 
-### ✅ Security Features
+### Step 2: Push to GitHub
 
-- **Authentication**: JWT + Refresh tokens, 2FA support
-- **Password Security**: Bcrypt hashing (12 rounds)
-- **Input Validation**: MongoDB sanitization, XSS prevention
-- **Rate Limiting**: Configurable request limits
-- **GDPR Compliance**: Consent tracking, data export, soft delete
-
-## 📱 Phase 2: Mobile App Integration
-
-Your database is **already mobile-ready**! Here's what's prepared:
-
-### Push Notifications
-```javascript
-// Register FCM token
-POST /api/v1/users/fcm-token
-{
-  "token": "fcm_device_token",
-  "device": "iPhone 14 Pro",
-  "platform": "ios"  // or "android"
-}
-```
-
-### Deep Linking
-All notifications include:
-```javascript
-{
-  "deepLink": "baitech://booking/123",
-  "actionData": {
-    "action": "view_booking",
-    "bookingId": "123"
-  }
-}
-```
-
-### Real-time Events (Socket.io)
-```javascript
-// Client connects
-socket.emit('authenticate', { token: 'jwt_token' });
-
-// Listen for events
-socket.on('new_message', handleNewMessage);
-socket.on('booking_update', handleBookingUpdate);
-socket.on('notification', handleNotification);
-```
-
-## 🛠️ Development Workflow
-
-### Create Your First User
-```javascript
-POST http://localhost:5000/api/v1/auth/register
-Content-Type: application/json
-
-{
-  "firstName": "John",
-  "lastName": "Doe",
-  "email": "john@example.com",
-  "phoneNumber": "+254712345678",
-  "password": "your-secure-password",
-  "role": "customer"
-}
-```
-
-### Test Geospatial Queries
-```javascript
-// Find technicians near location
-POST http://localhost:5000/api/v1/users/technicians/nearby
-Content-Type: application/json
-
-{
-  "longitude": 36.8219,
-  "latitude": -1.2921,
-  "maxDistance": 10000,  // 10km
-  "skill": "plumbing"
-}
-```
-
-### Create a Booking
-```javascript
-POST http://localhost:5000/api/v1/bookings
-Content-Type: application/json
-Authorization: Bearer <jwt_token>
-
-{
-  "serviceCategory": "plumbing",
-  "serviceType": "Pipe Repair",
-  "description": "Kitchen sink is leaking",
-  "urgency": "high",
-  "serviceLocation": {
-    "coordinates": [36.8219, -1.2921],
-    "address": "123 Main St, Nairobi"
-  },
-  "timeSlot": {
-    "date": "2025-10-15T09:00:00Z",
-    "startTime": "09:00",
-    "endTime": "11:00"
-  }
-}
-```
-
-## 📊 Database Management
-
-### View Database Stats
 ```bash
-# From Node.js
-const { getDatabaseStats } = require('./src/config/db');
-const stats = await getDatabaseStats();
-console.log(stats);
-
-# From MongoDB shell
-mongosh
-use baitech
-db.stats()
+git add .
+git commit -m "Ready for Render deployment"
+git push origin master
 ```
 
-### Create Indexes Manually
+### Step 3: Deploy on Render
+
+1. Go to https://dashboard.render.com
+2. Click **New** > **Blueprint**
+3. Connect your GitHub repository
+4. Render will detect `render.yaml` automatically
+5. Click **Apply Blueprint**
+
+### Step 4: Configure Environment Variables
+
+**Backend Service:**
+```
+MONGODB_URI=mongodb+srv://dumuwaks_admin:PASSWORD@cluster.mongodb.net/dumuwaks?retryWrites=true&w=majority
+JWT_SECRET=<generate-64-char-secret>
+JWT_REFRESH_SECRET=<generate-64-char-secret>
+MPESA_CONSUMER_KEY=your_mpesa_key
+MPESA_CONSUMER_SECRET=your_mpesa_secret
+MPESA_PASSKEY=your_mpesa_passkey
+MPESA_CALLBACK_URL=https://your-backend.onrender.com/api/v1/payments/mpesa/callback
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+```
+
+**Frontend Service:**
+```
+VITE_API_URL=https://your-backend.onrender.com/api/v1
+```
+
+**Auto-configured by Render:**
+```
+REDIS_HOST
+REDIS_PORT
+CORS_ORIGIN
+```
+
+### Step 5: Post-Deployment
+
+1. **Seed Pricing Data:**
+   - Go to backend service in Render dashboard
+   - Click **Shell** tab
+   - Run: `cd backend && npm run seed:pricing`
+
+2. **Update M-Pesa Callback URL** in M-Pesa developer portal
+
+3. **Test Application:**
+   - Frontend: `https://your-frontend.onrender.com`
+   - Backend: `https://your-backend.onrender.com/api/v1/health`
+
+### Render Service URLs
+
+After deployment, your services will be available at:
+
+- **Frontend:** `https://dumuwaks-frontend.onrender.com`
+- **Backend:** `https://dumuwaks-backend.onrender.com`
+- **API Docs:** `https://dumuwaks-backend.onrender.com/api-docs`
+- **Health Check:** `https://dumuwaks-backend.onrender.com/api/v1/health`
+
+### Cost Breakdown
+
+**Free Tier (Development):**
+| Service | Cost | Notes |
+|---------|------|-------|
+| Frontend | $0 | Static site |
+| Backend | $0 | Auto-sleeps after 15 min |
+| Redis | $0 | 25MB limit |
+| MongoDB | $0 | Atlas M0 (512MB) |
+| **Total** | **$0/month** | Cold starts |
+
+**Paid Tier (Production):**
+| Service | Cost | Benefits |
+|---------|------|----------|
+| Frontend | $0 | Same as free |
+| Backend | $7/month | Always-on, better CPU/RAM |
+| Redis | $7/month | 256MB, persistent |
+| MongoDB | $0 | Same as free (or $9 for M2) |
+| **Total** | **$14/month** | No cold starts |
+
+---
+
+## Cloudinary Media Storage
+
+Dumu Waks uses Cloudinary for media storage (replacing Google Drive).
+
+### Setup Instructions
+
+1. **Create Cloudinary Account:**
+   - Go to https://cloudinary.com/
+   - Sign up for free account
+   - Verify email
+
+2. **Get Credentials:**
+   - From Dashboard, copy:
+     - Cloud Name
+     - API Key
+     - API Secret
+
+3. **Configure Environment:**
+   ```env
+   CLOUDINARY_CLOUD_NAME=your-cloud-name
+   CLOUDINARY_API_KEY=your-api-key
+   CLOUDINARY_API_SECRET=your-api-secret
+   ```
+
+4. **Test Configuration:**
+   ```bash
+   # Start backend and check logs
+   npm run dev
+   # Look for: "Cloudinary configured successfully"
+
+   # Test endpoint
+   curl http://localhost:5000/api/v1/upload/config
+   # Should return: {"configured": true}
+   ```
+
+### Features
+
+- **Automatic Optimization:** Images resized to 500x500, cropped to faces, WebP conversion
+- **Organized Folders:** `profile-pictures/`, `posts/`, `bookings/`
+- **Supported Types:** JPEG, JPG, PNG, GIF, WebP, MP4, MOV, AVI
+- **Max File Size:** 10MB
+
+### Free Tier Limits
+
+- 25 GB storage
+- 25 GB bandwidth per month
+- Unlimited transformations
+
+---
+
+## Environment Variables
+
+### Required for Backend
+
+```env
+# Database
+MONGODB_URI=mongodb://localhost:27017/dumuwaks
+
+# Authentication
+JWT_SECRET=your-jwt-secret-at-least-32-characters
+JWT_REFRESH_SECRET=your-refresh-secret-key
+
+# M-Pesa (for payments)
+MPESA_CONSUMER_KEY=your_consumer_key
+MPESA_CONSUMER_SECRET=your_consumer_secret
+MPESA_PASSKEY=your_passkey
+MPESA_CALLBACK_URL=https://your-domain.com/api/v1/payments/mpesa/callback
+MPESA_ENVIRONMENT=sandbox
+
+# Cloudinary (for media)
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+
+# Redis (optional)
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# CORS
+CORS_ORIGIN=http://localhost:3000
+```
+
+### Required for Frontend
+
+```env
+VITE_API_URL=http://localhost:5000/api/v1
+```
+
+---
+
+## Security Best Practices
+
+### Environment Variables
+
+**DO:**
+- Always use environment variables for sensitive data
+- Use strong, randomly generated passwords (20+ characters)
+- Generate unique secrets for JWT_SECRET and JWT_REFRESH_SECRET
+- Keep `.env` file in `.gitignore`
+- Use different credentials for development and production
+- Store production credentials in a secure password manager
+
+**DON'T:**
+- Never commit `.env` files to version control
+- Never use default/example passwords in production
+- Never reuse passwords across services
+- Never share credentials in plaintext
+
+### Generate Strong Secrets
+
+JWT secrets are cryptographic keys used to sign and verify authentication tokens. Using weak or predictable secrets can lead to security vulnerabilities.
+
+**IMPORTANT:** Run the command TWICE to generate two different secrets:
+- One for `JWT_SECRET` (access tokens)
+- One for `JWT_REFRESH_SECRET` (refresh tokens)
+
 ```bash
-# If auto-index is disabled in production
-npm run indexes
+# Generate JWT secret (64 bytes = 128 hex characters)
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+
+# Example output:
+# a1b2c3d4e5f6... (128 character hex string)
+
+# Generate encryption key (32 bytes = 64 hex characters)
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-### Cleanup Old Data
+**Security Requirements for JWT Secrets:**
+- Minimum 32 characters (64+ recommended)
+- Use cryptographically secure random generation
+- Never use the same secret for JWT_SECRET and JWT_REFRESH_SECRET
+- Never commit secrets to version control
+- Rotate secrets periodically (every 90 days recommended)
+- Use different secrets for development and production
+
+**Example .env configuration:**
+```env
+# Generated with: node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+JWT_SECRET=a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef
+JWT_REFRESH_SECRET=f9e8d7c6b5a4321098765432109876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210
+```
+
+### Docker Security
+
+The following files are excluded from Docker images via `.dockerignore`:
+- `.env` and all `.env*` variants
+- `*credentials.json` files
+- Service account keys
+- Private keys (`.pem`, `.key` files)
+
+**IMPORTANT:** Even though these files are excluded, never commit them to git!
+
+### MongoDB Security
+
+- Always set strong `MONGO_ROOT_USERNAME` and `MONGO_ROOT_PASSWORD`
+- Don't expose port 27017 to the internet
+- Use authentication (enabled by default)
+- For production, use MongoDB Atlas with IP whitelisting
+
+### Redis Security
+
+- Redis has no authentication by default (local development only)
+- Don't expose port 6379 to the internet
+- For production, use Redis Cloud with password authentication
+
+### Check for Exposed Secrets
+
 ```bash
-# Run maintenance script
-npm run cleanup
+# Check for accidentally staged credential files
+git status | grep -E "\.env|credentials\.json|service-account"
+
+# Check for secrets in files
+git diff --cached | grep -iE "password|secret|key|token"
+
+# Scan for common secret patterns
+git diff --cached | grep -E "mongodb://|postgres://|redis://"
 ```
 
-This will:
-- Delete messages older than 90 days
-- Remove read notifications older than 30 days
-- Clean up deleted conversations
+### What to Do If Secrets Are Exposed
 
-## 🔍 Monitoring
+1. **Immediately rotate all exposed credentials**
+2. **Remove from git history** (use `git filter-branch` or `BFG Repo-Cleaner`)
+3. **Update all deployment environments**
+4. **Monitor for unauthorized access**
 
-### Health Check Endpoint
-```bash
-curl http://localhost:5000/health
-```
+---
 
-Returns:
-```json
-{
-  "status": "healthy",
-  "timestamp": "2025-10-10T12:00:00Z",
-  "uptime": 3600,
-  "environment": "development",
-  "database": {
-    "status": "connected",
-    "isHealthy": true,
-    "host": "localhost",
-    "database": "baitech"
-  }
-}
-```
-
-## 🎓 Learning Resources
-
-### Mongoose Documentation
-- Official Docs: https://mongoosejs.com/docs/
-- Indexes: https://mongoosejs.com/docs/guide.html#indexes
-- Geospatial: https://mongoosejs.com/docs/geojson.html
-
-### MongoDB Best Practices
-- Schema Design: https://www.mongodb.com/docs/manual/core/data-modeling-introduction/
-- Performance: https://www.mongodb.com/docs/manual/administration/analyzing-mongodb-performance/
-- Indexing: https://www.mongodb.com/docs/manual/indexes/
-
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### MongoDB Connection Issues
+
 ```bash
 # Check if MongoDB is running
 mongosh --eval "db.adminCommand('ping')"
@@ -355,6 +467,7 @@ tail -f /var/log/mongodb/mongod.log
 ```
 
 ### Port Already in Use
+
 ```bash
 # Find process using port 5000
 lsof -i :5000
@@ -363,50 +476,44 @@ lsof -i :5000
 kill -9 <PID>
 ```
 
-### Index Creation Fails
-```bash
-# Drop all indexes and recreate
-mongosh baitech
-db.users.dropIndexes()
-db.bookings.dropIndexes()
+### Docker Service Won't Start
 
-# Restart server to recreate
-npm run dev
-```
+- Check logs: `docker-compose logs backend`
+- Verify all environment variables are set
+- Check MongoDB Atlas network access (0.0.0.0/0)
 
-## 📞 Support
+### Frontend Can't Connect to Backend
 
-### Documentation
-- `README.md` - Complete backend documentation
-- `DATABASE_SCHEMA_SUMMARY.md` - Visual schema overview
-- Architecture file - Full system architecture
+- Verify `VITE_API_URL` is correct
+- Verify `CORS_ORIGIN` includes frontend URL
+- Check backend is running (green status)
 
-### Common Questions
+### Cloudinary "Not Configured" Error
 
-**Q: Can I use this with React Native?**
-A: Yes! All models include FCM tokens, deep linking, and mobile-optimized features.
+- Check all three environment variables are set:
+  - `CLOUDINARY_CLOUD_NAME`
+  - `CLOUDINARY_API_KEY`
+  - `CLOUDINARY_API_SECRET`
 
-**Q: Is this production-ready?**
-A: Yes! Includes security, performance optimizations, and best practices.
+### Render Service Issues
 
-**Q: How do I add new fields?**
-A: Edit the model file, add the field, and Mongoose will handle schema updates.
-
-**Q: Can I use PostgreSQL instead?**
-A: This is designed for MongoDB, but you could adapt it with significant changes.
-
-## 🎉 You're All Set!
-
-Your database schemas are initialized and ready for development. The next steps are:
-
-1. ✅ **Database Schemas** - COMPLETED
-2. 🔄 **API Routes & Controllers** - Next
-3. 🔄 **Authentication Middleware** - Next
-4. 🔄 **Frontend React App** - Next
-5. 🔄 **Mobile React Native App** - Phase 2
-
-**Happy coding!** 🚀
+1. Check service logs in Render dashboard
+2. Verify all environment variables are set
+3. Check MongoDB Atlas network access
+4. Check Render status page: https://status.render.com/
 
 ---
 
-**Need help?** Check the README.md or contact the team.
+## Additional Resources
+
+- **Full API Documentation:** [docs/api/API_ROUTES_SUMMARY.md](./docs/api/API_ROUTES_SUMMARY.md)
+- **Database Schema:** [docs/backend/DATABASE_SCHEMA_SUMMARY.md](./docs/backend/DATABASE_SCHEMA_SUMMARY.md)
+- **Pricing System:** [docs/features/PRICING_SYSTEM_DOCUMENTATION.md](./docs/features/PRICING_SYSTEM_DOCUMENTATION.md)
+- **M-Pesa Integration:** [docs/features/MPESA_INTEGRATION_GUIDE.md](./docs/features/MPESA_INTEGRATION_GUIDE.md)
+- **Render Docs:** https://render.com/docs
+- **MongoDB Atlas Docs:** https://www.mongodb.com/docs/atlas/
+- **Cloudinary Docs:** https://cloudinary.com/documentation
+
+---
+
+**Need help?** Check the [README.md](./README.md) or contact the team at support@dumuwaks.com

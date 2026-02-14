@@ -10,6 +10,8 @@ const {
 } = require('../controllers/mpesa.controller');
 const { protect, authorize } = require('../middleware/auth');
 const { validate } = require('../middleware/validation');
+const { mpesaCallbackVerify, mpesaTimeoutVerify } = require('../middleware/mpesaVerify');
+const { paymentLimiter } = require('../middleware/rateLimiter');
 
 const router = express.Router();
 
@@ -17,11 +19,13 @@ const router = express.Router();
  * @route   POST /api/v1/payments/mpesa/stkpush
  * @desc    Initiate M-Pesa STK Push payment
  * @access  Private (Customer/Corporate)
+ * @rateLimit 20 requests per hour per IP
  */
 router.post(
   '/stkpush',
   protect,
   authorize('customer', 'corporate'),
+  paymentLimiter,
   [
     body('phoneNumber')
       .notEmpty()
@@ -49,8 +53,9 @@ router.post(
  * @route   POST /api/v1/payments/mpesa/callback
  * @desc    M-Pesa callback endpoint (called by Safaricom)
  * @access  Public (No auth - called by M-Pesa servers)
+ * @security IP whitelist, HTTPS enforcement, structure validation
  */
-router.post('/callback', mpesaCallback);
+router.post('/callback', mpesaCallbackVerify, mpesaCallback);
 
 /**
  * @route   GET /api/v1/payments/mpesa/callback/test
@@ -84,14 +89,16 @@ router.get('/history', protect, getPaymentHistory);
  * @route   POST /api/v1/payments/mpesa/b2c-callback
  * @desc    M-Pesa B2C callback endpoint (called by Safaricom)
  * @access  Public (No auth - called by M-Pesa servers)
+ * @security IP whitelist, HTTPS enforcement, structure validation
  */
-router.post('/b2c-callback', b2cCallback);
+router.post('/b2c-callback', mpesaCallbackVerify, b2cCallback);
 
 /**
  * @route   POST /api/v1/payments/mpesa/b2c-timeout
  * @desc    M-Pesa B2C timeout endpoint (called by Safaricom)
  * @access  Public (No auth - called by M-Pesa servers)
+ * @security Callback secret validation
  */
-router.post('/b2c-timeout', b2cTimeout);
+router.post('/b2c-timeout', mpesaTimeoutVerify, b2cTimeout);
 
 module.exports = router;
