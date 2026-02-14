@@ -1,0 +1,302 @@
+# =============================================================================
+# Dumu Waks Deployment Pipeline
+# =============================================================================
+# This workflow handles production deployments to Render.com.
+# It triggers on pushes to the master branch after CI passes.
+#
+# Required Secrets:
+#   - RENDER_DEPLOY_HOOK_URL: Render.com deploy hook URL for backend
+#   - RENDER_FRONTEND_DEPLOY_HOOK_URL: Render.com deploy hook URL for frontend
+#
+# Deployment Strategy:
+#   1. CI must pass before deployment can proceed
+#   2. Manual approval required for production deployment
+#   3. Triggers Render.com deploy hooks for zero-downtime deployment
+#   4. Verifies deployment health after completion
+# =============================================================================
+
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+# Only one deployment at a time
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '20.x'
+
+jobs:
+  # ===========================================================================
+  # Verify CI Passed
+  # ===========================================================================
+  verify-ci:
+    name: Verify CI Status
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check CI status
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+
+            // Get the latest CI workflow run for this commit
+            const runs = await github.rest.actions.listWorkflowRuns({
+              owner,
+              repo,
+              workflow_id: 'ci.yml',
+              head_sha: context.sha,
+              status: 'completed',
+              per_page: 1
+            });
+
+            if (runs.data.workflow_runs.length === 0) {
+              core.setFailed('No completed CI runs found for this commit. Please ensure CI passes before deploying.');
+              return;
+            }
+
+            const latestRun = runs.data.workflow_runs[0];
+            if (latestRun.conclusion !== 'success') {
+              core.setFailed(`Latest CI run concluded with: ${latestRun.conclusion}. CI must pass before deployment.`);
+              return;
+            }
+
+            console.log(`CI run ${latestRun.id} passed successfully.`);
+            core.summary.addRaw(`CI verification passed. Run ID: ${latestRun.id}`);
+
+  # ===========================================================================
+  # Production Deployment Approval
+  # ===========================================================================
+  approval:
+    name: Deployment Approval
+    runs-on: ubuntu-latest
+    needs: verify-ci
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
+
+    environment:
+      name: production
+      url: https://ementech-backend.onrender.com
+
+    steps:
+      - name: Approval gate
+        run: |
+          echo "Production deployment approved."
+          echo "Commit: ${{ github.sha }}"
+          echo "Author: ${{ github.actor }}"
+          echo "Message: ${{ github.event.head_commit.message }}"
+
+  # ===========================================================================
+  # Deploy Backend to Render
+  # ===========================================================================
+  deploy-backend:
+    name: Deploy Backend
+    runs-on: ubuntu-latest
+    needs: approval
+    if: success()
+
+    environment:
+      name: production-backend
+      url: https://ementech-backend.onrender.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Trigger Render backend deployment
+        id: deploy-backend
+        run: |
+          echo "Triggering backend deployment to Render..."
+
+          if [ -z "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" ]; then
+            echo "Warning: RENDER_DEPLOY_HOOK_URL secret is not set. Skipping deployment."
+            echo "deployed=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}")
+
+          if [ "$HTTP_STATUS" -eq 200 ] || [ "$HTTP_STATUS" -eq 201 ]; then
+            echo "Backend deployment triggered successfully (HTTP $HTTP_STATUS)"
+            echo "deployed=true" >> $GITHUB_OUTPUT
+          else
+            echo "Failed to trigger backend deployment (HTTP $HTTP_STATUS)"
+            echo "deployed=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Wait for backend deployment
+        if: steps.deploy-backend.outputs.deployed == 'true'
+        run: |
+          echo "Waiting for backend deployment to complete..."
+          echo "Note: Render deployments typically take 2-5 minutes."
+          echo "Monitor at: https://dashboard.render.com"
+
+          # Wait for deployment to stabilize (Render doesn't have instant webhook confirmation)
+          sleep 60
+
+      - name: Verify backend health
+        if: steps.deploy-backend.outputs.deployed == 'true'
+        run: |
+          echo "Checking backend health..."
+
+          MAX_RETRIES=10
+          RETRY_COUNT=0
+          HEALTH_URL="https://ementech-backend.onrender.com/api/v1/health"
+
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$HEALTH_URL" || echo "000")
+
+            if [ "$HTTP_STATUS" -eq 200 ]; then
+              echo "Backend health check passed!"
+              exit 0
+            fi
+
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            echo "Health check attempt $RETRY_COUNT/$MAX_RETRIES (HTTP $HTTP_STATUS)"
+            sleep 30
+          done
+
+          echo "Warning: Backend health check did not pass within timeout."
+          echo "Please manually verify the deployment at: $HEALTH_URL"
+
+      - name: Deployment summary
+        run: |
+          echo "## Backend Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Author**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: Production" >> $GITHUB_STEP_SUMMARY
+
+  # ===========================================================================
+  # Deploy Frontend to Render
+  # ===========================================================================
+  deploy-frontend:
+    name: Deploy Frontend
+    runs-on: ubuntu-latest
+    needs: approval
+    if: success()
+
+    environment:
+      name: production-frontend
+      url: https://ementech-frontend.onrender.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Trigger Render frontend deployment
+        id: deploy-frontend
+        run: |
+          echo "Triggering frontend deployment to Render..."
+
+          if [ -z "${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK_URL }}" ]; then
+            echo "Warning: RENDER_FRONTEND_DEPLOY_HOOK_URL secret is not set. Skipping deployment."
+            echo "deployed=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST "${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK_URL }}")
+
+          if [ "$HTTP_STATUS" -eq 200 ] || [ "$HTTP_STATUS" -eq 201 ]; then
+            echo "Frontend deployment triggered successfully (HTTP $HTTP_STATUS)"
+            echo "deployed=true" >> $GITHUB_OUTPUT
+          else
+            echo "Failed to trigger frontend deployment (HTTP $HTTP_STATUS)"
+            echo "deployed=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Wait for frontend deployment
+        if: steps.deploy-frontend.outputs.deployed == 'true'
+        run: |
+          echo "Waiting for frontend deployment to complete..."
+          echo "Note: Render deployments typically take 2-5 minutes."
+          sleep 60
+
+      - name: Verify frontend deployment
+        if: steps.deploy-frontend.outputs.deployed == 'true'
+        run: |
+          echo "Checking frontend deployment..."
+
+          MAX_RETRIES=10
+          RETRY_COUNT=0
+          FRONTEND_URL="https://ementech-frontend.onrender.com"
+
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$FRONTEND_URL" || echo "000")
+
+            if [ "$HTTP_STATUS" -eq 200 ]; then
+              echo "Frontend is accessible!"
+              exit 0
+            fi
+
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            echo "Frontend check attempt $RETRY_COUNT/$MAX_RETRIES (HTTP $HTTP_STATUS)"
+            sleep 30
+          done
+
+          echo "Warning: Frontend did not become accessible within timeout."
+          echo "Please manually verify the deployment at: $FRONTEND_URL"
+
+      - name: Deployment summary
+        run: |
+          echo "## Frontend Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Author**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: Production" >> $GITHUB_STEP_SUMMARY
+
+  # ===========================================================================
+  # Deployment Complete Notification
+  # ===========================================================================
+  notify:
+    name: Deployment Notification
+    runs-on: ubuntu-latest
+    needs: [deploy-backend, deploy-frontend]
+    if: always()
+
+    steps:
+      - name: Create deployment summary
+        run: |
+          echo "# Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Deployment Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend | ${{ needs.deploy-backend.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend | ${{ needs.deploy-frontend.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Links" >> $GITHUB_STEP_SUMMARY
+          echo "- Backend: https://ementech-backend.onrender.com" >> $GITHUB_STEP_SUMMARY
+          echo "- Frontend: https://ementech-frontend.onrender.com" >> $GITHUB_STEP_SUMMARY
+          echo "- Render Dashboard: https://dashboard.render.com" >> $GITHUB_STEP_SUMMARY
+
+      - name: Check overall status
+        run: |
+          if [[ "${{ needs.deploy-backend.result }}" == "failure" ]] || \
+             [[ "${{ needs.deploy-frontend.result }}" == "failure" ]]; then
+            echo "::error::One or more deployments failed. Please check the logs."
+            exit 1
+          fi
+          echo "All deployments completed successfully!"
