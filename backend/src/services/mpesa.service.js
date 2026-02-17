@@ -4,33 +4,124 @@ const crypto = require('crypto');
 /**
  * M-Pesa Daraja API Service
  * Implements STK Push (Lipa na M-Pesa Online)
+ *
+ * SECURITY: Production deployments MUST have proper M-Pesa credentials configured.
+ * The service will throw errors if credentials are missing or use default values.
  */
+
+/**
+ * Validate M-Pesa credentials are properly configured
+ * SECURITY: Throws error if production uses sandbox/test credentials
+ */
+const validateMpesaCredentials = () => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const isMpesaProduction = process.env.MPESA_ENVIRONMENT === 'production';
+
+  // In production, M-Pesa must also be in production mode
+  if (isProduction && !isMpesaProduction) {
+    console.warn('SECURITY WARNING: Running in production but MPESA_ENVIRONMENT is not set to "production"');
+  }
+
+  // Check for required credentials
+  const requiredCredentials = [
+    'MPESA_CONSUMER_KEY',
+    'MPESA_CONSUMER_SECRET',
+    'MPESA_PASSKEY',
+    'MPESA_SHORTCODE',
+  ];
+
+  const missingCredentials = requiredCredentials.filter(cred => !process.env[cred]);
+
+  if (missingCredentials.length > 0) {
+    if (isProduction) {
+      throw new Error(`CRITICAL: Missing M-Pesa credentials in production: ${missingCredentials.join(', ')}`);
+    } else {
+      console.warn(`WARNING: Missing M-Pesa credentials: ${missingCredentials.join(', ')}. M-Pesa functionality will not work.`);
+    }
+  }
+
+  // SECURITY: Check for sandbox/test credentials in production
+  if (isProduction && isMpesaProduction) {
+    const sandboxPatterns = ['sandbox', 'test', 'demo', 'example', 'dummy'];
+
+    for (const cred of requiredCredentials) {
+      const value = process.env[cred];
+      if (value) {
+        for (const pattern of sandboxPatterns) {
+          if (value.toLowerCase().includes(pattern)) {
+            throw new Error(`SECURITY ERROR: ${cred} appears to contain sandbox/test credential "${pattern}" - cannot use in production`);
+          }
+        }
+      }
+    }
+  }
+};
+
+// Run credential validation on module load
+try {
+  validateMpesaCredentials();
+} catch (error) {
+  console.error('M-Pesa Configuration Error:', error.message);
+  // In production, we want to fail fast
+  if (process.env.NODE_ENV === 'production') {
+    throw error;
+  }
+}
 
 class MpesaService {
   constructor() {
+    // SECURITY: No default values for credentials - must be explicitly configured
     this.consumerKey = process.env.MPESA_CONSUMER_KEY;
     this.consumerSecret = process.env.MPESA_CONSUMER_SECRET;
     this.passkey = process.env.MPESA_PASSKEY;
     this.shortCode = process.env.MPESA_SHORTCODE;
+
+    // Environment configuration
     this.environment = process.env.MPESA_ENVIRONMENT || 'sandbox'; // 'sandbox' or 'production'
+
+    // SECURITY: Warn if using sandbox in production
+    if (process.env.NODE_ENV === 'production' && this.environment === 'sandbox') {
+      console.warn('SECURITY WARNING: Using M-Pesa SANDBOX environment in production deployment');
+    }
 
     // API URLs
     this.baseURL = this.environment === 'production'
       ? 'https://api.safaricom.co.ke'
       : 'https://sandbox.safaricom.co.ke';
 
-    this.callbackURL = process.env.MPESA_CALLBACK_URL || `${process.env.API_URL}/api/v1/payments/mpesa/callback`;
-    this.b2cCallbackURL = process.env.MPESA_B2C_CALLBACK_URL || `${process.env.API_URL}/api/v1/payments/mpesa/b2c-callback`;
-    this.b2cTimeoutURL = process.env.MPESA_B2C_TIMEOUT_URL || `${process.env.API_URL}/api/v1/payments/mpesa/b2c-timeout`;
-    this.initiatorName = process.env.MPESA_INITIATOR_NAME || 'testapi';
+    // Callback URLs - no defaults in production
+    this.callbackURL = process.env.MPESA_CALLBACK_URL;
+    this.b2cCallbackURL = process.env.MPESA_B2C_CALLBACK_URL;
+    this.b2cTimeoutURL = process.env.MPESA_B2C_TIMEOUT_URL;
+
+    // SECURITY: Validate callback URLs are configured in production
+    if (process.env.NODE_ENV === 'production') {
+      if (!this.callbackURL) {
+        throw new Error('MPESA_CALLBACK_URL is required in production');
+      }
+    }
+
+    // B2C Configuration - SECURITY: No default value for initiator name
+    this.initiatorName = process.env.MPESA_INITIATOR_NAME;
     this.securityCredential = process.env.MPESA_SECURITY_CREDENTIAL;
+
+    // SECURITY: Warn if B2C initiator uses default value
+    if (!this.initiatorName && (this.b2cCallbackURL || this.b2cTimeoutURL)) {
+      console.warn('WARNING: B2C is configured but MPESA_INITIATOR_NAME is not set. B2C payments will fail.');
+    }
   }
 
   /**
    * Generate OAuth access token
+   * SECURITY: Validates credentials before making request
    */
   async getAccessToken() {
     try {
+      // SECURITY: Validate credentials exist before making request
+      if (!this.consumerKey || !this.consumerSecret) {
+        throw new Error('M-Pesa credentials not configured. Set MPESA_CONSUMER_KEY and MPESA_CONSUMER_SECRET');
+      }
+
       const auth = Buffer.from(`${this.consumerKey}:${this.consumerSecret}`).toString('base64');
 
       const response = await axios.get(
@@ -51,8 +142,14 @@ class MpesaService {
 
   /**
    * Generate password for STK Push
+   * SECURITY: Validates required configuration before generating
    */
   generatePassword() {
+    // SECURITY: Validate passkey and shortcode exist
+    if (!this.passkey || !this.shortCode) {
+      throw new Error('M-Pesa passkey and shortcode must be configured. Set MPESA_PASSKEY and MPESA_SHORTCODE');
+    }
+
     const timestamp = this.getTimestamp();
     const password = Buffer.from(
       `${this.shortCode}${this.passkey}${timestamp}`
@@ -320,6 +417,7 @@ class MpesaService {
 
   /**
    * Initiate B2C (Business to Customer) Payment
+   * SECURITY: Validates B2C credentials before initiating payment
    * @param {Object} params - B2C parameters
    * @param {string} params.phoneNumber - Recipient phone number
    * @param {number} params.amount - Amount to send
@@ -329,6 +427,20 @@ class MpesaService {
    */
   async initiateB2C({ phoneNumber, amount, remarks, occasion }) {
     try {
+      // SECURITY: Validate B2C credentials are configured
+      if (!this.initiatorName) {
+        throw new Error('B2C payment requires MPESA_INITIATOR_NAME to be configured');
+      }
+      if (!this.securityCredential) {
+        throw new Error('B2C payment requires MPESA_SECURITY_CREDENTIAL to be configured');
+      }
+      if (!this.b2cCallbackURL) {
+        throw new Error('B2C payment requires MPESA_B2C_CALLBACK_URL to be configured');
+      }
+      if (!this.b2cTimeoutURL) {
+        throw new Error('B2C payment requires MPESA_B2C_TIMEOUT_URL to be configured');
+      }
+
       // Get access token
       const accessToken = await this.getAccessToken();
 

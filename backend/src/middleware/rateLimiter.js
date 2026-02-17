@@ -4,6 +4,9 @@
  * Provides configurable rate limiting for different endpoint types.
  * Implements strict rate limiting for authentication endpoints.
  *
+ * SECURITY: Rate limiting for authentication endpoints CANNOT be disabled,
+ * even if DISABLE_RATE_LIMIT=true is set. This prevents brute force attacks.
+ *
  * @module middleware/rateLimiter
  */
 
@@ -11,16 +14,29 @@ const rateLimit = require('express-rate-limit');
 
 /**
  * Check if rate limiting is disabled
+ * SECURITY: This only applies to general API rate limiting, NOT auth endpoints
  * Should only be true in development/testing
  */
 const isRateLimitDisabled = process.env.DISABLE_RATE_LIMIT === 'true';
 
+// Warn if rate limiting is disabled
+if (isRateLimitDisabled) {
+  if (process.env.NODE_ENV === 'production') {
+    console.warn('SECURITY WARNING: Rate limiting is DISABLED in production. This is a security risk.');
+  } else {
+    console.warn('WARNING: Rate limiting is disabled. This should only be used in testing.');
+  }
+}
+
 /**
  * Create a rate limiter with common configuration
  * @param {object} options - Rate limiter options
+ * @param {boolean} options.canBeDisabled - Whether this limiter can be disabled (default: true)
  * @returns {function} Express middleware
  */
 const createRateLimiter = (options) => {
+  const { canBeDisabled = true, ...limiterOptions } = options;
+
   const defaultOptions = {
     standardHeaders: true,
     legacyHeaders: false,
@@ -35,18 +51,20 @@ const createRateLimiter = (options) => {
     },
   };
 
-  // If rate limiting is disabled, return a pass-through middleware
-  if (isRateLimitDisabled) {
+  // SECURITY: If rate limiting is disabled, only bypass for non-critical limiters
+  // Authentication rate limiters (canBeDisabled=false) are ALWAYS enforced
+  if (isRateLimitDisabled && canBeDisabled) {
     return (req, res, next) => next();
   }
 
-  return rateLimit({ ...defaultOptions, ...options });
+  return rateLimit({ ...defaultOptions, ...limiterOptions });
 };
 
 /**
  * Strict Rate Limiter for Authentication Endpoints
  *
- * Prevents brute force attacks on login, register, and password reset.
+ * SECURITY: This rate limiter CANNOT be disabled, even with DISABLE_RATE_LIMIT=true
+ * This prevents brute force attacks on login, register, and password reset.
  *
  * Limits:
  * - 5 requests per 15 minutes per IP for login
@@ -54,6 +72,7 @@ const createRateLimiter = (options) => {
  * - 3 requests per hour per IP for forgot-password
  */
 const authLimiter = createRateLimiter({
+  canBeDisabled: false, // SECURITY: Authentication rate limiting CANNOT be disabled
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5, // 5 requests per window
   message: {
@@ -70,9 +89,11 @@ const authLimiter = createRateLimiter({
 
 /**
  * Registration Rate Limiter
+ * SECURITY: This rate limiter CANNOT be disabled
  * More restrictive to prevent account spam
  */
 const registerLimiter = createRateLimiter({
+  canBeDisabled: false, // SECURITY: Registration rate limiting CANNOT be disabled
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 3, // 3 registrations per hour per IP
   message: {
@@ -83,9 +104,11 @@ const registerLimiter = createRateLimiter({
 
 /**
  * Password Reset Rate Limiter
+ * SECURITY: This rate limiter CANNOT be disabled
  * Prevents email flooding
  */
 const passwordResetLimiter = createRateLimiter({
+  canBeDisabled: false, // SECURITY: Password reset rate limiting CANNOT be disabled
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 3, // 3 password reset requests per hour per IP
   message: {
@@ -101,9 +124,11 @@ const passwordResetLimiter = createRateLimiter({
 
 /**
  * 2FA Rate Limiter
+ * SECURITY: This rate limiter CANNOT be disabled
  * Prevents 2FA code brute forcing
  */
 const twoFactorLimiter = createRateLimiter({
+  canBeDisabled: false, // SECURITY: 2FA rate limiting CANNOT be disabled
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5, // 5 attempts per 15 minutes
   message: {
