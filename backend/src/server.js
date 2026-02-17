@@ -1,4 +1,10 @@
 require('dotenv').config();
+
+// SECURITY: Validate required secrets before starting
+// This will throw an error and prevent startup if secrets are missing in production
+const { validateSecurityConfig } = require('./config/securityValidation');
+validateSecurityConfig();
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -13,6 +19,10 @@ const { initializeSocket } = require('./config/socket');
 
 // Initialize Express app
 const app = express();
+
+// Trust proxy - Required for rate limiting behind nginx/load balancer
+// This fixes the ERR_ERL_UNEXPECTED_X_FORWARDED_FOR warning
+app.set('trust proxy', 1);
 
 // Connect to MongoDB
 connectDB().then(() => {
@@ -35,6 +45,8 @@ const corsOptions = {
       process.env.CLIENT_WEB_URL,
       process.env.CORS_ORIGIN, // For Render deployment
       'https://ementech-frontend.onrender.com', // Frontend deployed URL
+      'https://dumuwaks.ementech.co.ke', // Dumuwaks frontend
+      'https://api.ementech.co.ke', // API subdomain
       'http://localhost:3000',
       'http://localhost:3001',
       'http://localhost:5000', // Backend server (for Swagger UI)
@@ -162,6 +174,7 @@ app.use('/api/v1/admin', require('./routes/admin.routes'));
 app.use('/api/v1/matching', require('./routes/matching.routes'));
 app.use('/api/v1/media', require('./routes/media.routes'));
 app.use('/api/v1/upload', require('./routes/upload.routes'));
+app.use('/api/v1/work-gallery', require('./routes/workGallery.routes'));
 app.use('/api/v1/payments/mpesa', require('./routes/mpesa.routes'));
 app.use('/api/v1/payments/payouts', require('./routes/payout.routes'));
 app.use('/api/v1/pricing', require('./routes/pricing.routes'));

@@ -3,14 +3,56 @@
  *
  * Provides security validation for M-Pesa callback endpoints.
  * Implements:
- * - IP whitelist validation (Safaricom IPs)
+ * - IP whitelist validation (Safaricom IPs) - MANDATORY in production
  * - HTTPS enforcement check
  * - Callback structure validation
+ * - Callback secret verification - REQUIRED in production
+ *
+ * SECURITY: Production deployments MUST have MPESA_CALLBACK_SECRET configured.
+ * The application will fail to start if this is missing in production.
  *
  * @module middleware/mpesaVerify
  */
 
 const logger = require('../utils/logger') || console;
+
+// SECURITY: Startup validation - fail fast if security is not properly configured
+const performStartupValidation = () => {
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  if (isProduction) {
+    const errors = [];
+
+    // CRITICAL: Callback secret is REQUIRED in production
+    if (!process.env.MPESA_CALLBACK_SECRET) {
+      errors.push('MPESA_CALLBACK_SECRET is REQUIRED in production environment');
+    }
+
+    // HIGH: IP validation should be enabled in production
+    if (process.env.MPESA_VALIDATE_IPS === 'false') {
+      logger.warn('SECURITY WARNING: M-Pesa IP validation is disabled in production. This is not recommended.');
+    }
+
+    if (errors.length > 0) {
+      const errorMessage = `SECURITY CONFIGURATION ERROR: ${errors.join('; ')}`;
+      logger.error(errorMessage);
+      throw new Error(errorMessage);
+    }
+
+    logger.info('M-Pesa security validation passed for production environment');
+  } else {
+    // Development environment warnings
+    if (!process.env.MPESA_CALLBACK_SECRET) {
+      logger.warn('SECURITY WARNING: MPESA_CALLBACK_SECRET not set. Callbacks will not be authenticated.');
+    }
+    if (process.env.MPESA_VALIDATE_IPS !== 'false') {
+      logger.info('M-Pesa IP validation is enabled (can be disabled with MPESA_VALIDATE_IPS=false in development)');
+    }
+  }
+};
+
+// Run startup validation immediately
+performStartupValidation();
 
 /**
  * Safaricom IP ranges for M-Pesa callbacks
@@ -131,13 +173,20 @@ const validateCallbackStructure = (body) => {
  * Usage:
  * router.post('/callback', mpesaCallbackVerify, mpesaCallback);
  *
+ * SECURITY: In production:
+ * - IP validation is MANDATORY (cannot be disabled)
+ * - Callback secret verification is REQUIRED
+ *
  * @param {object} req - Express request object
  * @param {object} res - Express response object
  * @param {function} next - Express next function
  */
 const mpesaCallbackVerify = (req, res, next) => {
   const clientIP = getClientIP(req);
-  const validateIPs = process.env.MPESA_VALIDATE_IPS !== 'false';
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  // SECURITY: IP validation is MANDATORY in production, optional in development
+  const validateIPs = isProduction ? true : process.env.MPESA_VALIDATE_IPS !== 'false';
 
   // Log incoming callback for debugging
   logger.info('M-Pesa callback received', {
@@ -147,7 +196,7 @@ const mpesaCallbackVerify = (req, res, next) => {
   });
 
   // 1. HTTPS Enforcement (production only)
-  if (process.env.NODE_ENV === 'production') {
+  if (isProduction) {
     const isSecure = req.secure ||
                      req.protocol === 'https' ||
                      req.headers['x-forwarded-proto'] === 'https';
@@ -165,8 +214,8 @@ const mpesaCallbackVerify = (req, res, next) => {
     }
   }
 
-  // 2. IP Whitelist Validation (if enabled)
-  if (validateIPs && process.env.NODE_ENV === 'production') {
+  // 2. IP Whitelist Validation - MANDATORY in production
+  if (validateIPs && isProduction) {
     if (!isAllowedIP(clientIP)) {
       logger.error('M-Pesa callback rejected: IP not whitelisted', {
         ip: clientIP,
@@ -180,8 +229,18 @@ const mpesaCallbackVerify = (req, res, next) => {
     }
   }
 
-  // 3. Callback Secret Verification (if configured)
+  // 3. Callback Secret Verification - REQUIRED in production
   const callbackSecret = process.env.MPESA_CALLBACK_SECRET;
+
+  // SECURITY: In production, callback secret is MANDATORY
+  if (isProduction && !callbackSecret) {
+    logger.error('CRITICAL SECURITY ERROR: MPESA_CALLBACK_SECRET not configured in production');
+    return res.status(500).json({
+      ResultCode: 1,
+      ResultDesc: 'Server configuration error',
+    });
+  }
+
   if (callbackSecret) {
     const providedSecret = req.headers['x-mpesa-callback-secret'] ||
                           req.headers['x-callback-secret'];
@@ -233,21 +292,37 @@ const mpesaCallbackVerify = (req, res, next) => {
 /**
  * Optional: Lightweight verification for timeout endpoints
  * Less strict validation for timeout callbacks
+ *
+ * SECURITY: Callback secret verification is still REQUIRED in production
  */
 const mpesaTimeoutVerify = (req, res, next) => {
   const clientIP = getClientIP(req);
+  const isProduction = process.env.NODE_ENV === 'production';
 
   logger.info('M-Pesa timeout callback received', {
     ip: clientIP,
     path: req.path,
   });
 
-  // Only verify callback secret if configured
+  // SECURITY: Callback secret verification is REQUIRED in production
   const callbackSecret = process.env.MPESA_CALLBACK_SECRET;
-  if (callbackSecret && process.env.NODE_ENV === 'production') {
+
+  if (isProduction && !callbackSecret) {
+    logger.error('CRITICAL SECURITY ERROR: MPESA_CALLBACK_SECRET not configured in production');
+    return res.status(500).json({
+      ResultCode: 1,
+      ResultDesc: 'Server configuration error',
+    });
+  }
+
+  if (callbackSecret) {
     const providedSecret = req.headers['x-mpesa-callback-secret'];
 
-    if (providedSecret !== callbackSecret) {
+    if (!providedSecret || providedSecret !== callbackSecret) {
+      logger.error('M-Pesa timeout callback rejected: Invalid callback secret', {
+        ip: clientIP,
+        hasSecret: !!providedSecret,
+      });
       return res.status(403).json({
         ResultCode: 1,
         ResultDesc: 'Invalid credentials',
