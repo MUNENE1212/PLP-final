@@ -7,6 +7,9 @@ import messagingReducer from './slices/messagingSlice';
 import userReducer from './slices/userSlice';
 import dashboardReducer from './slices/dashboardSlice';
 import notificationReducer from './slices/notificationSlice';
+import workGalleryReducer from './slices/workGallerySlice';
+import serviceReducer from './slices/serviceSlice';
+import profileCompletenessReducer from './slices/profileSlice';
 
 export const store = configureStore({
   reducer: {
@@ -18,6 +21,9 @@ export const store = configureStore({
     user: userReducer,
     dashboard: dashboardReducer,
     notifications: notificationReducer,
+    workGallery: workGalleryReducer,
+    services: serviceReducer,
+    profileCompleteness: profileCompletenessReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
