@@ -1,6 +1,7 @@
 const socketIO = require('socket.io');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { registerTrackingHandlers } = require('../socketHandlers/tracking.handler');
 
 /**
  * Socket.IO Configuration
@@ -17,10 +18,13 @@ exports.initializeSocket = (server) => {
     cors: {
       origin: [
         process.env.CLIENT_WEB_URL,
+        'https://dumuwaks.ementech.co.ke',
+        'https://api.ementech.co.ke',
         'http://localhost:3000',
         'http://localhost:3001',
-        'http://localhost:5173'
-      ],
+        'http://localhost:5173',
+        'http://localhost:5174'
+      ].filter(Boolean),
       methods: ['GET', 'POST'],
       credentials: true
     },
@@ -121,6 +125,9 @@ exports.initializeSocket = (server) => {
       console.error(`Socket error for user ${socket.userId}:`, error);
     });
   });
+
+  // Register tracking handlers for real-time technician location tracking
+  registerTrackingHandlers(io);
 
   console.log('✅ Socket.IO initialized');
   return io;

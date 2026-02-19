@@ -2,11 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchBooking, cancelBooking } from '@/store/slices/bookingSlice';
+import { fetchMyGallery, addGalleryImage } from '@/store/slices/workGallerySlice';
 import Button from '@/components/ui/Button';
 import Loading from '@/components/ui/Loading';
 import BookingFeePaymentModal from '@/components/bookings/BookingFeePaymentModal';
 import TechnicianStatusActions from '@/components/bookings/TechnicianStatusActions';
 import CompletionConfirmation from '@/components/bookings/CompletionConfirmation';
+import WorkGalleryUploadModal from '@/components/workgallery/WorkGalleryUploadModal';
+import TechnicianTracker from '@/components/booking/TechnicianTracker';
 import {
   ArrowLeft,
   Calendar,
@@ -21,6 +24,8 @@ import {
   CheckCircle,
   XCircle,
   MessageCircle,
+  Camera,
+  X,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -115,9 +120,18 @@ const BookingDetail: React.FC = () => {
     (state) => state.bookings
   );
   const { user } = useAppSelector((state) => state.auth);
+  const { images: workGalleryImages, isUploading: isGalleryUploading } = useAppSelector(
+    (state) => state.workGallery
+  );
 
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [showWorkGalleryPrompt, setShowWorkGalleryPrompt] = useState(false);
+
+  // Determine user role (needed for useEffect hooks below)
+  const isCustomer = user?.role === 'customer';
+  const isTechnician = user?.role === 'technician';
 
   useEffect(() => {
     if (id) {
@@ -131,6 +145,22 @@ const BookingDetail: React.FC = () => {
       setIsPaymentModalOpen(true);
     }
   }, [searchParams, booking]);
+
+  // Fetch work gallery and check if prompt should be shown
+  useEffect(() => {
+    if (booking && isTechnician && booking.status === 'completed') {
+      dispatch(fetchMyGallery());
+
+      // Show prompt if booking was just completed (within last 24 hours)
+      // and user has less than 5 images
+      const completedDate = new Date(booking.updatedAt);
+      const hoursSinceCompletion = (Date.now() - completedDate.getTime()) / (1000 * 60 * 60);
+
+      if (hoursSinceCompletion < 24 && workGalleryImages.length < 5) {
+        setShowWorkGalleryPrompt(true);
+      }
+    }
+  }, [booking, isTechnician, dispatch, workGalleryImages.length]);
 
   const handleCancelBooking = async () => {
     if (!booking) return;
@@ -162,6 +192,18 @@ const BookingDetail: React.FC = () => {
     navigate('/messages');
   };
 
+  // Handle work gallery upload
+  const handleWorkGalleryUpload = async (data: any) => {
+    try {
+      await dispatch(addGalleryImage(data)).unwrap();
+      toast.success('Work photo added to your gallery!');
+      setIsUploadModalOpen(false);
+      setShowWorkGalleryPrompt(false);
+    } catch (error: any) {
+      toast.error(error || 'Failed to add work photo');
+    }
+  };
+
   if (isLoading || !booking) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
@@ -172,8 +214,6 @@ const BookingDetail: React.FC = () => {
 
   const statusConfig = STATUS_CONFIG[booking.status] || STATUS_CONFIG.pending;
   const StatusIcon = statusConfig.icon;
-  const isCustomer = user?.role === 'customer';
-  const isTechnician = user?.role === 'technician';
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -300,6 +340,25 @@ const BookingDetail: React.FC = () => {
               )}
             </div>
           </div>
+
+          {/* Real-time Technician Tracking - Show when en_route */}
+          {isCustomer && booking.status === 'en_route' && booking.technician && booking.serviceLocation.coordinates && (
+            <TechnicianTracker
+              bookingId={booking._id}
+              destination={{
+                coordinates: booking.serviceLocation.coordinates as [number, number],
+                address: booking.serviceLocation.address
+              }}
+              technicianName={`${booking.technician.firstName} ${booking.technician.lastName}`}
+              technicianId={booking.technician._id}
+              onTrackingCompleted={() => {
+                // Refresh booking when technician arrives
+                if (id) {
+                  dispatch(fetchBooking(id));
+                }
+              }}
+            />
+          )}
 
           {/* Pricing */}
           {booking.pricing && (
@@ -558,6 +617,61 @@ const BookingDetail: React.FC = () => {
           }}
         />
       )}
+
+      {/* Work Gallery Prompt for Technicians after completion */}
+      {showWorkGalleryPrompt && isTechnician && (
+        <div className="fixed bottom-4 right-4 z-40 max-w-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-primary-200 dark:border-primary-800 overflow-hidden">
+            <div className="bg-primary-600 px-4 py-3 flex items-start justify-between">
+              <div className="flex items-center gap-2">
+                <Camera className="h-5 w-5 text-white" />
+                <span className="font-semibold text-white">Showcase Your Work!</span>
+              </div>
+              <button
+                onClick={() => setShowWorkGalleryPrompt(false)}
+                className="text-white/80 hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="p-4">
+              <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
+                Great job completing this booking! Add photos of your work to your gallery to attract more customers.
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowWorkGalleryPrompt(false)}
+                  className="flex-1"
+                >
+                  Maybe Later
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => {
+                    setShowWorkGalleryPrompt(false);
+                    setIsUploadModalOpen(true);
+                  }}
+                  className="flex-1"
+                >
+                  Add Photos
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Work Gallery Upload Modal */}
+      <WorkGalleryUploadModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        onUpload={handleWorkGalleryUpload}
+        currentImageCount={workGalleryImages.length}
+        isUploading={isGalleryUploading}
+      />
     </div>
   );
 };
