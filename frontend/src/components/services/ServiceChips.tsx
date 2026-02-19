@@ -30,7 +30,7 @@ const ServiceChips: React.FC<ServiceChipsProps> = ({
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Loading skeleton
+  // Loading skeleton with shimmer animation
   if (loading) {
     return (
       <div
@@ -43,25 +43,51 @@ const ServiceChips: React.FC<ServiceChipsProps> = ({
         {Array.from({ length: 6 }).map((_, index) => (
           <div
             key={index}
-            className="h-11 w-32 flex-shrink-0 bg-charcoal border border-subtle rounded-full animate-pulse"
-          />
+            className={clsx(
+              'h-11 w-32 flex-shrink-0 flex flex-col items-start justify-center px-4 py-2',
+              'bg-charcoal border border-subtle rounded-full',
+              'shimmer'
+            )}
+          >
+            <div className="w-20 h-3 rounded bg-steel-800/50 mb-1" />
+            <div className="w-12 h-2 rounded bg-steel-800/50" />
+          </div>
         ))}
       </div>
     );
   }
 
-  // Empty state
+  // Empty state with friendly message
   if (services.length === 0) {
     return (
       <div
         className={clsx(
-          'flex items-center justify-center py-8 px-4',
+          'flex flex-col items-center justify-center py-8 px-4',
           className
         )}
         data-testid="service-chips-empty"
       >
-        <p className="text-steel text-sm text-center">
-          No services available in this category
+        <div className="w-12 h-12 mb-3 rounded-full bg-charcoal border border-subtle flex items-center justify-center">
+          <svg
+            className="w-6 h-6 text-steel"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+        </div>
+        <p className="text-bone text-sm font-medium text-center mb-1">
+          No services in this category
+        </p>
+        <p className="text-steel text-xs text-center">
+          Try selecting a different category or add a custom service
         </p>
       </div>
     );
@@ -112,6 +138,10 @@ interface ServiceChipProps {
 /**
  * ServiceChip Component
  * Individual service chip with name and price
+ * - Clear selected state with Circuit Blue accent and glow
+ * - Smooth hover state with transition
+ * - Focus ring for accessibility
+ * - Price range display
  */
 const ServiceChip: React.FC<ServiceChipProps> = ({
   service,
@@ -133,16 +163,18 @@ const ServiceChip: React.FC<ServiceChipProps> = ({
         'border-2 transition-all duration-200 ease-out',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-circuit focus-visible:ring-offset-2 focus-visible:ring-offset-mahogany',
 
-        // Default state
+        // Default state - subtle styling
         !isSelected && [
           'bg-charcoal border-subtle',
           'hover:border-steel hover:bg-hover',
+          'active:scale-[0.98]',
         ],
 
-        // Selected state
+        // Selected state - Circuit Blue accent with LED glow
         isSelected && [
           'bg-circuit/20 border-circuit',
           'shadow-led',
+          'scale-[1.02]',
         ]
       )}
       data-testid={`service-chip-${service._id}`}
@@ -186,6 +218,10 @@ interface ServiceChipLargeProps {
 /**
  * ServiceChipLarge Component
  * Larger chip variant with duration and description preview
+ * - Clear selected state with Circuit Blue accent and glow
+ * - Smooth hover state with transition
+ * - Focus ring for accessibility
+ * - Price range display
  */
 export const ServiceChipLarge: React.FC<ServiceChipLargeProps> = ({
   service,
@@ -211,12 +247,14 @@ export const ServiceChipLarge: React.FC<ServiceChipLargeProps> = ({
         !isSelected && [
           'bg-charcoal border-subtle',
           'hover:border-steel hover:bg-hover',
+          'active:scale-[0.98]',
         ],
 
-        // Selected state
+        // Selected state - Circuit Blue accent with LED glow
         isSelected && [
           'bg-circuit/20 border-circuit',
           'shadow-led',
+          'scale-[1.02]',
         ]
       )}
       data-testid={`service-chip-large-${service._id}`}
