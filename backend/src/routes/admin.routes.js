@@ -23,11 +23,17 @@ const {
 const { protect, authorize } = require('../middleware/auth');
 const { validate } = require('../middleware/validation');
 
+// Import new admin stats routes
+const adminStatsRoutes = require('./adminStats.routes');
+
 const router = express.Router();
 
 // All routes are admin-only
 router.use(protect);
 router.use(authorize('admin'));
+
+// Mount admin stats routes under /stats
+router.use('/stats', adminStatsRoutes);
 
 // Dashboard routes
 router.get('/stats', getDashboardStats);
