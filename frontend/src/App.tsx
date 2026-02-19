@@ -29,6 +29,7 @@ import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
 import NotFound from './pages/NotFound';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminDashboardNew from './pages/admin/Dashboard';
 import UserManagement from './pages/UserManagement';
 import SystemSettings from './pages/SystemSettings';
 import ReportsPage from './pages/ReportsPage';
@@ -113,6 +114,7 @@ const App: React.FC = () => {
               <Route path="settings" element={<ProfileSettings />} />
 
               {/* Admin Routes */}
+              <Route path="admin/*" element={<AdminDashboardNew />} />
               <Route path="admin" element={<AdminDashboard />} />
               <Route path="admin/users" element={<UserManagement />} />
               <Route path="admin/settings" element={<SystemSettings />} />

@@ -361,6 +361,460 @@ export const getReports = async (startDate?: string, endDate?: string): Promise<
   }
 };
 
+// ===== ESCROW MANAGEMENT =====
+
+export interface EscrowRecord {
+  _id: string;
+  bookingId: string;
+  bookingNumber: string;
+  customerId: string;
+  customerName: string;
+  customerPhone: string;
+  technicianId: string;
+  technicianName: string;
+  technicianPhone: string;
+  amount: number;
+  platformFee: number;
+  technicianAmount: number;
+  status: 'pending' | 'funded' | 'held' | 'disputed' | 'released' | 'refunded';
+  fundedAt?: string;
+  releasedAt?: string;
+  refundedAt?: string;
+  disputeReason?: string;
+  createdAt: string;
+  updatedAt: string;
+  serviceType: string;
+  serviceCategory: string;
+}
+
+export interface EscrowStats {
+  totalActive: number;
+  totalHeld: number;
+  totalDisputed: number;
+  pendingRelease: number;
+  totalValue: number;
+  averageHoldTime: number;
+}
+
+export interface BulkActionResult {
+  success: boolean;
+  processed: number;
+  failed: number;
+  errors?: Array<{
+    id: string;
+    reason: string;
+  }>;
+}
+
+/**
+ * Get escrow statistics
+ */
+export const getEscrowStats = async (): Promise<EscrowStats> => {
+  try {
+    const response = await axios.get('/admin/escrow/stats');
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Error fetching escrow stats:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get all escrows with filters
+ */
+export const getEscrows = async (params: {
+  status?: string;
+  page?: number;
+  limit?: number;
+  search?: string;
+  sortBy?: string;
+  order?: 'asc' | 'desc';
+} = {}): Promise<{ escrows: EscrowRecord[]; pagination: { page: number; limit: number; total: number; pages: number } }> => {
+  try {
+    const response = await axios.get('/admin/escrow', { params });
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Error fetching escrows:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get escrow by ID
+ */
+export const getEscrowById = async (escrowId: string): Promise<EscrowRecord> => {
+  try {
+    const response = await axios.get(`/admin/escrow/${escrowId}`);
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Error fetching escrow:', error);
+    throw error;
+  }
+};
+
+/**
+ * Release escrow to technician
+ */
+export const releaseEscrow = async (escrowId: string, notes?: string): Promise<EscrowRecord> => {
+  try {
+    const response = await axios.post(`/admin/escrow/${escrowId}/release`, { notes });
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Error releasing escrow:', error);
+    throw error;
+  }
+};
+
+/**
+ * Refund escrow to customer
+ */
+export const refundEscrow = async (escrowId: string, reason: string): Promise<EscrowRecord> => {
+  try {
+    const response = await axios.post(`/admin/escrow/${escrowId}/refund`, { reason });
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Error refunding escrow:', error);
+    throw error;
+  }
+};
+
+/**
+ * Bulk release escrows
+ */
+export const bulkReleaseEscrows = async (escrowIds: string[]): Promise<BulkActionResult> => {
+  try {
+    const response = await axios.post('/admin/escrow/bulk-release', { escrowIds });
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Error bulk releasing escrows:', error);
+    throw error;
+  }
+};
+
+/**
+ * Export escrows to CSV
+ */
+export const exportEscrows = async (params: { status?: string } = {}): Promise<Blob> => {
+  try {
+    const response = await axios.get('/admin/escrow/export', {
+      params,
+      responseType: 'blob',
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error('Error exporting escrows:', error);
+    throw error;
+  }
+};
+
+// ===== TRANSACTION MANAGEMENT =====
+
+export interface TransactionRecord {
+  _id: string;
+  transactionId: string;
+  bookingId?: string;
+  bookingNumber?: string;
+  userId: string;
+  userName: string;
+  userType: 'customer' | 'technician';
+  type: 'payment' | 'payout' | 'refund' | 'platform_fee' | 'booking_fee';
+  amount: number;
+  currency: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
+  paymentMethod: 'mpesa' | 'card' | 'wallet' | 'internal';
+  mpesaReceipt?: string;
+  mpesaReference?: string;
+  description: string;
+  metadata?: Record<string, any>;
+  createdAt: string;
+  processedAt?: string;
+  failureReason?: string;
+}
+
+export interface TransactionFilter {
+  startDate?: string;
+  endDate?: string;
+  type?: string;
+  status?: string;
+  paymentMethod?: string;
+  search?: string;
+}
+
+/**
+ * Get transactions with filters
+ */
+export const getTransactions = async (params: TransactionFilter & {
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  order?: 'asc' | 'desc';
+} = {}): Promise<{ transactions: TransactionRecord[]; pagination: { page: number; limit: number; total: number; pages: number } }> => {
+  try {
+    const response = await axios.get('/admin/transactions', { params });
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Error fetching transactions:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get transaction by ID
+ */
+export const getTransactionById = async (transactionId: string): Promise<TransactionRecord> => {
+  try {
+    const response = await axios.get(`/admin/transactions/${transactionId}`);
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Error fetching transaction:', error);
+    throw error;
+  }
+};
+
+/**
+ * Lookup M-Pesa receipt
+ */
+export const lookupMpesaReceipt = async (transactionId: string): Promise<Record<string, any>> => {
+  try {
+    const response = await axios.get(`/admin/transactions/${transactionId}/mpesa-lookup`);
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Error looking up M-Pesa receipt:', error);
+    throw error;
+  }
+};
+
+/**
+ * Export transactions to CSV
+ */
+export const exportTransactions = async (params: TransactionFilter = {}): Promise<Blob> => {
+  try {
+    const response = await axios.get('/admin/transactions/export', {
+      params,
+      responseType: 'blob',
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error('Error exporting transactions:', error);
+    throw error;
+  }
+};
+
+// ===== DISPUTE MANAGEMENT =====
+
+export interface DisputeResolution {
+  disputeId: string;
+  escrowId: string;
+  bookingId: string;
+  raisedBy: 'customer' | 'technician';
+  reason: string;
+  status: 'open' | 'investigating' | 'resolved' | 'closed';
+  resolution?: {
+    type: 'release_to_technician' | 'refund_customer' | 'partial_refund' | 'escalate';
+    amount?: number;
+    notes: string;
+    resolvedBy: string;
+    resolvedAt: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Get disputes
+ */
+export const getDisputes = async (params: {
+  status?: string;
+  page?: number;
+  limit?: number;
+} = {}): Promise<{ disputes: DisputeResolution[]; pagination: { page: number; limit: number; total: number; pages: number } }> => {
+  try {
+    const response = await axios.get('/admin/disputes', { params });
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Error fetching disputes:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get dispute by ID
+ */
+export const getDisputeById = async (disputeId: string): Promise<DisputeResolution> => {
+  try {
+    const response = await axios.get(`/admin/disputes/${disputeId}`);
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Error fetching dispute:', error);
+    throw error;
+  }
+};
+
+/**
+ * Resolve dispute
+ */
+export const resolveDispute = async (
+  disputeId: string,
+  resolution: DisputeResolution['resolution']
+): Promise<DisputeResolution> => {
+  try {
+    const response = await axios.post(`/admin/disputes/${disputeId}/resolve`, resolution);
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Error resolving dispute:', error);
+    throw error;
+  }
+};
+
+// ===== REPORTS =====
+
+export interface FinancialReport {
+  period: { start: string; end: string };
+  summary: {
+    totalRevenue: number;
+    totalPayouts: number;
+    totalRefunds: number;
+    platformFees: number;
+    netRevenue: number;
+  };
+  breakdown: {
+    payments: number;
+    payouts: number;
+    refunds: number;
+    pendingPayouts: number;
+    escrowHeld: number;
+  };
+}
+
+export interface ServiceReport {
+  period: { start: string; end: string };
+  summary: {
+    totalServices: number;
+    activeServices: number;
+    pendingApprovals: number;
+    avgApprovalTime: number;
+  };
+  categories: Array<{ category: string; count: number; revenue: number }>;
+}
+
+export interface TechnicianReport {
+  period: { start: string; end: string };
+  summary: {
+    totalTechnicians: number;
+    activeTechnicians: number;
+    avgRating: number;
+    totalJobsCompleted: number;
+  };
+  performance: Array<{
+    _id: string;
+    name: string;
+    completedBookings: number;
+    totalEarnings: number;
+    averageRating: number;
+  }>;
+}
+
+/**
+ * Generate financial report
+ */
+export const generateFinancialReport = async (params: {
+  startDate: string;
+  endDate: string;
+}): Promise<FinancialReport> => {
+  try {
+    const response = await axios.get('/admin/reports/financial', { params });
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Error generating financial report:', error);
+    throw error;
+  }
+};
+
+/**
+ * Generate service report
+ */
+export const generateServiceReport = async (params: {
+  startDate: string;
+  endDate: string;
+}): Promise<ServiceReport> => {
+  try {
+    const response = await axios.get('/admin/reports/service', { params });
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Error generating service report:', error);
+    throw error;
+  }
+};
+
+/**
+ * Generate technician report
+ */
+export const generateTechnicianReport = async (params: {
+  startDate: string;
+  endDate: string;
+}): Promise<TechnicianReport> => {
+  try {
+    const response = await axios.get('/admin/reports/technician', { params });
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Error generating technician report:', error);
+    throw error;
+  }
+};
+
+/**
+ * Export report to file
+ */
+export const exportReport = async (params: {
+  type: 'financial' | 'service' | 'technician';
+  startDate: string;
+  endDate: string;
+  format: 'csv' | 'pdf';
+}): Promise<Blob> => {
+  try {
+    const response = await axios.get('/admin/reports/export', {
+      params,
+      responseType: 'blob',
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error('Error exporting report:', error);
+    throw error;
+  }
+};
+
+// ===== ACTIVITY LOG =====
+
+export interface ActivityLogEntry {
+  _id: string;
+  adminId: string;
+  adminName: string;
+  action: string;
+  resource: string;
+  resourceId: string;
+  details: string;
+  ipAddress: string;
+  createdAt: string;
+}
+
+/**
+ * Get admin activity log
+ */
+export const getActivityLog = async (params: {
+  page?: number;
+  limit?: number;
+  adminId?: string;
+  action?: string;
+} = {}): Promise<{ logs: ActivityLogEntry[]; pagination: { page: number; limit: number; total: number; pages: number } }> => {
+  try {
+    const response = await axios.get('/admin/activity-log', { params });
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Error fetching activity log:', error);
+    throw error;
+  }
+};
+
 export default {
   getDashboardStats,
   getRecentActivity,
@@ -378,5 +832,29 @@ export default {
   updateTax,
   updateDiscounts,
   updateServiceRates,
-  getReports
+  getReports,
+  // Escrow
+  getEscrowStats,
+  getEscrows,
+  getEscrowById,
+  releaseEscrow,
+  refundEscrow,
+  bulkReleaseEscrows,
+  exportEscrows,
+  // Transactions
+  getTransactions,
+  getTransactionById,
+  lookupMpesaReceipt,
+  exportTransactions,
+  // Disputes
+  getDisputes,
+  getDisputeById,
+  resolveDispute,
+  // Reports
+  generateFinancialReport,
+  generateServiceReport,
+  generateTechnicianReport,
+  exportReport,
+  // Activity Log
+  getActivityLog,
 };
