@@ -85,25 +85,28 @@ describe('Button Component', () => {
   // SIZE TESTS
   // ============================================
   describe('Sizes', () => {
-    it('should render medium size by default', () => {
+    it('should render medium size by default (48px for WCAG AA compliance)', () => {
       render(<Button>Medium</Button>);
       const button = screen.getByRole('button');
-      expect(button).toHaveClass('h-10');
+      expect(button).toHaveClass('h-12'); // 48px for accessibility
+      expect(button).toHaveClass('min-w-[48px]'); // Minimum touch target width
       expect(button).toHaveClass('px-4');
     });
 
-    it('should render small size', () => {
+    it('should render small size (44px minimum for WCAG AA compliance)', () => {
       render(<Button size="sm">Small</Button>);
       const button = screen.getByRole('button');
-      expect(button).toHaveClass('h-9');
+      expect(button).toHaveClass('h-11'); // 44px for accessibility
+      expect(button).toHaveClass('min-w-[44px]'); // Minimum touch target width
       expect(button).toHaveClass('px-3');
       expect(button).toHaveClass('text-sm');
     });
 
-    it('should render large size', () => {
+    it('should render large size (56px for enhanced touch targets)', () => {
       render(<Button size="lg">Large</Button>);
       const button = screen.getByRole('button');
-      expect(button).toHaveClass('h-12');
+      expect(button).toHaveClass('h-14'); // 56px for accessibility
+      expect(button).toHaveClass('min-w-[56px]'); // Minimum touch target width
       expect(button).toHaveClass('px-6');
       expect(button).toHaveClass('text-lg');
     });
