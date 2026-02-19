@@ -2,6 +2,32 @@ const mongoose = require('mongoose');
 
 const Schema = mongoose.Schema;
 
+// Booking Fee Tier Schema - Tiered booking fee structure
+const BookingFeeTierSchema = new Schema({
+  minAmount: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  maxAmount: {
+    type: Number,
+    default: null // null = no upper limit
+  },
+  percentage: {
+    type: Number,
+    required: true,
+    min: 0,
+    max: 100
+  },
+  label: {
+    type: String // e.g., "Standard", "Medium", "Large Jobs"
+  },
+  isActive: {
+    type: Boolean,
+    default: true
+  }
+}, { _id: false });
+
 // Service Price Schema - Base prices for different services
 const ServicePriceSchema = new Schema({
   serviceCategory: {
@@ -132,6 +158,17 @@ const PricingConfigSchema = new Schema({
 
   // Service Prices
   servicePrices: [ServicePriceSchema],
+
+  // Booking Fee Tiers - Tiered fee structure based on booking amount
+  bookingFeeTiers: [BookingFeeTierSchema],
+
+  // Default booking fee percentage (fallback if no tiers configured)
+  defaultBookingFeePercentage: {
+    type: Number,
+    default: 12,
+    min: 0,
+    max: 100
+  },
 
   // Distance Pricing
   distancePricing: {
@@ -305,6 +342,104 @@ PricingConfigSchema.virtual('isCurrentlyActive').get(function() {
          (!this.effectiveTo || this.effectiveTo >= now);
 });
 
+// ===== VALIDATION =====
+
+/**
+ * Validate booking fee tiers configuration
+ * - Tiers must not overlap
+ * - Tiers should cover all amounts (0 to infinity)
+ * - Percentage must be between 0 and 100
+ */
+PricingConfigSchema.pre('save', function(next) {
+  // Skip validation if no booking fee tiers configured
+  if (!this.bookingFeeTiers || this.bookingFeeTiers.length === 0) {
+    return next();
+  }
+
+  const activeTiers = this.bookingFeeTiers.filter(tier => tier.isActive);
+
+  // Validate each tier's percentage is within bounds
+  for (const tier of activeTiers) {
+    if (tier.percentage < 0 || tier.percentage > 100) {
+      const error = new Error(
+        `Booking fee tier "${tier.label || 'unnamed'}" has invalid percentage: ${tier.percentage}. Must be between 0 and 100.`
+      );
+      return next(error);
+    }
+
+    // Validate minAmount is non-negative
+    if (tier.minAmount < 0) {
+      const error = new Error(
+        `Booking fee tier "${tier.label || 'unnamed'}" has negative minAmount: ${tier.minAmount}. Must be >= 0.`
+      );
+      return next(error);
+    }
+
+    // Validate maxAmount if not null
+    if (tier.maxAmount !== null && tier.maxAmount <= tier.minAmount) {
+      const error = new Error(
+        `Booking fee tier "${tier.label || 'unnamed'}" has maxAmount (${tier.maxAmount}) <= minAmount (${tier.minAmount}).`
+      );
+      return next(error);
+    }
+  }
+
+  // Sort tiers by minAmount for overlap and coverage checking
+  const sortedTiers = [...activeTiers].sort((a, b) => a.minAmount - b.minAmount);
+
+  // Check for overlaps and gaps
+  for (let i = 0; i < sortedTiers.length; i++) {
+    const current = sortedTiers[i];
+
+    // First tier should start at 0
+    if (i === 0 && current.minAmount !== 0) {
+      const error = new Error(
+        `Booking fee tiers must start at minAmount 0. First tier "${current.label || 'unnamed'}" starts at ${current.minAmount}.`
+      );
+      return next(error);
+    }
+
+    // Check for gaps between tiers
+    if (i > 0) {
+      const previous = sortedTiers[i - 1];
+      const expectedMin = previous.maxAmount !== null ? previous.maxAmount + 1 : previous.minAmount;
+
+      if (previous.maxAmount === null) {
+        const error = new Error(
+          `Booking fee tier "${previous.label || 'unnamed'}" has no upper limit (maxAmount: null), but there's another tier "${current.label || 'unnamed'}" after it.`
+        );
+        return next(error);
+      }
+
+      if (current.minAmount > expectedMin) {
+        const error = new Error(
+          `Gap in booking fee tiers: No coverage between ${previous.maxAmount} and ${current.minAmount}. Tiers must be contiguous.`
+        );
+        return next(error);
+      }
+
+      if (current.minAmount < expectedMin) {
+        const error = new Error(
+          `Overlap in booking fee tiers: "${previous.label || 'unnamed'}" (${previous.minAmount}-${previous.maxAmount}) overlaps with "${current.label || 'unnamed'}" (${current.minAmount}-${current.maxAmount || 'null'}).`
+        );
+        return next(error);
+      }
+    }
+  }
+
+  // Last tier should have no upper limit (maxAmount: null) to cover all amounts
+  const lastTier = sortedTiers[sortedTiers.length - 1];
+  if (lastTier.maxAmount !== null) {
+    // This is a warning, not an error - amounts beyond the last tier will use default percentage
+    console.warn(
+      `[PricingConfig] Warning: Last booking fee tier "${lastTier.label || 'unnamed'}" has an upper limit. ` +
+      `Amounts above ${lastTier.maxAmount} will use default percentage (${this.defaultBookingFeePercentage}%).`
+    );
+  }
+
+  next();
+});
+
 // ===== METHODS =====
 
 // Get service price by category and type
@@ -415,6 +550,85 @@ PricingConfigSchema.methods.calculateDiscount = function(customer, subtotal) {
   return discount;
 };
 
+/**
+ * Get applicable booking fee tier for a given amount
+ * @param {Number} amount - The booking amount to find the tier for
+ * @returns {Object|null} The matching tier or null if no tiers configured
+ */
+PricingConfigSchema.methods.getApplicableTier = function(amount) {
+  // If no tiers configured or amount is invalid, return null
+  if (!this.bookingFeeTiers || this.bookingFeeTiers.length === 0 || amount < 0) {
+    return null;
+  }
+
+  // Sort tiers by minAmount ascending to ensure correct matching
+  const sortedTiers = [...this.bookingFeeTiers]
+    .filter(tier => tier.isActive)
+    .sort((a, b) => a.minAmount - b.minAmount);
+
+  // Find the first tier where amount falls within range
+  for (const tier of sortedTiers) {
+    const withinMin = amount >= tier.minAmount;
+    const withinMax = tier.maxAmount === null || amount <= tier.maxAmount;
+
+    if (withinMin && withinMax) {
+      return tier;
+    }
+  }
+
+  // If no tier found (should not happen with properly configured tiers),
+  // return the last active tier for amounts beyond the highest maxAmount
+  const lastActiveTier = sortedTiers[sortedTiers.length - 1];
+  if (lastActiveTier && lastActiveTier.maxAmount === null && amount >= lastActiveTier.minAmount) {
+    return lastActiveTier;
+  }
+
+  return null;
+};
+
+/**
+ * Calculate booking fee based on amount using tiered structure
+ * @param {Number} amount - The booking amount to calculate fee for
+ * @returns {Object} Object containing fee amount, percentage, and tier info
+ */
+PricingConfigSchema.methods.calculateBookingFee = function(amount) {
+  // Validate input
+  if (typeof amount !== 'number' || isNaN(amount) || amount < 0) {
+    return {
+      feeAmount: 0,
+      percentage: this.defaultBookingFeePercentage || 12,
+      tier: null,
+      tierLabel: 'Default',
+      isDefault: true
+    };
+  }
+
+  // Try to get applicable tier
+  const applicableTier = this.getApplicableTier(amount);
+
+  if (applicableTier) {
+    const feeAmount = Math.round((amount * applicableTier.percentage) / 100 * 100) / 100;
+    return {
+      feeAmount,
+      percentage: applicableTier.percentage,
+      tier: applicableTier,
+      tierLabel: applicableTier.label || 'Custom',
+      isDefault: false
+    };
+  }
+
+  // Fallback to default percentage if no tier matches
+  const defaultPercentage = this.defaultBookingFeePercentage || 12;
+  const feeAmount = Math.round((amount * defaultPercentage) / 100 * 100) / 100;
+  return {
+    feeAmount,
+    percentage: defaultPercentage,
+    tier: null,
+    tierLabel: 'Default',
+    isDefault: true
+  };
+};
+
 // ===== STATIC METHODS =====
 
 // Get active pricing configuration
@@ -438,6 +652,140 @@ PricingConfigSchema.statics.getServicePricesByCategory = async function(category
   return config.servicePrices.filter(sp =>
     sp.serviceCategory === category && sp.isActive
   );
+};
+
+/**
+ * Get or create default pricing configuration with recommended booking fee tiers
+ * This ensures there's always a valid pricing config available
+ * @returns {Promise<Object>} The pricing configuration document
+ */
+PricingConfigSchema.statics.getOrCreateDefault = async function() {
+  // First, try to get existing active config
+  let config = await this.getActivePricing();
+
+  if (config) {
+    return config;
+  }
+
+  // Create default configuration with recommended fee tiers
+  const defaultConfig = {
+    name: 'Default Pricing Configuration',
+    bookingFeeTiers: [
+      {
+        minAmount: 0,
+        maxAmount: 5000,
+        percentage: 12,
+        label: 'Standard',
+        isActive: true
+      },
+      {
+        minAmount: 5001,
+        maxAmount: 20000,
+        percentage: 10,
+        label: 'Medium',
+        isActive: true
+      },
+      {
+        minAmount: 20001,
+        maxAmount: null, // No upper limit
+        percentage: 8,
+        label: 'Large Jobs',
+        isActive: true
+      }
+    ],
+    defaultBookingFeePercentage: 12,
+    servicePrices: [
+      // Default service prices for each category
+      { serviceCategory: 'plumbing', serviceType: 'general', basePrice: 1500, priceUnit: 'fixed', estimatedDuration: 2 },
+      { serviceCategory: 'electrical', serviceType: 'general', basePrice: 1500, priceUnit: 'fixed', estimatedDuration: 2 },
+      { serviceCategory: 'carpentry', serviceType: 'general', basePrice: 1200, priceUnit: 'fixed', estimatedDuration: 3 },
+      { serviceCategory: 'masonry', serviceType: 'general', basePrice: 2000, priceUnit: 'per_hour', estimatedDuration: 4 },
+      { serviceCategory: 'painting', serviceType: 'general', basePrice: 800, priceUnit: 'per_sqm', estimatedDuration: 4 },
+      { serviceCategory: 'hvac', serviceType: 'general', basePrice: 2500, priceUnit: 'fixed', estimatedDuration: 2 },
+      { serviceCategory: 'welding', serviceType: 'general', basePrice: 1800, priceUnit: 'fixed', estimatedDuration: 3 }
+    ],
+    distancePricing: {
+      enabled: true,
+      tiers: [
+        { minDistance: 0, maxDistance: 5, pricePerKm: 0, flatFee: 0 },
+        { minDistance: 5, maxDistance: 15, pricePerKm: 50, flatFee: 0 },
+        { minDistance: 15, maxDistance: 30, pricePerKm: 40, flatFee: 100 },
+        { minDistance: 30, maxDistance: 50, pricePerKm: 35, flatFee: 200 }
+      ],
+      maxServiceDistance: 50
+    },
+    urgencyMultipliers: [
+      { urgencyLevel: 'low', multiplier: 1.0, description: 'Scheduled more than 3 days ahead' },
+      { urgencyLevel: 'medium', multiplier: 1.0, description: 'Standard scheduling' },
+      { urgencyLevel: 'high', multiplier: 1.25, description: 'Within 24 hours' },
+      { urgencyLevel: 'emergency', multiplier: 1.5, description: 'Within 4 hours' }
+    ],
+    timePricing: {
+      enabled: true,
+      schedules: [
+        {
+          name: 'Weekend',
+          daysOfWeek: [0, 6], // Sunday and Saturday
+          multiplier: 1.15,
+          isActive: true
+        },
+        {
+          name: 'After Hours',
+          daysOfWeek: [1, 2, 3, 4, 5], // Monday to Friday
+          startTime: '18:00',
+          endTime: '23:59',
+          multiplier: 1.1,
+          isActive: true
+        }
+      ]
+    },
+    technicianTiers: {
+      enabled: true,
+      tiers: [
+        { tierName: 'Junior', minExperience: 0, minRating: 0, minCompletedJobs: 0, priceMultiplier: 1.0, description: 'New technicians' },
+        { tierName: 'Mid-Level', minExperience: 2, minRating: 4.0, minCompletedJobs: 20, priceMultiplier: 1.15, description: 'Experienced technicians' },
+        { tierName: 'Senior', minExperience: 5, minRating: 4.5, minCompletedJobs: 50, priceMultiplier: 1.3, description: 'Highly experienced' },
+        { tierName: 'Expert', minExperience: 10, minRating: 4.8, minCompletedJobs: 100, priceMultiplier: 1.5, description: 'Master technicians' }
+      ]
+    },
+    platformFee: {
+      type: 'percentage',
+      value: 15
+    },
+    tax: {
+      enabled: true,
+      rate: 16,
+      name: 'VAT'
+    },
+    discounts: {
+      firstTimeCustomer: {
+        enabled: true,
+        type: 'percentage',
+        value: 10
+      },
+      loyaltyDiscount: {
+        enabled: true,
+        thresholds: [
+          { minBookings: 5, discount: 5 },
+          { minBookings: 10, discount: 10 },
+          { minBookings: 20, discount: 15 }
+        ]
+      }
+    },
+    surgePricing: {
+      enabled: false,
+      threshold: 20,
+      maxMultiplier: 2
+    },
+    minBookingPrice: 500,
+    maxBookingPrice: 100000,
+    currency: 'KES',
+    isActive: true,
+    version: 1
+  };
+
+  config = await this.create(defaultConfig);
+  return config;
 };
 
 // Clone configuration for new version
