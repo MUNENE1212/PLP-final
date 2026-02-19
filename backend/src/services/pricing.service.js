@@ -87,7 +87,6 @@ async function calculatePrice(params) {
 
     // Fallback to 'general' service type if specific type not found
     if (!servicePrice) {
-      console.log(`Service type '${serviceType}' not found in category '${serviceCategory}', using fallback 'general'`);
       servicePrice = pricingConfig.getServicePrice(serviceCategory, 'general');
 
       // If still not found, throw error (category might be invalid)
@@ -151,12 +150,6 @@ async function calculatePrice(params) {
       } else {
         calculatedUrgency = 'low'; // More than 3 days
       }
-
-      console.log('Auto-calculated urgency:', {
-        scheduledDateTime,
-        hoursUntilService: Math.round(hoursUntilService * 10) / 10,
-        calculatedUrgency
-      });
     }
 
     breakdown.urgencyMultiplier = pricingConfig.getUrgencyMultiplier(calculatedUrgency);
@@ -233,13 +226,6 @@ async function calculatePrice(params) {
     // Customer pays: subtotal - discount (NO platform fee or tax added)
     breakdown.totalAmount = breakdown.subtotal - breakdown.discount;
 
-    console.log('=== PRICING CALCULATION DEBUG ===');
-    console.log('Subtotal:', breakdown.subtotal);
-    console.log('Discount:', breakdown.discount);
-    console.log('Total Amount (before min/max):', breakdown.totalAmount);
-    console.log('Min Booking Price:', pricingConfig.minBookingPrice);
-    console.log('Max Booking Price:', pricingConfig.maxBookingPrice);
-
     // 9. Apply min/max constraints FIRST (before any dependent calculations)
     const originalTotalAmount = breakdown.totalAmount;
     if (breakdown.totalAmount < pricingConfig.minBookingPrice) {
@@ -249,7 +235,6 @@ async function calculatePrice(params) {
         originalPrice: originalTotalAmount,
         adjustedPrice: pricingConfig.minBookingPrice
       };
-      console.log('⚠️ MIN PRICE APPLIED:', originalTotalAmount, '→', pricingConfig.minBookingPrice);
     } else if (breakdown.totalAmount > pricingConfig.maxBookingPrice) {
       breakdown.totalAmount = pricingConfig.maxBookingPrice;
       breakdown.details.priceAdjustment = {
@@ -257,12 +242,7 @@ async function calculatePrice(params) {
         originalPrice: originalTotalAmount,
         adjustedPrice: pricingConfig.maxBookingPrice
       };
-      console.log('⚠️ MAX PRICE APPLIED:', originalTotalAmount, '→', pricingConfig.maxBookingPrice);
-    } else {
-      console.log('✅ No min/max adjustment needed');
     }
-    console.log('Total Amount (after min/max):', breakdown.totalAmount);
-    console.log('==================================');
 
     // 10. Calculate platform fee (deducted from technician's earnings) - AFTER min/max
     if (pricingConfig.platformFee.type === 'percentage') {
@@ -293,14 +273,16 @@ async function calculatePrice(params) {
     // 12. Calculate technician payout (what technician receives) - AFTER fees
     breakdown.technicianPayout = breakdown.totalAmount - breakdown.platformFee - breakdown.tax;
 
-    // 13. Calculate booking fee (20% refundable deposit) - AFTER min/max adjustment
-    const bookingFeePercentage = 20;
-    breakdown.bookingFee = (breakdown.totalAmount * bookingFeePercentage) / 100;
+    // 13. Calculate booking fee using tiered structure - AFTER min/max adjustment
+    const bookingFeeResult = pricingConfig.calculateBookingFee(breakdown.totalAmount);
+    breakdown.bookingFee = bookingFeeResult.feeAmount;
     breakdown.remainingAmount = breakdown.totalAmount - breakdown.bookingFee;
     breakdown.details.bookingFee = {
-      percentage: bookingFeePercentage,
+      percentage: bookingFeeResult.percentage,
       amount: breakdown.bookingFee,
       remainingAmount: breakdown.remainingAmount,
+      tierLabel: bookingFeeResult.tierLabel,
+      isDefaultTier: bookingFeeResult.isDefault,
       description: 'Refundable booking deposit (required before matching)',
       refundable: true,
       heldInEscrow: true
