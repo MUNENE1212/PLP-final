@@ -4,6 +4,7 @@ const MatchingInteraction = require('../models/MatchingInteraction');
 const User = require('../models/User');
 const Booking = require('../models/Booking');
 const { v4: uuidv4 } = require('uuid');
+const distanceService = require('../services/distance.service');
 
 /**
  * @desc    Get smart-matched technician recommendations for a service request
@@ -114,14 +115,17 @@ exports.findTechnicians = async (req, res) => {
         return false;
       }
 
-      const distance = calculateDistance(
-        location.coordinates[1], location.coordinates[0],
-        tech.location.coordinates[1], tech.location.coordinates[0]
+      // Use the new distance service for ETA calculation
+      const etaResult = distanceService.calculateETA(
+        { lat: tech.location.coordinates[1], lon: tech.location.coordinates[0] },
+        { lat: location.coordinates[1], lon: location.coordinates[0] },
+        'urban' // Default to urban for Kenya
       );
 
-      tech.distance = distance;
-      const withinRange = distance <= maxDistance;
-      console.log(`Technician ${tech._id}: ${tech.firstName} ${tech.lastName} - ${distance}km away - ${withinRange ? 'INCLUDED' : 'EXCLUDED'}`);
+      tech.distance = etaResult.distance;
+      tech.eta = etaResult;
+      const withinRange = etaResult.distance <= maxDistance;
+      console.log(`Technician ${tech._id}: ${tech.firstName} ${tech.lastName} - ${etaResult.distance}km away (${etaResult.etaText}) - ${withinRange ? 'INCLUDED' : 'EXCLUDED'}`);
       return withinRange;
     });
 
@@ -186,9 +190,10 @@ exports.findTechnicians = async (req, res) => {
           proBoost: boostMultiplier
         },
         distance: technician.distance,
+        eta: technician.eta, // Include ETA information
         algorithm: {
-          version: '1.1',
-          model: 'weighted_scoring_with_subscription_boost',
+          version: '1.2', // Updated version for ETA support
+          model: 'weighted_scoring_with_subscription_boost_and_eta',
           factors: scoring.weights,
           boostApplied: isPro,
           boostMultiplier
@@ -237,7 +242,17 @@ exports.findTechnicians = async (req, res) => {
     const response = {
       success: true,
       count: topMatches.length,
-      data: topMatches,
+      data: topMatches.map(match => ({
+        ...match.toObject(),
+        eta: match.eta || {
+          distance: match.distance,
+          distanceText: `${match.distance} km`,
+          estimatedMinutes: Math.round(match.distance * 1.4 / 25 * 60), // fallback calculation
+          etaText: `~${Math.round(match.distance * 1.4 / 25 * 60)} min`,
+          area: 'urban',
+          roadFactor: 1.4
+        }
+      })),
       sessionId,
       preferences: {
         maxDistance: preferences.general.maxDistance,
@@ -732,6 +747,16 @@ function toRad(degrees) {
  */
 function generateMatchReasons(scores, technician) {
   const reasons = [];
+
+  // Add ETA reason if available
+  if (technician.eta && technician.eta.estimatedMinutes) {
+    reasons.push({
+      reason: `Can arrive in ${technician.eta.etaText}`,
+      weight: 0.20,
+      score: Math.max(0, 100 - technician.eta.estimatedMinutes), // Higher score for shorter ETA
+      etaDetails: technician.eta
+    });
+  }
 
   if (scores.skillMatch >= 90) {
     reasons.push({
