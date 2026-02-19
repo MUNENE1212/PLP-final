@@ -1,0 +1,261 @@
+import React, { useRef } from 'react';
+import { clsx } from 'clsx';
+import type { Service } from '@/types/service';
+import { getPriceRangeDisplay } from '@/services/service.service';
+
+/**
+ * Props for ServiceChips component
+ */
+interface ServiceChipsProps {
+  services: Service[];
+  selectedServiceId?: string | null;
+  onServiceSelect: (service: Service) => void;
+  loading?: boolean;
+  className?: string;
+}
+
+/**
+ * ServiceChips Component
+ * Horizontal scrollable chips for service selection
+ * - UPPERCASE bold text
+ * - Selected state with Circuit Blue accent
+ * - Touch-friendly (44px height minimum)
+ */
+const ServiceChips: React.FC<ServiceChipsProps> = ({
+  services,
+  selectedServiceId = null,
+  onServiceSelect,
+  loading = false,
+  className,
+}) => {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Loading skeleton
+  if (loading) {
+    return (
+      <div
+        className={clsx(
+          'flex gap-2 overflow-x-auto pb-2 scrollbar-hide',
+          className
+        )}
+        data-testid="service-chips-loading"
+      >
+        {Array.from({ length: 6 }).map((_, index) => (
+          <div
+            key={index}
+            className="h-11 w-32 flex-shrink-0 bg-charcoal border border-subtle rounded-full animate-pulse"
+          />
+        ))}
+      </div>
+    );
+  }
+
+  // Empty state
+  if (services.length === 0) {
+    return (
+      <div
+        className={clsx(
+          'flex items-center justify-center py-8 px-4',
+          className
+        )}
+        data-testid="service-chips-empty"
+      >
+        <p className="text-steel text-sm text-center">
+          No services available in this category
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className={clsx('relative', className)}>
+      {/* Left scroll indicator */}
+      <div className="absolute left-0 top-0 bottom-2 w-8 bg-gradient-to-r from-mahogany to-transparent z-10 pointer-events-none hidden sm:block" />
+
+      {/* Right scroll indicator */}
+      <div className="absolute right-0 top-0 bottom-2 w-8 bg-gradient-to-l from-mahogany to-transparent z-10 pointer-events-none hidden sm:block" />
+
+      {/* Scrollable container */}
+      <div
+        ref={scrollContainerRef}
+        className={clsx(
+          'flex gap-2 overflow-x-auto pb-2 px-1',
+          'scrollbar-hide scroll-smooth',
+          'snap-x snap-mandatory'
+        )}
+        role="listbox"
+        aria-label="Services"
+        data-testid="service-chips"
+      >
+        {services.map((service) => (
+          <ServiceChip
+            key={service._id}
+            service={service}
+            isSelected={selectedServiceId === service._id}
+            onClick={() => onServiceSelect(service)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+/**
+ * Props for ServiceChip component
+ */
+interface ServiceChipProps {
+  service: Service;
+  isSelected: boolean;
+  onClick: () => void;
+}
+
+/**
+ * ServiceChip Component
+ * Individual service chip with name and price
+ */
+const ServiceChip: React.FC<ServiceChipProps> = ({
+  service,
+  isSelected,
+  onClick,
+}) => {
+  return (
+    <button
+      type="button"
+      role="option"
+      aria-selected={isSelected}
+      onClick={onClick}
+      className={clsx(
+        // Base styles - WCAG 2.1 AA compliant (44x44px minimum)
+        'flex-shrink-0 snap-start',
+        'flex flex-col items-start justify-center',
+        'min-h-[44px] min-w-[44px] px-4 py-2',
+        'rounded-full',
+        'border-2 transition-all duration-200 ease-out',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-circuit focus-visible:ring-offset-2 focus-visible:ring-offset-mahogany',
+
+        // Default state
+        !isSelected && [
+          'bg-charcoal border-subtle',
+          'hover:border-steel hover:bg-hover',
+        ],
+
+        // Selected state
+        isSelected && [
+          'bg-circuit/20 border-circuit',
+          'shadow-led',
+        ]
+      )}
+      data-testid={`service-chip-${service._id}`}
+    >
+      {/* Service Name - UPPERCASE */}
+      <span
+        className={clsx(
+          'text-sm font-bold uppercase tracking-wide',
+          'leading-tight',
+          'transition-colors duration-200',
+          isSelected ? 'text-circuit' : 'text-bone'
+        )}
+      >
+        {service.name}
+      </span>
+
+      {/* Price Range */}
+      <span
+        className={clsx(
+          'text-[10px] mt-0.5',
+          'transition-colors duration-200',
+          isSelected ? 'text-circuit-300' : 'text-steel'
+        )}
+      >
+        {getPriceRangeDisplay(service.basePriceMin, service.basePriceMax)}
+      </span>
+    </button>
+  );
+};
+
+/**
+ * Props for ServiceChipLarge component
+ * Alternative large chip variant for more prominent display
+ */
+interface ServiceChipLargeProps {
+  service: Service;
+  isSelected: boolean;
+  onClick: () => void;
+}
+
+/**
+ * ServiceChipLarge Component
+ * Larger chip variant with duration and description preview
+ */
+export const ServiceChipLarge: React.FC<ServiceChipLargeProps> = ({
+  service,
+  isSelected,
+  onClick,
+}) => {
+  return (
+    <button
+      type="button"
+      role="option"
+      aria-selected={isSelected}
+      onClick={onClick}
+      className={clsx(
+        // Base styles
+        'flex-shrink-0 snap-start',
+        'w-48 min-h-[88px] p-3',
+        'rounded-lg',
+        'border-2 transition-all duration-200 ease-out',
+        'text-left',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-circuit focus-visible:ring-offset-2 focus-visible:ring-offset-mahogany',
+
+        // Default state
+        !isSelected && [
+          'bg-charcoal border-subtle',
+          'hover:border-steel hover:bg-hover',
+        ],
+
+        // Selected state
+        isSelected && [
+          'bg-circuit/20 border-circuit',
+          'shadow-led',
+        ]
+      )}
+      data-testid={`service-chip-large-${service._id}`}
+    >
+      {/* Service Name - UPPERCASE */}
+      <span
+        className={clsx(
+          'text-sm font-bold uppercase tracking-wide block',
+          'leading-tight line-clamp-2',
+          'transition-colors duration-200',
+          isSelected ? 'text-circuit' : 'text-bone'
+        )}
+      >
+        {service.name}
+      </span>
+
+      {/* Duration */}
+      <span
+        className={clsx(
+          'text-[10px] mt-1 block',
+          'transition-colors duration-200',
+          isSelected ? 'text-circuit-300' : 'text-wrench'
+        )}
+      >
+        {service.estimatedDuration}
+      </span>
+
+      {/* Price Range */}
+      <span
+        className={clsx(
+          'text-xs mt-1 font-medium block',
+          'transition-colors duration-200',
+          isSelected ? 'text-circuit-300' : 'text-steel'
+        )}
+      >
+        {getPriceRangeDisplay(service.basePriceMin, service.basePriceMax)}
+      </span>
+    </button>
+  );
+};
+
+export default ServiceChips;
