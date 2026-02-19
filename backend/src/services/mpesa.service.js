@@ -77,11 +77,27 @@ class MpesaService {
     this.shortCode = process.env.MPESA_SHORTCODE;
 
     // Environment configuration
-    this.environment = process.env.MPESA_ENVIRONMENT || 'sandbox'; // 'sandbox' or 'production'
+    // ALLOW_SANDBOX_IN_PROD=true allows testing M-Pesa in production (for development/staging)
+    const allowSandboxInProd = process.env.ALLOW_SANDBOX_IN_PROD === 'true';
+    this.environment = process.env.MPESA_ENVIRONMENT;
 
-    // SECURITY: Warn if using sandbox in production
-    if (process.env.NODE_ENV === 'production' && this.environment === 'sandbox') {
-      console.warn('SECURITY WARNING: Using M-Pesa SANDBOX environment in production deployment');
+    // SECURITY: Require explicit environment configuration in production
+    if (process.env.NODE_ENV === 'production') {
+      if (!this.environment) {
+        throw new Error('CRITICAL: MPESA_ENVIRONMENT is REQUIRED in production. Set to "production" or "sandbox" in environment variables.');
+      }
+      // Allow sandbox in production only if explicitly enabled (for testing)
+      if (this.environment === 'sandbox' && !allowSandboxInProd) {
+        throw new Error('CRITICAL: MPESA_ENVIRONMENT is "sandbox" in production. Set ALLOW_SANDBOX_IN_PROD=true to enable testing mode, or set MPESA_ENVIRONMENT=production.');
+      }
+      if (this.environment === 'sandbox') {
+        console.warn('⚠️  WARNING: Running M-Pesa in SANDBOX mode on production server. Payments will NOT be real.');
+      }
+    }
+
+    // Default to sandbox only in development/test
+    if (!this.environment) {
+      this.environment = 'sandbox';
     }
 
     // API URLs
@@ -564,6 +580,285 @@ class MpesaService {
     }
 
     return true;
+  }
+
+  /**
+   * Query account balance (for platform M-Pesa account)
+   * @returns {Object} Account balance response
+   */
+  async queryAccountBalance() {
+    try {
+      // Validate B2C credentials
+      if (!this.initiatorName) {
+        throw new Error('Account balance query requires MPESA_INITIATOR_NAME to be configured');
+      }
+      if (!this.securityCredential) {
+        throw new Error('Account balance query requires MPESA_SECURITY_CREDENTIAL to be configured');
+      }
+
+      const accessToken = await this.getAccessToken();
+
+      const payload = {
+        Initiator: this.initiatorName,
+        SecurityCredential: this.securityCredential,
+        CommandID: 'AccountBalance',
+        PartyA: this.shortCode,
+        IdentifierType: '4', // Organization
+        Remarks: 'Account balance query',
+        QueueTimeOutURL: this.b2cTimeoutURL || this.callbackURL,
+        ResultURL: this.b2cCallbackURL || this.callbackURL,
+      };
+
+      console.log('M-Pesa Account Balance Query:', {
+        ...payload,
+        SecurityCredential: '[HIDDEN]',
+      });
+
+      const response = await axios.post(
+        `${this.baseURL}/mpesa/accountbalance/v1/query`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      console.log('M-Pesa Account Balance Response:', response.data);
+
+      return {
+        success: true,
+        data: {
+          conversationId: response.data.ConversationID,
+          originatorConversationId: response.data.OriginatorConversationID,
+          responseCode: response.data.ResponseCode,
+          responseDescription: response.data.ResponseDescription,
+        },
+      };
+    } catch (error) {
+      console.error('M-Pesa Account Balance Query Error:', error.response?.data || error.message);
+
+      return {
+        success: false,
+        error: error.response?.data?.errorMessage || error.message || 'Account balance query failed',
+        details: error.response?.data,
+      };
+    }
+  }
+
+  /**
+   * Process account balance callback
+   * @param {Object} callbackData - Callback data from M-Pesa
+   * @returns {Object} Processed balance data
+   */
+  processAccountBalanceCallback(callbackData) {
+    try {
+      const { Result } = callbackData;
+
+      const result = {
+        conversationId: Result.ConversationID,
+        originatorConversationId: Result.OriginatorConversationID,
+        resultCode: Result.ResultCode,
+        resultDesc: Result.ResultDesc,
+      };
+
+      if (Result.ResultCode === 0) {
+        const resultParameters = Result.ResultParameters?.ResultParameter || [];
+        const parameters = {};
+        resultParameters.forEach(param => {
+          parameters[param.Key] = param.Value;
+        });
+
+        result.success = true;
+        result.accountBalance = parameters.AccountBalance;
+        result.availableBalance = parameters.BOAvertimePaymentMMFAccountBalance;
+        result.utilityBalance = parameters.UTILITYAccountBalance;
+        result.workingBalance = parameters.WorkingAccountBalance;
+      } else {
+        result.success = false;
+        result.errorMessage = Result.ResultDesc;
+      }
+
+      return result;
+    } catch (error) {
+      console.error('M-Pesa Account Balance Callback Processing Error:', error);
+      throw new Error('Failed to process M-Pesa account balance callback');
+    }
+  }
+
+  /**
+   * Validate Kenyan phone number format
+   * Supports 07XX, 01XX, +2547XX, +2541XX, 2547XX, 2541XX formats
+   * @param {string} phoneNumber - Phone number to validate
+   * @returns {boolean} True if valid Kenyan phone number
+   */
+  isValidKenyanPhone(phoneNumber) {
+    if (!phoneNumber) return false;
+
+    // Remove spaces and dashes
+    const cleaned = phoneNumber.replace(/[\s\-]/g, '');
+
+    // Valid Kenyan phone patterns
+    const patterns = [
+      /^(254|0)(1|7)\d{8}$/,  // 254XXXXXXXXX or 0XXXXXXXXX
+      /^\+254(1|7)\d{8}$/,     // +254XXXXXXXXX
+    ];
+
+    return patterns.some(pattern => pattern.test(cleaned));
+  }
+
+  /**
+   * Initiate STK Push for escrow funding
+   * @param {Object} params - Escrow payment parameters
+   * @param {string} params.phoneNumber - Customer phone number
+   * @param {number} params.amount - Amount to charge
+   * @param {string} params.escrowId - Escrow ID reference
+   * @param {string} params.bookingId - Booking ID reference
+   * @param {string} params.description - Transaction description
+   * @returns {Object} STK Push response with escrow context
+   */
+  async initiateEscrowFunding({ phoneNumber, amount, escrowId, bookingId, description }) {
+    try {
+      // Validate phone number format
+      if (!this.isValidKenyanPhone(phoneNumber)) {
+        throw new Error('Invalid Kenyan phone number format. Use format 07XX or 2547XX');
+      }
+
+      // Validate amount
+      if (!amount || amount < 1) {
+        throw new Error('Amount must be at least 1 KES');
+      }
+
+      const accountReference = `ESC-${escrowId.substring(0, 8).toUpperCase()}`;
+      const transactionDesc = description || `Escrow funding for booking`;
+
+      const result = await this.initiateSTKPush({
+        phoneNumber,
+        amount,
+        accountReference,
+        transactionDesc,
+      });
+
+      // Add escrow context to response
+      if (result.success) {
+        result.data.escrowId = escrowId;
+        result.data.bookingId = bookingId;
+        result.data.paymentType = 'escrow_funding';
+      }
+
+      return result;
+    } catch (error) {
+      console.error('Escrow funding STK Push Error:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to initiate escrow funding',
+      };
+    }
+  }
+
+  /**
+   * Initiate B2C payout to technician for completed escrow
+   * @param {Object} params - Payout parameters
+   * @param {string} params.phoneNumber - Technician phone number
+   * @param {number} params.amount - Amount to payout
+   * @param {string} params.escrowId - Escrow ID reference
+   * @param {string} params.bookingId - Booking ID reference
+   * @param {string} params.transactionId - Internal transaction ID
+   * @param {string} params.occasion - Payment occasion
+   * @returns {Object} B2C response with escrow context
+   */
+  async initiateEscrowPayout({ phoneNumber, amount, escrowId, bookingId, transactionId, occasion }) {
+    try {
+      // Validate phone number format
+      if (!this.isValidKenyanPhone(phoneNumber)) {
+        throw new Error('Invalid Kenyan phone number format. Use format 07XX or 2547XX');
+      }
+
+      // Validate amount
+      if (!amount || amount < 1) {
+        throw new Error('Amount must be at least 1 KES');
+      }
+
+      // Maximum B2C amount per transaction (Safaricom limit)
+      const MAX_B2C_AMOUNT = 150000; // 150,000 KES
+      if (amount > MAX_B2C_AMOUNT) {
+        throw new Error(`Amount exceeds maximum B2C limit of ${MAX_B2C_AMOUNT.toLocaleString()} KES`);
+      }
+
+      const remarks = `Payout for escrow ${escrowId.substring(0, 8).toUpperCase()}`;
+      const payoutOccasion = occasion || 'Technician payout for completed service';
+
+      const result = await this.initiateB2C({
+        phoneNumber,
+        amount,
+        remarks,
+        occasion: payoutOccasion,
+      });
+
+      // Add escrow context to response
+      if (result.success) {
+        result.data.escrowId = escrowId;
+        result.data.bookingId = bookingId;
+        result.data.transactionId = transactionId;
+        result.data.paymentType = 'escrow_payout';
+      }
+
+      return result;
+    } catch (error) {
+      console.error('Escrow payout B2C Error:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to initiate escrow payout',
+      };
+    }
+  }
+
+  /**
+   * Handle STK Push callback for escrow integration
+   * Parses callback and returns structured data for escrow funding
+   * @param {Object} callbackData - Raw callback data from M-Pesa
+   * @returns {Object} Processed callback with escrow context
+   */
+  handleSTKPushCallback(callbackData) {
+    const processed = this.processCallback(callbackData);
+
+    // Extract escrow reference from account reference if available
+    if (processed.success && processed.checkoutRequestId) {
+      // The account reference would contain ESC-XXXXXXXX format
+      // This can be used to link back to the escrow
+      processed.escrowFunded = processed.success;
+      processed.fundedAt = processed.success ? new Date() : null;
+    }
+
+    return processed;
+  }
+
+  /**
+   * Handle B2C callback for escrow release
+   * Parses callback and returns structured data for escrow release
+   * @param {Object} callbackData - Raw callback data from M-Pesa
+   * @returns {Object} Processed callback with escrow context
+   */
+  handleB2CCallback(callbackData) {
+    const processed = this.processB2CCallback(callbackData);
+
+    // Add escrow release context
+    if (processed.success) {
+      processed.escrowReleased = true;
+      processed.releasedAt = new Date();
+    }
+
+    return processed;
+  }
+
+  /**
+   * Transaction status query for external systems
+   * @param {string} checkoutRequestID - CheckoutRequestID from STK Push
+   * @returns {Object} Transaction status response
+   */
+  async queryTransactionStatus(checkoutRequestID) {
+    return this.querySTKPushStatus(checkoutRequestID);
   }
 }
 

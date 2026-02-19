@@ -10,7 +10,34 @@ const MPesaDetailsSchema = new Schema({
   phoneNumber: String,
   transactionDate: Date,
   resultCode: String,
-  resultDescription: String
+  resultDescription: String,
+  // B2C specific fields
+  conversationId: String,
+  originatorConversationId: String,
+  transactionReceipt: String,
+  transactionId: String,
+  // Additional M-Pesa metadata
+  merchantRequestID: String,
+  responseCode: String,
+  responseDescription: String,
+  customerMessage: String,
+}, { _id: false });
+
+// Payout details (for B2C payouts)
+const PayoutDetailsSchema = new Schema({
+  conversationId: String,
+  originatorConversationId: String,
+  transactionId: String,
+  resultCode: Number,
+  resultDesc: String,
+  transactionAmount: Number,
+  transactionReceipt: String,
+  receiverPartyPublicName: String,
+  transactionCompletedDateTime: String,
+  b2CRecipientIsRegisteredCustomer: String,
+  b2CChargesPaidAccountAvailableFunds: String,
+  b2CUtilityAccountAvailableFunds: String,
+  b2CWorkingAccountAvailableFunds: String,
 }, { _id: false });
 
 // Stripe specific details
@@ -71,6 +98,12 @@ const TransactionSchema = new Schema({
     ref: 'Booking'
   },
 
+  // Escrow reference (links to escrow if applicable)
+  escrowRef: {
+    type: Schema.Types.ObjectId,
+    ref: 'Escrow'
+  },
+
   // Transaction Type
   type: {
     type: String,
@@ -129,6 +162,7 @@ const TransactionSchema = new Schema({
   // Gateway-specific details
   mpesaDetails: MPesaDetailsSchema,
   stripeDetails: StripeDetailsSchema,
+  payoutDetails: PayoutDetailsSchema,
 
   // Transaction Status
   status: {

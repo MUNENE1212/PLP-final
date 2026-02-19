@@ -10,6 +10,8 @@ import notificationReducer from './slices/notificationSlice';
 import workGalleryReducer from './slices/workGallerySlice';
 import serviceReducer from './slices/serviceSlice';
 import profileCompletenessReducer from './slices/profileSlice';
+import mpesaReducer from './slices/mpesaSlice';
+import escrowReducer from './slices/escrowSlice';
 
 export const store = configureStore({
   reducer: {
@@ -24,6 +26,8 @@ export const store = configureStore({
     workGallery: workGalleryReducer,
     services: serviceReducer,
     profileCompleteness: profileCompletenessReducer,
+    mpesa: mpesaReducer,
+    escrow: escrowReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

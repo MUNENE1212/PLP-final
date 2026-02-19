@@ -176,10 +176,13 @@ app.use('/api/v1/media', require('./routes/media.routes'));
 app.use('/api/v1/upload', require('./routes/upload.routes'));
 app.use('/api/v1/work-gallery', require('./routes/workGallery.routes'));
 app.use('/api/v1/payments/mpesa', require('./routes/mpesa.routes'));
+app.use('/api/v1/mpesa/webhooks', require('./routes/mpesaWebhook.routes'));
 app.use('/api/v1/payments/payouts', require('./routes/payout.routes'));
 app.use('/api/v1/pricing', require('./routes/pricing.routes'));
 app.use('/api/v1/services', require('./routes/service.routes'));
 app.use('/api/v1/profile/completeness', require('./routes/profileCompleteness.routes'));
+app.use('/api/v1/escrow', require('./routes/escrow.routes'));
+app.use('/api/v1/payment-plans', require('./routes/paymentPlan.routes'));
 
 // 404 Handler
 app.use((req, res) => {
