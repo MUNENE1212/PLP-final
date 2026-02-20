@@ -17,6 +17,31 @@ export interface Subscription {
   };
 }
 
+// Re-export booking notification types
+export type {
+  BookingStatus,
+  PaymentStatus,
+  CounterOfferStatus,
+  BookingStatusChangedPayload,
+  BookingNotificationTechnician,
+  BookingNotificationCustomer,
+  BookingAssignedPayload,
+  CounterOfferInfo,
+  BookingCounterOfferPayload,
+  BookingPaymentUpdatePayload,
+  BookingNotificationPayload,
+  BookingNotificationType,
+  BookingNotification,
+  BookingNotificationState,
+} from './bookingNotification';
+
+export {
+  BOOKING_NOTIFICATION_EVENTS,
+  getBookingNotificationTitle,
+  getStatusIcon,
+  getStatusUrgency,
+} from './bookingNotification';
+
 // User Types
 export interface User {
   _id: string;

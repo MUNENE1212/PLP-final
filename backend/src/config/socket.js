@@ -2,6 +2,7 @@ const socketIO = require('socket.io');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { registerTrackingHandlers } = require('../socketHandlers/tracking.handler');
+const { registerBookingNotificationHandlers } = require('../socketHandlers/bookingNotification.handler');
 
 /**
  * Socket.IO Configuration
@@ -128,6 +129,9 @@ exports.initializeSocket = (server) => {
 
   // Register tracking handlers for real-time technician location tracking
   registerTrackingHandlers(io);
+
+  // Register booking notification handlers for real-time booking status updates
+  registerBookingNotificationHandlers(io);
 
   console.log('✅ Socket.IO initialized');
   return io;
