@@ -63,7 +63,26 @@ const AvailabilitySchema = new Schema({
       type: Boolean,
       default: true
     }
-  }]
+  }],
+  // Real-time availability fields for Task #73
+  status: {
+    type: String,
+    enum: ['online', 'busy', 'away', 'offline'],
+    default: 'offline'
+  },
+  lastSeen: {
+    type: Date,
+    default: Date.now
+  },
+  currentBookingId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Booking',
+    default: null
+  },
+  queuePosition: {
+    type: Number,
+    default: 0
+  }
 }, { _id: false });
 
 const PortfolioSchema = new Schema({
@@ -78,6 +97,50 @@ const PortfolioSchema = new Schema({
   client: {
     name: String,
     testimonial: String
+  }
+}, { timestamps: true });
+
+// Work Gallery Image Schema (for technician's portfolio showcase)
+const WorkGalleryImageSchema = new Schema({
+  url: {
+    type: String,
+    required: true
+  },
+  publicId: {
+    type: String,
+    required: true
+  },
+  caption: {
+    type: String,
+    maxlength: 500,
+    trim: true
+  },
+  category: {
+    type: String,
+    enum: ['plumbing', 'electrical', 'carpentry', 'masonry', 'painting', 'hvac', 'welding', 'other'],
+    required: true
+  },
+  date: {
+    type: Date,
+    default: Date.now
+  },
+  location: {
+    type: String,
+    trim: true
+  },
+  isBeforeAfter: {
+    type: Boolean,
+    default: false
+  },
+  pairId: {
+    type: Schema.Types.ObjectId,
+    ref: 'WorkGalleryImage'
+  },
+  order: {
+    type: Number,
+    min: 1,
+    max: 10,
+    required: true
   }
 }, { timestamps: true });
 
@@ -197,6 +260,10 @@ const UserSchema = new Schema({
   portfolio: {
     type: [PortfolioSchema],
     default: undefined
+  },
+  workGalleryImages: {
+    type: [WorkGalleryImageSchema],
+    default: []
   },
   hourlyRate: {
     type: Number,
@@ -569,6 +636,14 @@ UserSchema.pre('save', async function(next) {
 UserSchema.pre('save', function(next) {
   if (this.isModified('isOnline') && !this.isOnline) {
     this.lastSeen = new Date();
+  }
+  next();
+});
+
+// Validate work gallery images limit (max 10)
+UserSchema.pre('save', function(next) {
+  if (this.workGalleryImages && this.workGalleryImages.length > 10) {
+    return next(new Error('Maximum 10 work gallery images allowed per technician'));
   }
   next();
 });
