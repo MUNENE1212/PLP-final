@@ -91,12 +91,36 @@ class SocketService {
     this.socket?.on('message:delivered', callback);
   }
 
+  offMessageDelivered(callback?: (data: { messageId: string; userId: string }) => void): void {
+    if (callback) {
+      this.socket?.off('message:delivered', callback);
+    } else {
+      this.socket?.off('message:delivered');
+    }
+  }
+
   onMessageRead(callback: (data: { messageId: string; userId: string }) => void): void {
     this.socket?.on('message:read', callback);
   }
 
-  onMessageDeleted(callback: (data: { messageId: string; conversationId: string }) => void): void {
+  offMessageRead(callback?: (data: { messageId: string; userId: string }) => void): void {
+    if (callback) {
+      this.socket?.off('message:read', callback);
+    } else {
+      this.socket?.off('message:read');
+    }
+  }
+
+  onMessageDeletedLegacy(callback: (data: { messageId: string; conversationId: string }) => void): void {
     this.socket?.on('message:deleted', callback);
+  }
+
+  offMessageDeletedLegacy(callback?: (data: { messageId: string; conversationId: string }) => void): void {
+    if (callback) {
+      this.socket?.off('message:deleted', callback);
+    } else {
+      this.socket?.off('message:deleted');
+    }
   }
 
   onMessageReaction(
@@ -120,6 +144,102 @@ class SocketService {
 
   emitTypingStop(conversationId: string): void {
     this.socket?.emit('typing:stop', { conversationId });
+  }
+
+  // ===== MESSAGE DELIVERY STATUS =====
+
+  /**
+   * Emit message delivered event
+   */
+  emitMessageDelivered(messageId: string, conversationId: string): void {
+    this.socket?.emit('message:delivered', { messageId, conversationId });
+  }
+
+  /**
+   * Emit message read event
+   */
+  emitMessageRead(messageId: string, conversationId: string): void {
+    this.socket?.emit('message:read', { messageId, conversationId });
+  }
+
+  /**
+   * Emit mark conversation as read
+   */
+  emitMarkConversationRead(conversationId: string): void {
+    this.socket?.emit('conversation:mark_read', { conversationId });
+  }
+
+  /**
+   * Listen for message delivered event
+   */
+  onMessageDeliveredStatus(callback: (data: { messageId: string; conversationId: string; deliveredAt: string }) => void): void {
+    this.socket?.on('message:delivered', callback);
+  }
+
+  /**
+   * Listen for message read event
+   */
+  onMessageReadStatus(callback: (data: { messageId: string; conversationId: string; readAt: string; readBy: string }) => void): void {
+    this.socket?.on('message:read', callback);
+  }
+
+  /**
+   * Listen for conversation marked as read
+   */
+  onConversationMarkedRead(callback: (data: { conversationId: string; updatedCount: number }) => void): void {
+    this.socket?.on('conversation:marked_read', callback);
+  }
+
+  // ===== MESSAGE REACTIONS VIA SOCKET =====
+
+  /**
+   * Emit message reaction via socket
+   */
+  emitMessageReaction(messageId: string, emoji: string): void {
+    this.socket?.emit('message:react', { messageId, emoji });
+  }
+
+  // ===== MESSAGE DELETION =====
+
+  /**
+   * Emit message deleted event
+   */
+  emitMessageDeleted(messageId: string, conversationId: string, deleteForEveryone: boolean): void {
+    this.socket?.emit('message:deleted', { messageId, conversationId, deleteForEveryone });
+  }
+
+  /**
+   * Listen for message deleted event
+   */
+  onMessageDeletedEvent(callback: (data: { messageId: string; conversationId: string; deletedBy?: string }) => void): void {
+    this.socket?.on('message:deleted', callback);
+  }
+
+  /**
+   * Remove message deleted listener
+   */
+  offMessageDeletedEvent(callback?: (data: { messageId: string; conversationId: string; deletedBy?: string }) => void): void {
+    if (callback) {
+      this.socket?.off('message:deleted', callback);
+    } else {
+      this.socket?.off('message:deleted');
+    }
+  }
+
+  // ===== MESSAGE EDITING =====
+
+  /**
+   * Emit message edited event
+   */
+  emitMessageEdited(messageId: string, conversationId: string, newText: string): void {
+    this.socket?.emit('message:edited', { messageId, conversationId, newText });
+  }
+
+  /**
+   * Listen for message edited event
+   */
+  onMessageEdited(callback: (data: { messageId: string; conversationId: string; text: string; isEdited: boolean; editedAt: string }) => void): void {
+    this.socket?.on('message:edited', callback);
   }
 
   // Conversation events
