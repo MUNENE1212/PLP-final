@@ -6,6 +6,7 @@ const { registerBookingNotificationHandlers } = require('../socketHandlers/booki
 const { registerMessagingHandlers } = require('../socketHandlers/messaging.handler');
 const { registerAvailabilityHandlers } = require('../socketHandlers/availability.handler');
 const { registerPricingHandlers } = require('../socketHandlers/pricing.handler');
+const { registerAnalyticsHandlers } = require('../socketHandlers/analytics.handler');
 
 /**
  * Socket.IO Configuration
@@ -144,6 +145,9 @@ exports.initializeSocket = (server) => {
 
   // Register pricing handlers for real-time pricing & negotiation
   registerPricingHandlers(io);
+
+  // Register analytics handlers for real-time admin dashboard
+  registerAnalyticsHandlers(io);
 
   console.log('✅ Socket.IO initialized');
   return io;

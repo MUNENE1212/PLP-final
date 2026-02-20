@@ -13,3 +13,6 @@ export { default as DashboardOverview } from './DashboardOverview';
 export { default as EscrowManagementPanel } from './EscrowManagementPanel';
 export { default as TransactionHistory } from './TransactionHistory';
 export { default as UserManagement } from './UserManagement';
+export { default as LiveMetricsCards } from './LiveMetricsCards';
+export { default as ActivityFeed } from './ActivityFeed';
+export { default as StatusDistribution } from './StatusDistribution';
