@@ -1,6 +1,12 @@
 import { io, Socket } from 'socket.io-client';
 import { STORAGE_KEYS } from '@/config/constants';
-import { Message } from '@/types';
+import { Message, BOOKING_NOTIFICATION_EVENTS } from '@/types';
+import type {
+  BookingStatusChangedPayload,
+  BookingAssignedPayload,
+  BookingCounterOfferPayload,
+  BookingPaymentUpdatePayload,
+} from '@/types';
 
 class SocketService {
   private socket: Socket | null = null;
@@ -9,7 +15,6 @@ class SocketService {
 
   connect(userId: string): void {
     if (this.socket?.connected) {
-      console.log('Socket already connected');
       return;
     }
 
@@ -18,8 +23,6 @@ class SocketService {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
     // Remove /api/v1 from the URL to get the base server URL
     const backendUrl = apiUrl.replace(/\/api\/v\d+$/, '');
-
-    console.log('Connecting to Socket.IO server:', backendUrl);
 
     this.socket = io(backendUrl, {
       auth: {
@@ -40,37 +43,22 @@ class SocketService {
 
     // Connection events
     this.socket.on('connect', () => {
-      console.log('Socket connected:', this.socket?.id);
       this.reconnectAttempts = 0;
 
       // Join user's personal room
       this.socket?.emit('user:join', userId);
     });
 
-    this.socket.on('disconnect', (reason) => {
-      console.log('Socket disconnected:', reason);
+    this.socket.on('disconnect', () => {
+      // Socket disconnected - reconnection will be handled automatically
     });
 
-    this.socket.on('connect_error', (error) => {
-      console.error('Socket connection error:', error.message);
+    this.socket.on('connect_error', () => {
       this.reconnectAttempts++;
-
-      if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-        console.error('Max reconnection attempts reached');
-      }
     });
 
-    this.socket.on('reconnect', (attemptNumber) => {
-      console.log('Socket reconnected after', attemptNumber, 'attempts');
+    this.socket.on('reconnect', () => {
       this.reconnectAttempts = 0;
-    });
-
-    this.socket.on('reconnect_attempt', (attemptNumber) => {
-      console.log('Socket reconnection attempt:', attemptNumber);
-    });
-
-    this.socket.on('reconnect_failed', () => {
-      console.error('Socket reconnection failed');
     });
   }
 
@@ -210,8 +198,112 @@ class SocketService {
   emit(event: string, data?: any): void {
     if (this.socket?.connected) {
       this.socket.emit(event, data);
+    }
+  }
+
+  // ===== BOOKING NOTIFICATION EVENTS =====
+
+  /**
+   * Subscribe to booking updates for a specific booking
+   */
+  subscribeToBooking(bookingId: string): void {
+    this.socket?.emit(BOOKING_NOTIFICATION_EVENTS.SUBSCRIBE, { bookingId });
+  }
+
+  /**
+   * Unsubscribe from booking updates
+   */
+  unsubscribeFromBooking(bookingId: string): void {
+    this.socket?.emit(BOOKING_NOTIFICATION_EVENTS.UNSUBSCRIBE, { bookingId });
+  }
+
+  /**
+   * Listen for booking status changes
+   */
+  onBookingStatusChanged(callback: (data: BookingStatusChangedPayload) => void): void {
+    this.socket?.on(BOOKING_NOTIFICATION_EVENTS.STATUS_CHANGED, callback as any);
+  }
+
+  /**
+   * Remove booking status change listener
+   */
+  offBookingStatusChanged(callback?: (data: BookingStatusChangedPayload) => void): void {
+    if (callback) {
+      this.socket?.off(BOOKING_NOTIFICATION_EVENTS.STATUS_CHANGED, callback as any);
     } else {
-      console.warn('Socket not connected. Cannot emit event:', event);
+      this.socket?.off(BOOKING_NOTIFICATION_EVENTS.STATUS_CHANGED);
+    }
+  }
+
+  /**
+   * Listen for booking assignment notifications
+   */
+  onBookingAssigned(callback: (data: BookingAssignedPayload) => void): void {
+    this.socket?.on(BOOKING_NOTIFICATION_EVENTS.ASSIGNED, callback as any);
+  }
+
+  /**
+   * Remove booking assignment listener
+   */
+  offBookingAssigned(callback?: (data: BookingAssignedPayload) => void): void {
+    if (callback) {
+      this.socket?.off(BOOKING_NOTIFICATION_EVENTS.ASSIGNED, callback as any);
+    } else {
+      this.socket?.off(BOOKING_NOTIFICATION_EVENTS.ASSIGNED);
+    }
+  }
+
+  /**
+   * Listen for counter-offer notifications
+   */
+  onBookingCounterOffer(callback: (data: BookingCounterOfferPayload) => void): void {
+    this.socket?.on(BOOKING_NOTIFICATION_EVENTS.COUNTER_OFFER, callback as any);
+  }
+
+  /**
+   * Remove counter-offer listener
+   */
+  offBookingCounterOffer(callback?: (data: BookingCounterOfferPayload) => void): void {
+    if (callback) {
+      this.socket?.off(BOOKING_NOTIFICATION_EVENTS.COUNTER_OFFER, callback as any);
+    } else {
+      this.socket?.off(BOOKING_NOTIFICATION_EVENTS.COUNTER_OFFER);
+    }
+  }
+
+  /**
+   * Listen for payment update notifications
+   */
+  onBookingPaymentUpdate(callback: (data: BookingPaymentUpdatePayload) => void): void {
+    this.socket?.on(BOOKING_NOTIFICATION_EVENTS.PAYMENT_UPDATE, callback as any);
+  }
+
+  /**
+   * Remove payment update listener
+   */
+  offBookingPaymentUpdate(callback?: (data: BookingPaymentUpdatePayload) => void): void {
+    if (callback) {
+      this.socket?.off(BOOKING_NOTIFICATION_EVENTS.PAYMENT_UPDATE, callback as any);
+    } else {
+      this.socket?.off(BOOKING_NOTIFICATION_EVENTS.PAYMENT_UPDATE);
+    }
+  }
+
+  /**
+   * Listen for booking errors
+   */
+  onBookingError(callback: (error: { error: string }) => void): void {
+    this.socket?.on(BOOKING_NOTIFICATION_EVENTS.ERROR, callback);
+  }
+
+  /**
+   * Remove booking error listener
+   */
+  offBookingError(callback?: (error: { error: string }) => void): void {
+    if (callback) {
+      this.socket?.off(BOOKING_NOTIFICATION_EVENTS.ERROR, callback);
+    } else {
+      this.socket?.off(BOOKING_NOTIFICATION_EVENTS.ERROR);
     }
   }
 }

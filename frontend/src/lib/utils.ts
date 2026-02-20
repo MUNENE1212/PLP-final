@@ -9,6 +9,162 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /* ============================================
+   DESIGN TOKEN ACCESS UTILITIES
+   Rich Dark Design System for Dumu Waks
+   ============================================ */
+
+/**
+ * Get CSS variable value with fallback
+ * @param variable - CSS variable name (with or without -- prefix)
+ * @param fallback - Fallback value if variable is not defined
+ */
+export function getToken(variable: string, fallback: string = ''): string {
+  const varName = variable.startsWith('--') ? variable : `--${variable}`;
+  return `var(${varName}${fallback ? `, ${fallback}` : ''})`;
+}
+
+/**
+ * Get color token value
+ */
+export function colorToken(color: keyof typeof colorTokens): string {
+  return getToken(colorTokens[color]);
+}
+
+/**
+ * Rich Dark Design System Color Tokens
+ * Maps semantic names to CSS variable names
+ */
+export const colorTokens = {
+  // Background colors
+  bgPrimary: '--dw-bg-primary',      // Deep Mahogany #261212
+  bgSecondary: '--dw-bg-secondary',    // Iron Charcoal #1C1C1C
+  bgTertiary: '--dw-bg-tertiary',
+  bgElevated: '--dw-bg-elevated',
+  bgHover: '--dw-bg-hover',
+  bgActive: '--dw-bg-active',
+
+  // Text colors
+  textPrimary: '--dw-text-primary',    // Soft Bone #E0E0E0
+  textSecondary: '--dw-text-secondary',  // Steel Grey #9BA4B0
+  textTertiary: '--dw-text-tertiary',
+  textDisabled: '--dw-text-disabled',
+  textLink: '--dw-text-link',          // Circuit Blue #0090C5
+
+  // Brand/Accent colors
+  accentPrimary: '--dw-accent-primary',  // Circuit Blue #0090C5
+  accentSecondary: '--dw-accent-secondary', // Wrench Purple #7D4E9F
+  accentHover: '--dw-accent-hover',
+
+  // Semantic colors
+  success: '--dw-color-success',
+  successBg: '--dw-color-success-bg',
+  warning: '--dw-color-warning',
+  warningBg: '--dw-color-warning-bg',
+  error: '--dw-color-error',
+  errorBg: '--dw-color-error-bg',
+  info: '--dw-color-info',
+  infoBg: '--dw-color-info-bg',
+
+  // Border colors
+  borderSubtle: '--dw-border-subtle',
+  borderDefault: '--dw-border-default',
+  borderStrong: '--dw-border-strong',
+  borderFocus: '--dw-border-focus',
+} as const;
+
+/**
+ * Spacing tokens
+ */
+export const spacingTokens = {
+  0: '--dw-spacing-0',
+  1: '--dw-spacing-1',
+  2: '--dw-spacing-2',
+  3: '--dw-spacing-3',
+  4: '--dw-spacing-4',
+  5: '--dw-spacing-5',
+  6: '--dw-spacing-6',
+  8: '--dw-spacing-8',
+  10: '--dw-spacing-10',
+  12: '--dw-spacing-12',
+  16: '--dw-spacing-16',
+  20: '--dw-spacing-20',
+  24: '--dw-spacing-24',
+} as const;
+
+/**
+ * Radius tokens
+ */
+export const radiusTokens = {
+  none: '--dw-radius-none',
+  sm: '--dw-radius-sm',
+  md: '--dw-radius-md',
+  lg: '--dw-radius-lg',
+  xl: '--dw-radius-xl',
+  '2xl': '--dw-radius-2xl',
+  full: '--dw-radius-full',
+} as const;
+
+/**
+ * Shadow tokens
+ */
+export const shadowTokens = {
+  sm: '--dw-shadow-sm',
+  md: '--dw-shadow-md',
+  lg: '--dw-shadow-lg',
+  xl: '--dw-shadow-xl',
+  '2xl': '--dw-shadow-2xl',
+  glass: '--dw-shadow-glass',
+  glassLg: '--dw-shadow-glass-lg',
+  led: '--dw-shadow-led',
+  ledLg: '--dw-shadow-led-lg',
+  ledPurple: '--dw-shadow-led-purple',
+  brand: '--dw-shadow-brand',
+  brandLg: '--dw-shadow-brand-lg',
+  mahogany: '--dw-shadow-mahogany',
+  mahoganyLg: '--dw-shadow-mahogany-lg',
+} as const;
+
+/**
+ * Get inline style for dynamic design token usage
+ * @param tokens - Object of token names to values
+ */
+export function tokenStyles(tokens: Record<string, string>): React.CSSProperties {
+  const styles: React.CSSProperties = {};
+  for (const [key, value] of Object.entries(tokens)) {
+    styles[key as keyof React.CSSProperties] = getToken(value) as any;
+  }
+  return styles;
+}
+
+/**
+ * Create a style object with LED glow effect
+ * @param color - Base color for the glow (default: Circuit Blue)
+ */
+export function ledGlowStyle(color?: string): React.CSSProperties {
+  return {
+    boxShadow: color
+      ? `0 0 10px ${color}40, 0 0 20px ${color}20`
+      : getToken('--dw-shadow-led'),
+  };
+}
+
+/**
+ * Create gradient style
+ * @param from - Start color
+ * @param to - End color
+ * @param direction - Gradient direction (default: 135deg)
+ */
+export function gradientStyle(
+  from: string,
+  to: string,
+  direction: string = '135deg'
+): React.CSSProperties {
+  return {
+    background: `linear-gradient(${direction}, ${from}, ${to})`,
+  };
+}
+
+/* ============================================
    ACCESSIBILITY UTILITIES
    ============================================ */
 
@@ -241,4 +397,30 @@ export function timeAgo(date: string | Date): string {
   if (interval > 1) return Math.floor(interval) + ' minutes ago';
 
   return Math.floor(seconds) + ' seconds ago';
+}
+
+/**
+ * Format distance to now (alias for timeAgo with slightly different format)
+ * Returns human-readable time distance like "2 hours ago" or "just now"
+ */
+export function formatDistanceToNow(date: Date): string {
+  const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
+
+  if (seconds < 5) return 'just now';
+  if (seconds < 60) return `${seconds} seconds ago`;
+
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'} ago`;
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} ${hours === 1 ? 'hour' : 'hours'} ago`;
+
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days} ${days === 1 ? 'day' : 'days'} ago`;
+
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months} ${months === 1 ? 'month' : 'months'} ago`;
+
+  const years = Math.floor(months / 12);
+  return `${years} ${years === 1 ? 'year' : 'years'} ago`;
 }

@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { logout } from '@/store/slices/authSlice';
 import { fetchUnreadCount } from '@/store/slices/notificationSlice';
+import { useBookingNotifications } from '@/hooks/useBookingNotifications';
 import Button from '../ui/Button';
 import { User, LogOut, Bell, Settings, HelpCircle, Sliders, Menu, X } from 'lucide-react';
-import ThemeToggle from '../common/ThemeToggle';
 import NotificationDropdown from '../notifications/NotificationDropdown';
 
 const Navbar: React.FC = () => {
@@ -14,6 +14,15 @@ const Navbar: React.FC = () => {
   const dispatch = useAppDispatch();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notificationDropdownOpen, setNotificationDropdownOpen] = useState(false);
+
+  // Subscribe to real-time booking notifications
+  const { unreadCount: bookingUnreadCount, isConnected: isSocketConnected } = useBookingNotifications({
+    showToasts: true,
+    playSound: false,
+  });
+
+  // Combined unread count (regular notifications + booking notifications)
+  const totalUnreadCount = unreadCount + bookingUnreadCount;
 
   const handleLogout = () => {
     dispatch(logout());
@@ -37,7 +46,7 @@ const Navbar: React.FC = () => {
   }, [isAuthenticated, dispatch]);
 
   return (
-    <nav className="border-b bg-white dark:bg-gray-800 shadow-sm transition-colors duration-200">
+    <nav className="glass-nav border-b border-subtle shadow-mahogany transition-colors duration-200">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
@@ -61,7 +70,7 @@ const Navbar: React.FC = () => {
             <div className="hidden md:flex items-center space-x-6">
               <Link
                 to="/dashboard"
-                className="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                className="text-bone hover:text-circuit transition-colors duration-200"
               >
                 Dashboard
               </Link>
@@ -69,13 +78,13 @@ const Navbar: React.FC = () => {
                 <>
                   <Link
                     to="/find-technicians"
-                    className="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                    className="text-bone hover:text-circuit transition-colors duration-200"
                   >
                     Find Technicians
                   </Link>
                   <Link
                     to="/preferences"
-                    className="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center"
+                    className="text-bone hover:text-circuit transition-colors duration-200 flex items-center"
                   >
                     <Sliders className="h-4 w-4 mr-1" />
                     Match Preferences
@@ -84,19 +93,19 @@ const Navbar: React.FC = () => {
               )}
               <Link
                 to="/bookings"
-                className="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                className="text-bone hover:text-circuit transition-colors duration-200"
               >
                 Bookings
               </Link>
               <Link
                 to="/messages"
-                className="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                className="text-bone hover:text-circuit transition-colors duration-200"
               >
                 Messages
               </Link>
               <Link
                 to="/support"
-                className="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center"
+                className="text-bone hover:text-circuit transition-colors duration-200 flex items-center"
               >
                 <HelpCircle className="h-4 w-4 mr-1" />
                 Support
@@ -108,17 +117,15 @@ const Navbar: React.FC = () => {
           <div className="hidden md:flex items-center space-x-4">
             {isAuthenticated ? (
               <>
-                <ThemeToggle />
-
                 <div className="relative">
                   <button
                     onClick={() => setNotificationDropdownOpen(!notificationDropdownOpen)}
-                    className="relative rounded-full p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    className="relative rounded-full p-2 text-steel hover:bg-hover transition-colors duration-200"
                   >
                     <Bell className="h-5 w-5" />
-                    {unreadCount > 0 && (
-                      <span className="absolute top-1 right-1 flex items-center justify-center h-4 w-4 text-xs font-bold text-white bg-red-500 rounded-full">
-                        {unreadCount > 9 ? '9+' : unreadCount}
+                    {totalUnreadCount > 0 && (
+                      <span className="absolute top-1 right-1 flex items-center justify-center h-4 w-4 text-xs font-bold text-white bg-circuit rounded-full animate-pulse-glow">
+                        {totalUnreadCount > 9 ? '9+' : totalUnreadCount}
                       </span>
                     )}
                   </button>
@@ -140,13 +147,13 @@ const Navbar: React.FC = () => {
                     <img
                       src={user?.profilePicture || `https://ui-avatars.com/api/?name=${user?.firstName}+${user?.lastName}`}
                       alt={`${user?.firstName} ${user?.lastName}`}
-                      className="h-8 w-8 rounded-full object-cover"
+                      className="h-8 w-8 rounded-full object-cover border border-steel"
                     />
                     <div className="hidden lg:block">
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      <p className="text-sm font-medium text-bone">
                         {user?.firstName} {user?.lastName}
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{user?.role}</p>
+                      <p className="text-xs text-steel capitalize">{user?.role}</p>
                     </div>
                   </div>
 
@@ -158,15 +165,13 @@ const Navbar: React.FC = () => {
               </>
             ) : (
               <>
-                <ThemeToggle />
-
                 <Link to="/login">
-                  <Button variant="ghost" size="sm">
+                  <Button variant="outline" size="sm">
                     Sign In
                   </Button>
                 </Link>
                 <Link to="/register">
-                  <Button variant="primary" size="sm">
+                  <Button variant="primary" size="sm" className="led-glow">
                     Get Started
                   </Button>
                 </Link>
@@ -176,10 +181,9 @@ const Navbar: React.FC = () => {
 
           {/* Mobile Menu Button */}
           <div className="flex md:hidden items-center space-x-2">
-            <ThemeToggle />
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="inline-flex items-center justify-center rounded-md p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="inline-flex items-center justify-center rounded-md p-2 text-bone hover:bg-hover transition-colors duration-200"
               aria-label="Toggle mobile menu"
             >
               {mobileMenuOpen ? (
@@ -194,22 +198,22 @@ const Navbar: React.FC = () => {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <div className="md:hidden border-t border-subtle bg-charcoal">
           <div className="space-y-1 px-4 pb-3 pt-2">
             {isAuthenticated ? (
               <>
                 {/* User Profile Section */}
-                <div className="flex items-center space-x-3 px-3 py-3 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex items-center space-x-3 px-3 py-3 border-b border-subtle">
                   <img
                     src={user?.profilePicture || `https://ui-avatars.com/api/?name=${user?.firstName}+${user?.lastName}`}
                     alt={`${user?.firstName} ${user?.lastName}`}
                     className="h-10 w-10 rounded-full object-cover"
                   />
                   <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    <p className="text-sm font-medium text-bone">
                       {user?.firstName} {user?.lastName}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{user?.role}</p>
+                    <p className="text-xs text-steel capitalize">{user?.role}</p>
                   </div>
                 </div>
 
@@ -217,7 +221,7 @@ const Navbar: React.FC = () => {
                 <Link
                   to="/dashboard"
                   onClick={closeMobileMenu}
-                  className="block rounded-md px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  className="block rounded-md px-3 py-2 text-base font-medium text-bone hover:bg-hover transition-colors duration-200"
                 >
                   Dashboard
                 </Link>
@@ -227,14 +231,14 @@ const Navbar: React.FC = () => {
                     <Link
                       to="/find-technicians"
                       onClick={closeMobileMenu}
-                      className="block rounded-md px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      className="block rounded-md px-3 py-2 text-base font-medium text-bone hover:bg-hover transition-colors duration-200"
                     >
                       Find Technicians
                     </Link>
                     <Link
                       to="/preferences"
                       onClick={closeMobileMenu}
-                      className="flex items-center rounded-md px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      className="flex items-center rounded-md px-3 py-2 text-base font-medium text-bone hover:bg-hover transition-colors duration-200"
                     >
                       <Sliders className="h-4 w-4 mr-2" />
                       Match Preferences
@@ -245,7 +249,7 @@ const Navbar: React.FC = () => {
                 <Link
                   to="/bookings"
                   onClick={closeMobileMenu}
-                  className="block rounded-md px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  className="block rounded-md px-3 py-2 text-base font-medium text-bone hover:bg-hover transition-colors duration-200"
                 >
                   Bookings
                 </Link>
@@ -253,7 +257,7 @@ const Navbar: React.FC = () => {
                 <Link
                   to="/messages"
                   onClick={closeMobileMenu}
-                  className="block rounded-md px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  className="block rounded-md px-3 py-2 text-base font-medium text-bone hover:bg-hover transition-colors duration-200"
                 >
                   Messages
                 </Link>
@@ -261,24 +265,25 @@ const Navbar: React.FC = () => {
                 <Link
                   to="/support"
                   onClick={closeMobileMenu}
-                  className="flex items-center rounded-md px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  className="flex items-center rounded-md px-3 py-2 text-base font-medium text-bone hover:bg-hover transition-colors duration-200"
                 >
                   <HelpCircle className="h-4 w-4 mr-2" />
                   Support
                 </Link>
 
                 {/* Actions */}
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mt-2">
+                {/* Actions */}
+                <div className="border-t border-subtle pt-2 mt-2">
                   <Link
                     to="/notifications"
                     onClick={closeMobileMenu}
-                    className="w-full flex items-center rounded-md px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    className="w-full flex items-center rounded-md px-3 py-2 text-base font-medium text-bone hover:bg-hover transition-colors duration-200"
                   >
                     <Bell className="h-5 w-5 mr-2" />
                     Notifications
-                    {unreadCount > 0 && (
-                      <span className="ml-auto flex items-center justify-center h-5 w-5 text-xs font-bold text-white bg-red-500 rounded-full">
-                        {unreadCount > 9 ? '9+' : unreadCount}
+                    {totalUnreadCount > 0 && (
+                      <span className="ml-auto flex items-center justify-center h-5 w-5 text-xs font-bold text-white bg-circuit rounded-full">
+                        {totalUnreadCount > 9 ? '9+' : totalUnreadCount}
                       </span>
                     )}
                   </Link>
@@ -286,7 +291,7 @@ const Navbar: React.FC = () => {
                   <Link
                     to="/settings"
                     onClick={closeMobileMenu}
-                    className="flex items-center rounded-md px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    className="flex items-center rounded-md px-3 py-2 text-base font-medium text-bone hover:bg-hover transition-colors duration-200"
                   >
                     <Settings className="h-4 w-4 mr-2" />
                     Settings
@@ -294,7 +299,7 @@ const Navbar: React.FC = () => {
 
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center rounded-md px-3 py-2 text-base font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                    className="w-full flex items-center rounded-md px-3 py-2 text-base font-medium text-error hover:bg-error-bg transition-colors duration-200"
                   >
                     <LogOut className="h-4 w-4 mr-2" />
                     Logout
@@ -306,14 +311,14 @@ const Navbar: React.FC = () => {
                 <Link
                   to="/login"
                   onClick={closeMobileMenu}
-                  className="block rounded-md px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  className="block rounded-md px-3 py-2 text-base font-medium text-bone hover:bg-hover transition-colors duration-200"
                 >
                   Sign In
                 </Link>
                 <Link
                   to="/register"
                   onClick={closeMobileMenu}
-                  className="block rounded-md px-3 py-2 text-base font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
+                  className="block rounded-md px-3 py-2 text-base font-medium text-circuit hover:bg-hover transition-colors duration-200"
                 >
                   Get Started
                 </Link>
