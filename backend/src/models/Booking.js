@@ -82,6 +82,34 @@ const BookingSchema = new Schema({
     ref: 'User'
   },
 
+  // WORD BANK Service Reference
+  service: {
+    type: Schema.Types.ObjectId,
+    ref: 'Service'
+  },
+
+  // Payment Plan Reference
+  paymentPlan: {
+    type: Schema.Types.ObjectId,
+    ref: 'PaymentPlan'
+  },
+
+  // Escrow Reference
+  escrow: {
+    type: Schema.Types.ObjectId,
+    ref: 'Escrow'
+  },
+
+  // Deposit tracking
+  depositPaid: {
+    type: Boolean,
+    default: false
+  },
+  depositAmount: {
+    type: Number,
+    default: 0
+  },
+
   // Service Details
   serviceCategory: {
     type: String,
@@ -108,6 +136,32 @@ const BookingSchema = new Schema({
     url: String,
     publicId: String,
     caption: String
+  }],
+
+  // Completion Media (photos/videos uploaded by technician after job completion)
+  completionMedia: [{
+    url: {
+      type: String,
+      required: true
+    },
+    publicId: {
+      type: String,
+      required: true
+    },
+    type: {
+      type: String,
+      enum: ['image', 'video'],
+      default: 'image'
+    },
+    caption: String,
+    uploadedAt: {
+      type: Date,
+      default: Date.now
+    },
+    uploadedBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User'
+    }
   }],
 
   // Location
@@ -171,7 +225,7 @@ const BookingSchema = new Schema({
     }
   },
 
-  // Counter Offer from Technician
+  // Counter Offer from Technician (Enhanced for multiple rounds)
   counterOffer: {
     proposedBy: {
       type: Schema.Types.ObjectId,
@@ -197,12 +251,56 @@ const BookingSchema = new Schema({
     reason: String, // Why the technician is proposing different pricing
     additionalNotes: String,
     validUntil: Date, // Counter offer expiration
+    round: {
+      type: Number,
+      default: 1
+    }, // Current negotiation round
     customerResponse: {
       respondedAt: Date,
       accepted: Boolean,
-      notes: String
+      notes: String,
+      counterAmount: Number // If customer proposes a different amount
     }
   },
+
+  // Negotiation History (tracks all negotiation rounds)
+  negotiationHistory: [{
+    round: {
+      type: Number,
+      required: true
+    },
+    proposedBy: {
+      type: String,
+      enum: ['technician', 'customer'],
+      required: true
+    },
+    proposedByUser: {
+      type: Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    proposedAt: {
+      type: Date,
+      default: Date.now
+    },
+    proposedAmount: {
+      type: Number,
+      required: true
+    },
+    reason: String,
+    additionalNotes: String,
+    validUntil: Date,
+    status: {
+      type: String,
+      enum: ['pending', 'accepted', 'rejected', 'expired', 'superseded'],
+      default: 'pending'
+    },
+    response: {
+      respondedAt: Date,
+      accepted: Boolean,
+      notes: String,
+      counterAmount: Number
+    }
+  }],
 
   // Payment Details
   payment: {

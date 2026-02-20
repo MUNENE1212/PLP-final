@@ -1,5 +1,11 @@
 const Booking = require('../models/Booking');
 
+// Maximum negotiation rounds allowed
+const MAX_NEGOTIATION_ROUNDS = 5;
+
+// Counter-offer expiration time in hours
+const COUNTER_OFFER_EXPIRATION_HOURS = 24;
+
 /**
  * @desc    Accept booking (Technician)
  * @route   POST /api/v1/bookings/:id/accept
@@ -168,7 +174,7 @@ exports.rejectBooking = async (req, res) => {
  */
 exports.submitCounterOffer = async (req, res) => {
   try {
-    const { proposedAmount, reason, additionalNotes } = req.body;
+    const { proposedAmount, reason, additionalNotes, expiresInHours } = req.body;
 
     if (!proposedAmount || proposedAmount <= 0) {
       return res.status(400).json({
@@ -203,11 +209,29 @@ exports.submitCounterOffer = async (req, res) => {
       });
     }
 
-    // Verify booking is in assigned status
-    if (booking.status !== 'assigned') {
+    // Verify booking is in assigned status (or counter-offer rejected state)
+    if (!['assigned'].includes(booking.status)) {
       return res.status(400).json({
         success: false,
         message: `Cannot submit counter offer for booking in ${booking.status} status`
+      });
+    }
+
+    // Check max negotiation rounds
+    const currentRound = booking.negotiationHistory?.length || 0;
+    if (currentRound >= MAX_NEGOTIATION_ROUNDS) {
+      return res.status(400).json({
+        success: false,
+        message: `Maximum negotiation rounds (${MAX_NEGOTIATION_ROUNDS}) reached. Please accept or reject the booking.`
+      });
+    }
+
+    // Mark previous pending offers as superseded
+    if (booking.negotiationHistory && booking.negotiationHistory.length > 0) {
+      booking.negotiationHistory.forEach(offer => {
+        if (offer.status === 'pending') {
+          offer.status = 'superseded';
+        }
       });
     }
 
@@ -225,9 +249,12 @@ exports.submitCounterOffer = async (req, res) => {
       currency: originalPricing.currency || 'KES'
     };
 
-    // Set counter offer expiration (24 hours from now)
+    // Set counter offer expiration
+    const expirationHours = expiresInHours || COUNTER_OFFER_EXPIRATION_HOURS;
     const validUntil = new Date();
-    validUntil.setHours(validUntil.getHours() + 24);
+    validUntil.setHours(validUntil.getHours() + expirationHours);
+
+    const newRound = currentRound + 1;
 
     // Create counter offer
     booking.counterOffer = {
@@ -237,12 +264,29 @@ exports.submitCounterOffer = async (req, res) => {
       proposedPricing,
       reason,
       additionalNotes,
-      validUntil
+      validUntil,
+      round: newRound
     };
+
+    // Add to negotiation history
+    if (!booking.negotiationHistory) {
+      booking.negotiationHistory = [];
+    }
+    booking.negotiationHistory.push({
+      round: newRound,
+      proposedBy: 'technician',
+      proposedByUser: req.user.id,
+      proposedAt: new Date(),
+      proposedAmount,
+      reason,
+      additionalNotes,
+      validUntil,
+      status: 'pending'
+    });
 
     await booking.save();
 
-    // Notify customer
+    // Notify customer via notification service
     try {
       const notificationService = require('../services/notification.service');
       const technicianName = `${booking.technician.firstName} ${booking.technician.lastName}`;
@@ -251,10 +295,22 @@ exports.submitCounterOffer = async (req, res) => {
       console.error('Notification error:', notifError);
     }
 
+    // Send real-time socket notification
+    try {
+      const { getIO } = require('../config/socket');
+      const { notifyNewCounterOffer } = require('../socketHandlers/pricing.handler');
+      const io = getIO();
+      notifyNewCounterOffer(io, booking, booking.counterOffer);
+    } catch (socketError) {
+      console.error('Socket notification error:', socketError);
+    }
+
     res.status(200).json({
       success: true,
       message: 'Counter offer submitted successfully',
       counterOffer: booking.counterOffer,
+      negotiationHistory: booking.negotiationHistory,
+      roundsRemaining: MAX_NEGOTIATION_ROUNDS - newRound,
       booking
     });
 
@@ -275,7 +331,7 @@ exports.submitCounterOffer = async (req, res) => {
  */
 exports.respondToCounterOffer = async (req, res) => {
   try {
-    const { accepted, notes } = req.body;
+    const { accepted, notes, counterAmount } = req.body;
 
     if (typeof accepted !== 'boolean') {
       return res.status(400).json({
@@ -314,10 +370,99 @@ exports.respondToCounterOffer = async (req, res) => {
     // Check if counter offer has expired
     if (new Date() > booking.counterOffer.validUntil) {
       booking.counterOffer.status = 'expired';
+      // Update history
+      const historyItem = booking.negotiationHistory.find(
+        h => h.round === booking.counterOffer.round && h.status === 'pending'
+      );
+      if (historyItem) {
+        historyItem.status = 'expired';
+      }
       await booking.save();
       return res.status(400).json({
         success: false,
         message: 'Counter offer has expired'
+      });
+    }
+
+    // Check if customer wants to make a counter-counter offer
+    if (!accepted && counterAmount && counterAmount > 0) {
+      // Check max negotiation rounds
+      const currentRound = booking.counterOffer.round || 1;
+      if (currentRound >= MAX_NEGOTIATION_ROUNDS) {
+        return res.status(400).json({
+          success: false,
+          message: `Maximum negotiation rounds (${MAX_NEGOTIATION_ROUNDS}) reached. Please accept or reject.`
+        });
+      }
+
+      // Mark current offer as rejected with counter
+      booking.counterOffer.status = 'rejected';
+      booking.counterOffer.customerResponse = {
+        respondedAt: new Date(),
+        accepted: false,
+        notes,
+        counterAmount
+      };
+
+      // Update history
+      const historyItem = booking.negotiationHistory.find(
+        h => h.round === booking.counterOffer.round && h.status === 'pending'
+      );
+      if (historyItem) {
+        historyItem.status = 'rejected';
+        historyItem.response = {
+          respondedAt: new Date(),
+          accepted: false,
+          notes,
+          counterAmount
+        };
+      }
+
+      // Add customer's counter to history
+      const newRound = currentRound + 1;
+      booking.negotiationHistory.push({
+        round: newRound,
+        proposedBy: 'customer',
+        proposedByUser: req.user.id,
+        proposedAt: new Date(),
+        proposedAmount: counterAmount,
+        reason: notes,
+        status: 'pending'
+      });
+
+      // Reset counterOffer to pending customer counter
+      booking.counterOffer = {
+        proposedBy: req.user.id,
+        proposedAt: new Date(),
+        status: 'pending',
+        proposedPricing: {
+          ...booking.pricing,
+          totalAmount: counterAmount
+        },
+        reason: notes,
+        round: newRound,
+        validUntil: new Date(Date.now() + COUNTER_OFFER_EXPIRATION_HOURS * 60 * 60 * 1000)
+      };
+
+      await booking.save();
+
+      // Notify technician of customer's counter
+      try {
+        const notificationService = require('../services/notification.service');
+        const customerName = `${booking.customer.firstName} ${booking.customer.lastName}`;
+        await notificationService.notifyCounterOfferRejected(booking, customerName);
+      } catch (notifError) {
+        console.error('Notification error:', notifError);
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: 'Counter offer rejected. Your counter-proposal has been sent to the technician.',
+        isCounterProposal: true,
+        counterOffer: booking.counterOffer,
+        negotiationHistory: booking.negotiationHistory,
+        roundsRemaining: MAX_NEGOTIATION_ROUNDS - newRound,
+        booking
       });
     }
 
@@ -328,13 +473,20 @@ exports.respondToCounterOffer = async (req, res) => {
       notes
     };
 
+    // Update history
+    const historyItem = booking.negotiationHistory.find(
+      h => h.round === booking.counterOffer.round && h.status === 'pending'
+    );
+
     if (accepted) {
       // Accept counter offer - update pricing and status
       booking.counterOffer.status = 'accepted';
       booking.pricing = booking.counterOffer.proposedPricing;
 
-      // Recalculate booking fee (20% of new total)
-      booking.bookingFee.amount = Math.round(booking.pricing.totalAmount * (booking.bookingFee.percentage / 100));
+      // Recalculate booking fee based on new total
+      booking.bookingFee.amount = Math.round(
+        booking.pricing.totalAmount * (booking.bookingFee.percentage / 100)
+      );
 
       // Move to accepted status
       booking.status = 'accepted';
@@ -344,6 +496,15 @@ exports.respondToCounterOffer = async (req, res) => {
         changedAt: new Date(),
         notes: `Customer accepted counter offer. New price: ${booking.pricing.currency} ${booking.pricing.totalAmount}`
       });
+
+      if (historyItem) {
+        historyItem.status = 'accepted';
+        historyItem.response = {
+          respondedAt: new Date(),
+          accepted: true,
+          notes
+        };
+      }
     } else {
       // Reject counter offer
       booking.counterOffer.status = 'rejected';
@@ -353,6 +514,15 @@ exports.respondToCounterOffer = async (req, res) => {
         changedAt: new Date(),
         notes: `Customer rejected counter offer. ${notes || ''}`
       });
+
+      if (historyItem) {
+        historyItem.status = 'rejected';
+        historyItem.response = {
+          respondedAt: new Date(),
+          accepted: false,
+          notes
+        };
+      }
     }
 
     await booking.save();
@@ -362,10 +532,17 @@ exports.respondToCounterOffer = async (req, res) => {
       const notificationService = require('../services/notification.service');
       const customerName = `${booking.customer.firstName} ${booking.customer.lastName}`;
 
+      // Also send real-time socket notification
+      const { getIO } = require('../config/socket');
+      const { notifyCounterOfferAccepted, notifyCounterOfferRejected } = require('../socketHandlers/pricing.handler');
+      const io = getIO();
+
       if (accepted) {
         await notificationService.notifyCounterOfferAccepted(booking, customerName);
+        notifyCounterOfferAccepted(io, booking, booking.counterOffer.customerResponse);
       } else {
         await notificationService.notifyCounterOfferRejected(booking, customerName);
+        notifyCounterOfferRejected(io, booking, booking.counterOffer.customerResponse);
       }
     } catch (notifError) {
       console.error('Notification error:', notifError);
@@ -384,5 +561,147 @@ exports.respondToCounterOffer = async (req, res) => {
       message: 'Error responding to counter offer',
       error: error.message
     });
+  }
+};
+
+/**
+ * @desc    Get negotiation history for a booking
+ * @route   GET /api/v1/bookings/:id/negotiation-history
+ * @access  Private (Customer or Technician involved)
+ */
+exports.getNegotiationHistory = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id)
+      .select('customer technician negotiationHistory counterOffer pricing')
+      .populate('negotiationHistory.proposedByUser', 'firstName lastName role');
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Verify access
+    const userId = req.user.id;
+    const customerId = booking.customer._id?.toString() || booking.customer.toString();
+    const technicianId = booking.technician?._id?.toString() || booking.technician?.toString();
+
+    if (userId !== customerId && userId !== technicianId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied to this booking'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        currentCounterOffer: booking.counterOffer,
+        negotiationHistory: booking.negotiationHistory || [],
+        originalPricing: booking.pricing,
+        maxRounds: MAX_NEGOTIATION_ROUNDS,
+        roundsRemaining: MAX_NEGOTIATION_ROUNDS - (booking.negotiationHistory?.length || 0)
+      }
+    });
+
+  } catch (error) {
+    console.error('Get negotiation history error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error getting negotiation history',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Withdraw counter offer (Technician)
+ * @route   DELETE /api/v1/bookings/:id/counter-offer
+ * @access  Private (Technician)
+ */
+exports.withdrawCounterOffer = async (req, res) => {
+  try {
+    const { reason } = req.body;
+
+    const booking = await Booking.findById(req.params.id)
+      .populate('customer', 'firstName lastName email phoneNumber')
+      .populate('technician', 'firstName lastName email');
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Verify technician is assigned to this booking
+    if (booking.technician?._id?.toString() !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not assigned to this booking'
+      });
+    }
+
+    // Verify counter offer exists and is pending
+    if (!booking.counterOffer || booking.counterOffer.status !== 'pending') {
+      return res.status(400).json({
+        success: false,
+        message: 'No pending counter offer to withdraw'
+      });
+    }
+
+    // Mark as withdrawn
+    booking.counterOffer.status = 'withdrawn';
+
+    // Update history
+    const historyItem = booking.negotiationHistory.find(
+      h => h.round === booking.counterOffer.round && h.status === 'pending'
+    );
+    if (historyItem) {
+      historyItem.status = 'withdrawn';
+    }
+
+    await booking.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Counter offer withdrawn successfully',
+      booking
+    });
+
+  } catch (error) {
+    console.error('Withdraw counter offer error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error withdrawing counter offer',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Auto-expire stale counter offers (called by cron job)
+ * @route   Internal
+ */
+exports.expireStaleCounterOffers = async () => {
+  try {
+    const now = new Date();
+
+    const result = await Booking.updateMany(
+      {
+        'counterOffer.status': 'pending',
+        'counterOffer.validUntil': { $lt: now }
+      },
+      {
+        $set: { 'counterOffer.status': 'expired' }
+      }
+    );
+
+    console.log(`Expired ${result.modifiedCount} stale counter offers`);
+    return result;
+  } catch (error) {
+    console.error('Error expiring stale counter offers:', error);
+    throw error;
   }
 };
