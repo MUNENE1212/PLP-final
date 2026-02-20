@@ -426,6 +426,90 @@ class SocketService {
       this.socket?.off(BOOKING_NOTIFICATION_EVENTS.ERROR);
     }
   }
+
+  // ===== AVAILABILITY EVENTS (Task #73) =====
+
+  /**
+   * Emit availability status update
+   */
+  emitAvailabilityUpdate(status: string, currentBookingId?: string): void {
+    this.socket?.emit('availability:update', { status, currentBookingId });
+  }
+
+  /**
+   * Request online technician count for a category
+   */
+  getOnlineCount(category: string): void {
+    this.socket?.emit('availability:get_online_count', { category });
+  }
+
+  /**
+   * Subscribe to queue position updates
+   */
+  subscribeToQueue(bookingId: string): void {
+    this.socket?.emit('queue:subscribe', { bookingId });
+  }
+
+  /**
+   * Unsubscribe from queue updates
+   */
+  unsubscribeFromQueue(bookingId: string): void {
+    this.socket?.emit('queue:unsubscribe', { bookingId });
+  }
+
+  /**
+   * Listen for availability status changes
+   */
+  onAvailabilityChanged(callback: (data: any) => void): void {
+    this.socket?.on('availability:changed', callback);
+  }
+
+  /**
+   * Remove availability status change listener
+   */
+  offAvailabilityChanged(callback?: (data: any) => void): void {
+    if (callback) {
+      this.socket?.off('availability:changed', callback);
+    } else {
+      this.socket?.off('availability:changed');
+    }
+  }
+
+  /**
+   * Listen for queue position updates
+   */
+  onQueuePositionUpdate(callback: (data: any) => void): void {
+    this.socket?.on('queue:position_update', callback);
+  }
+
+  /**
+   * Remove queue position update listener
+   */
+  offQueuePositionUpdate(callback?: (data: any) => void): void {
+    if (callback) {
+      this.socket?.off('queue:position_update', callback);
+    } else {
+      this.socket?.off('queue:position_update');
+    }
+  }
+
+  /**
+   * Listen for category online count updates
+   */
+  onCategoryOnlineCount(callback: (data: { category: string; count: number }) => void): void {
+    this.socket?.on('category:online_count', callback);
+  }
+
+  /**
+   * Remove category online count listener
+   */
+  offCategoryOnlineCount(callback?: (data: { category: string; count: number }) => void): void {
+    if (callback) {
+      this.socket?.off('category:online_count', callback);
+    } else {
+      this.socket?.off('category:online_count');
+    }
+  }
 }
 
 // Export singleton instance

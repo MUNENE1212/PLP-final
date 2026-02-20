@@ -4,6 +4,7 @@ const User = require('../models/User');
 const { registerTrackingHandlers } = require('../socketHandlers/tracking.handler');
 const { registerBookingNotificationHandlers } = require('../socketHandlers/bookingNotification.handler');
 const { registerMessagingHandlers } = require('../socketHandlers/messaging.handler');
+const { registerAvailabilityHandlers } = require('../socketHandlers/availability.handler');
 
 /**
  * Socket.IO Configuration
@@ -136,6 +137,9 @@ exports.initializeSocket = (server) => {
 
   // Register messaging handlers for real-time messaging features
   registerMessagingHandlers(io);
+
+  // Register availability handlers for real-time availability & queue system
+  registerAvailabilityHandlers(io);
 
   console.log('✅ Socket.IO initialized');
   return io;
