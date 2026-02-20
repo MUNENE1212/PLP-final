@@ -510,6 +510,214 @@ class SocketService {
       this.socket?.off('category:online_count');
     }
   }
+
+  // ===== PRICING EVENTS (Task #74) =====
+
+  /**
+   * Subscribe to pricing updates (surge alerts, market rates)
+   */
+  subscribeToPricing(): void {
+    this.socket?.emit('pricing:subscribe');
+  }
+
+  /**
+   * Unsubscribe from pricing updates
+   */
+  unsubscribeFromPricing(): void {
+    this.socket?.emit('pricing:unsubscribe');
+  }
+
+  /**
+   * Listen for market rates updates
+   */
+  onMarketRates(callback: (data: any) => void): void {
+    this.socket?.on('pricing:market_rates', callback);
+  }
+
+  /**
+   * Remove market rates listener
+   */
+  offMarketRates(callback?: (data: any) => void): void {
+    if (callback) {
+      this.socket?.off('pricing:market_rates', callback);
+    } else {
+      this.socket?.off('pricing:market_rates');
+    }
+  }
+
+  /**
+   * Listen for surge alerts
+   */
+  onSurgeAlert(callback: (data: any) => void): void {
+    this.socket?.on('pricing:surge_alert', callback);
+  }
+
+  /**
+   * Remove surge alert listener
+   */
+  offSurgeAlert(callback?: (data: any) => void): void {
+    if (callback) {
+      this.socket?.off('pricing:surge_alert', callback);
+    } else {
+      this.socket?.off('pricing:surge_alert');
+    }
+  }
+
+  /**
+   * Request price estimate
+   */
+  requestPriceEstimate(params: {
+    serviceCategory: string;
+    serviceType?: string;
+    urgency?: string;
+    scheduledDateTime?: string;
+    basePrice?: number;
+    distanceFee?: number;
+  }): void {
+    this.socket?.emit('pricing:get_estimate', params);
+  }
+
+  /**
+   * Listen for price estimate
+   */
+  onPriceEstimate(callback: (data: any) => void): void {
+    this.socket?.on('pricing:estimate', callback);
+  }
+
+  /**
+   * Remove price estimate listener
+   */
+  offPriceEstimate(callback?: (data: any) => void): void {
+    if (callback) {
+      this.socket?.off('pricing:estimate', callback);
+    } else {
+      this.socket?.off('pricing:estimate');
+    }
+  }
+
+  /**
+   * Listen for pricing errors
+   */
+  onPricingError(callback: (error: { error: string }) => void): void {
+    this.socket?.on('pricing:error', callback);
+  }
+
+  /**
+   * Remove pricing error listener
+   */
+  offPricingError(callback?: (error: { error: string }) => void): void {
+    if (callback) {
+      this.socket?.off('pricing:error', callback);
+    } else {
+      this.socket?.off('pricing:error');
+    }
+  }
+
+  // ===== COUNTER-OFFER EVENTS (Task #74) =====
+
+  /**
+   * Subscribe to counter-offer updates for a booking
+   */
+  subscribeToCounterOffer(bookingId: string): void {
+    this.socket?.emit('counter_offer:subscribe', { bookingId });
+  }
+
+  /**
+   * Unsubscribe from counter-offer updates
+   */
+  unsubscribeFromCounterOffer(bookingId: string): void {
+    this.socket?.emit('counter_offer:unsubscribe', { bookingId });
+  }
+
+  /**
+   * Listen for new counter-offer
+   */
+  onCounterOfferNew(callback: (data: any) => void): void {
+    this.socket?.on('counter_offer:new', callback);
+  }
+
+  /**
+   * Remove new counter-offer listener
+   */
+  offCounterOfferNew(callback?: (data: any) => void): void {
+    if (callback) {
+      this.socket?.off('counter_offer:new', callback);
+    } else {
+      this.socket?.off('counter_offer:new');
+    }
+  }
+
+  /**
+   * Listen for counter-offer accepted
+   */
+  onCounterOfferAccepted(callback: (data: any) => void): void {
+    this.socket?.on('counter_offer:accepted', callback);
+  }
+
+  /**
+   * Remove counter-offer accepted listener
+   */
+  offCounterOfferAccepted(callback?: (data: any) => void): void {
+    if (callback) {
+      this.socket?.off('counter_offer:accepted', callback);
+    } else {
+      this.socket?.off('counter_offer:accepted');
+    }
+  }
+
+  /**
+   * Listen for counter-offer rejected
+   */
+  onCounterOfferRejected(callback: (data: any) => void): void {
+    this.socket?.on('counter_offer:rejected', callback);
+  }
+
+  /**
+   * Remove counter-offer rejected listener
+   */
+  offCounterOfferRejected(callback?: (data: any) => void): void {
+    if (callback) {
+      this.socket?.off('counter_offer:rejected', callback);
+    } else {
+      this.socket?.off('counter_offer:rejected');
+    }
+  }
+
+  /**
+   * Listen for counter-offer state
+   */
+  onCounterOfferState(callback: (data: any) => void): void {
+    this.socket?.on('counter_offer:state', callback);
+  }
+
+  /**
+   * Remove counter-offer state listener
+   */
+  offCounterOfferState(callback?: (data: any) => void): void {
+    if (callback) {
+      this.socket?.off('counter_offer:state', callback);
+    } else {
+      this.socket?.off('counter_offer:state');
+    }
+  }
+
+  /**
+   * Listen for counter-offer errors
+   */
+  onCounterOfferError(callback: (error: { error: string }) => void): void {
+    this.socket?.on('counter_offer:error', callback);
+  }
+
+  /**
+   * Remove counter-offer error listener
+   */
+  offCounterOfferError(callback?: (error: { error: string }) => void): void {
+    if (callback) {
+      this.socket?.off('counter_offer:error', callback);
+    } else {
+      this.socket?.off('counter_offer:error');
+    }
+  }
 }
 
 // Export singleton instance

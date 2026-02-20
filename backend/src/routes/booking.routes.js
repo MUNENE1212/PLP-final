@@ -11,6 +11,7 @@ const miscController = require('../controllers/booking.misc.controller');
 
 const { protect, authorize } = require('../middleware/auth');
 const { validate } = require('../middleware/validation');
+const { uploadCompletionMedia, handleMulterError } = require('../middleware/upload');
 
 const router = express.Router();
 
@@ -231,6 +232,21 @@ router.post(
   offerController.respondToCounterOffer
 );
 
+// Get negotiation history
+router.get(
+  '/:id/negotiation-history',
+  protect,
+  offerController.getNegotiationHistory
+);
+
+// Withdraw counter offer
+router.delete(
+  '/:id/counter-offer',
+  protect,
+  authorize('technician'),
+  offerController.withdrawCounterOffer
+);
+
 // ===== MISC ROUTES (Disputes, QA, Pricing, Assignment) =====
 
 // Assign technician
@@ -290,6 +306,43 @@ router.put(
     validate
   ],
   miscController.resolveDispute
+);
+
+// ===== COMPLETION MEDIA ROUTES =====
+
+// Upload completion media (technician only)
+router.post(
+  '/:id/completion-media',
+  protect,
+  authorize('technician'),
+  uploadCompletionMedia,
+  handleMulterError,
+  completionController.uploadCompletionMedia
+);
+
+// Get completion media (customer, technician, support, admin)
+router.get(
+  '/:id/completion-media',
+  protect,
+  completionController.getCompletionMedia
+);
+
+// Delete specific completion media (uploader, support, admin)
+router.delete(
+  '/:id/completion-media/:mediaId',
+  protect,
+  completionController.deleteCompletionMedia
+);
+
+// Update completion media caption (uploader, support, admin)
+router.patch(
+  '/:id/completion-media/:mediaId',
+  protect,
+  [
+    body('caption').optional().isString().withMessage('Caption must be a string'),
+    validate
+  ],
+  completionController.updateCompletionMediaCaption
 );
 
 module.exports = router;
