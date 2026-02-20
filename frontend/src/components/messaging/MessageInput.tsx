@@ -1,19 +1,56 @@
-import React, { useState, useRef, KeyboardEvent } from 'react';
+import React, { useState, useRef, KeyboardEvent, useEffect } from 'react';
+import VoiceNoteRecorder from './VoiceNoteRecorder';
+import { socketService } from '@/services/socket';
 
 interface MessageInputProps {
-  onSend: (message: { text?: string; type: 'text' }) => void;
+  onSend: (message: { text?: string; type: 'text' | 'audio' | 'image' | 'location'; audioBlob?: Blob; duration?: number }) => void;
   disabled?: boolean;
   placeholder?: string;
+  conversationId?: string;
 }
 
 const MessageInput: React.FC<MessageInputProps> = ({
   onSend,
   disabled = false,
   placeholder = 'Type a message...',
+  conversationId,
 }) => {
   const [message, setMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup typing timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Handle typing indicator with debounce
+  const handleTypingIndicator = (isTyping: boolean) => {
+    if (conversationId) {
+      if (isTyping) {
+        socketService.emitTypingStart(conversationId);
+      } else {
+        socketService.emitTypingStop(conversationId);
+      }
+    }
+  };
+
+  // Debounce typing stop
+  const debouncedStopTyping = () => {
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    typingTimeoutRef.current = setTimeout(() => {
+      handleTypingIndicator(false);
+      setIsTyping(false);
+    }, 2000);
+  };
 
   const handleSend = () => {
     const trimmedMessage = message.trim();
@@ -53,15 +90,44 @@ const MessageInput: React.FC<MessageInputProps> = ({
     // Typing indicator
     if (!isTyping && e.target.value.length > 0) {
       setIsTyping(true);
-      // TODO: Emit typing event via socket
+      handleTypingIndicator(true);
     } else if (isTyping && e.target.value.length === 0) {
       setIsTyping(false);
-      // TODO: Emit stop typing event via socket
+      handleTypingIndicator(false);
+    } else if (isTyping && e.target.value.length > 0) {
+      // Debounce typing stop
+      debouncedStopTyping();
     }
+  };
+
+  // Handle voice note send
+  const handleVoiceSend = (audioBlob: Blob, duration: number) => {
+    onSend({
+      type: 'audio',
+      audioBlob,
+      duration,
+    });
+    setShowVoiceRecorder(false);
+  };
+
+  // Handle voice note cancel
+  const handleVoiceCancel = () => {
+    setShowVoiceRecorder(false);
   };
 
   return (
     <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
+      {/* Voice recorder modal */}
+      {showVoiceRecorder && (
+        <div className="mb-4">
+          <VoiceNoteRecorder
+            onSend={handleVoiceSend}
+            onCancel={handleVoiceCancel}
+            maxDuration={60}
+          />
+        </div>
+      )}
+
       <div className="flex items-end gap-2">
         {/* Emoji/Attachment buttons */}
         <div className="flex gap-1">
@@ -94,6 +160,24 @@ const MessageInput: React.FC<MessageInputProps> = ({
                 strokeWidth={2}
                 d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
               />
+            </svg>
+          </button>
+
+          {/* Voice note button - crucial for Kenyan market */}
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={() => setShowVoiceRecorder(!showVoiceRecorder)}
+            className={`p-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+              showVoiceRecorder
+                ? 'bg-red-100 dark:bg-red-900/30 text-red-500'
+                : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+            }`}
+            title={showVoiceRecorder ? 'Close voice recorder' : 'Record voice message'}
+          >
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
+              <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" />
             </svg>
           </button>
         </div>
@@ -137,7 +221,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
 
       {/* Helper text */}
       <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-        Press Enter to send, Shift + Enter for new line
+        Press Enter to send, Shift + Enter for new line. Voice messages up to 60 seconds.
       </div>
     </div>
   );

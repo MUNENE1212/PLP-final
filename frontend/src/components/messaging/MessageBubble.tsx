@@ -5,6 +5,7 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { useAppSelector } from '@/store/hooks';
 import { getRoleStyles, UserRole } from '@/utils/roleColors';
 import { cn } from '@/lib/utils';
+import VoiceNotePlayer from './VoiceNotePlayer';
 
 interface MessageBubbleProps {
   message: Message;
@@ -175,41 +176,122 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             }`}
           >
             {/* Text content */}
-            {message.text && (
+            {message.text && message.type === 'text' && (
               <p className="whitespace-pre-wrap break-words">{message.text}</p>
             )}
 
-            {/* Attachments */}
-            {message.attachments && message.attachments.length > 0 && (
+            {/* Voice/Audio messages */}
+            {(message.type === 'audio' || message.type === 'voice') && message.attachments && message.attachments.length > 0 && (
+              <div className="mt-1">
+                <VoiceNotePlayer
+                  audioUrl={message.attachments[0].url}
+                  duration={message.attachments[0].duration || 0}
+                  isOwn={isOwn}
+                />
+              </div>
+            )}
+
+            {/* Location messages */}
+            {message.type === 'location' && message.attachments && message.attachments.length > 0 && (
+              <div className="mt-2">
+                <a
+                  href={`https://www.google.com/maps?q=${message.attachments[0].coordinates?.latitude},${message.attachments[0].coordinates?.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`flex items-center gap-2 p-3 rounded-lg ${
+                    isOwn ? 'bg-primary-dark/50' : 'bg-gray-50 dark:bg-gray-700'
+                  }`}
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <div>
+                    <p className={`text-sm font-medium ${isOwn ? 'text-white' : 'text-gray-900 dark:text-gray-100'}`}>
+                      {message.attachments[0].locationName || 'Shared Location'}
+                    </p>
+                    <p className={`text-xs ${isOwn ? 'text-white/70' : 'text-gray-500'}`}>
+                      Tap to open in maps
+                    </p>
+                  </div>
+                </a>
+              </div>
+            )}
+
+            {/* Price quote messages */}
+            {message.type === 'booking' && message.attachments && message.attachments.length > 0 && (
+              <div className={`mt-2 p-3 rounded-lg ${isOwn ? 'bg-primary-dark/50' : 'bg-gray-50 dark:bg-gray-700'}`}>
+                <div className="flex items-center gap-2 mb-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                  <span className={`text-sm font-medium ${isOwn ? 'text-white' : 'text-gray-900 dark:text-gray-100'}`}>
+                    Price Quote
+                  </span>
+                </div>
+                <p className={`text-lg font-bold ${isOwn ? 'text-white' : 'text-gray-900 dark:text-gray-100'}`}>
+                  KES {message.attachments[0].price?.toLocaleString() || '0'}
+                </p>
+                {message.attachments[0].description && (
+                  <p className={`text-sm mt-1 ${isOwn ? 'text-white/70' : 'text-gray-500'}`}>
+                    {message.attachments[0].description}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Image messages */}
+            {message.type === 'image' && message.attachments && message.attachments.length > 0 && (
               <div className="mt-2 space-y-2">
                 {message.attachments.map((attachment, index) => (
-                  <div key={index}>
-                    {attachment.type === 'image' && (
-                      <img
-                        src={attachment.url}
-                        alt="Attachment"
-                        className="max-w-full rounded-lg cursor-pointer hover:opacity-90"
-                        onClick={() => window.open(attachment.url, '_blank')}
-                      />
-                    )}
-                    {attachment.type === 'document' && (
-                      <a
-                        href={attachment.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`flex items-center gap-2 p-2 rounded ${
-                          isOwn ? 'bg-primary-dark' : 'bg-white'
-                        }`}
-                      >
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd"/>
-                        </svg>
-                        <span className="text-sm">{attachment.filename || 'Document'}</span>
-                      </a>
-                    )}
-                  </div>
+                  <img
+                    key={index}
+                    src={attachment.url}
+                    alt="Image"
+                    className="max-w-full rounded-lg cursor-pointer hover:opacity-90"
+                    onClick={() => window.open(attachment.url, '_blank')}
+                  />
                 ))}
               </div>
+            )}
+
+            {/* Video messages */}
+            {message.type === 'video' && message.attachments && message.attachments.length > 0 && (
+              <div className="mt-2">
+                <video
+                  src={message.attachments[0].url}
+                  controls
+                  className="max-w-full rounded-lg"
+                  style={{ maxHeight: '300px' }}
+                />
+              </div>
+            )}
+
+            {/* Document attachments */}
+            {message.type === 'document' && message.attachments && message.attachments.length > 0 && (
+              <div className="mt-2 space-y-2">
+                {message.attachments.map((attachment, index) => (
+                  <a
+                    key={index}
+                    href={attachment.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`flex items-center gap-2 p-2 rounded ${
+                      isOwn ? 'bg-primary-dark' : 'bg-white'
+                    }`}
+                  >
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd"/>
+                    </svg>
+                    <span className="text-sm">{attachment.filename || 'Document'}</span>
+                  </a>
+                ))}
+              </div>
+            )}
+
+            {/* Legacy attachments handling (for backward compatibility) */}
+            {message.text && message.type !== 'text' && (
+              <p className="whitespace-pre-wrap break-words mt-1">{message.text}</p>
             )}
 
             {/* Edited indicator */}

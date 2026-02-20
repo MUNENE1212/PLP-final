@@ -210,7 +210,7 @@ export interface Match {
 
 // Message Types
 export interface Attachment {
-  type: 'image' | 'video' | 'audio' | 'document' | 'location';
+  type: 'image' | 'video' | 'audio' | 'document' | 'location' | 'price_quote';
   url: string;
   publicId?: string;
   thumbnail?: string;
@@ -223,6 +223,8 @@ export interface Attachment {
     longitude: number;
   };
   locationName?: string;
+  price?: number;
+  description?: string;
 }
 
 export interface ReadReceipt {
@@ -240,7 +242,7 @@ export interface Message {
   _id: string;
   conversation: string;
   sender: User | string;
-  type: 'text' | 'image' | 'video' | 'audio' | 'document' | 'location' | 'booking' | 'system' | 'call';
+  type: 'text' | 'image' | 'video' | 'audio' | 'voice' | 'document' | 'location' | 'booking' | 'system' | 'call' | 'price_quote';
   text?: string;
   attachments?: Attachment[];
   bookingRef?: string;

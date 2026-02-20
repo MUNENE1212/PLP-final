@@ -45,7 +45,7 @@ export const useSocket = () => {
       socketService.onMessageDelivered(handleMessageDelivered);
       socketService.onMessageRead(handleMessageRead);
       socketService.onMessageReaction(handleMessageReaction);
-      socketService.onMessageDeleted(handleMessageDeleted);
+      socketService.onMessageDeletedLegacy(handleMessageDeleted);
 
       // Cleanup on unmount or logout
       return () => {

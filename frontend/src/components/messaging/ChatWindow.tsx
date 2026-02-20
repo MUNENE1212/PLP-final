@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
   fetchMessages,
@@ -9,7 +9,9 @@ import {
 } from '@/store/slices/messagingSlice';
 import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
+import TypingIndicator from './TypingIndicator';
 import { Conversation } from '@/types';
+import socketService from '@/services/socket';
 
 interface ChatWindowProps {
   conversation: Conversation | null;
@@ -23,6 +25,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation }) => {
   const { user } = useAppSelector((state) => state.auth);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const [typingUsers, setTypingUsers] = useState<{ userId: string; userName: string }[]>([]);
 
   useEffect(() => {
     if (conversation) {
@@ -31,8 +34,46 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation }) => {
 
       // Mark messages as read
       dispatch(markAsRead(conversation._id));
+
+      // Join the conversation room for real-time updates
+      socketService.joinConversation(conversation._id);
     }
+
+    return () => {
+      // Leave the conversation room when unmounting
+      if (conversation) {
+        socketService.leaveConversation(conversation._id);
+      }
+    };
   }, [conversation, dispatch]);
+
+  // Set up typing indicator listeners
+  useEffect(() => {
+    const handleTypingStart = (data: { conversationId: string; userId: string; userName: string }) => {
+      if (conversation && data.conversationId === conversation._id && data.userId !== user?._id) {
+        setTypingUsers(prev => {
+          if (!prev.find(u => u.userId === data.userId)) {
+            return [...prev, { userId: data.userId, userName: data.userName }];
+          }
+          return prev;
+        });
+      }
+    };
+
+    const handleTypingStop = (data: { conversationId: string; userId: string }) => {
+      if (conversation && data.conversationId === conversation._id) {
+        setTypingUsers(prev => prev.filter(u => u.userId !== data.userId));
+      }
+    };
+
+    socketService.onTypingStart(handleTypingStart);
+    socketService.onTypingStop(handleTypingStop);
+
+    return () => {
+      socketService.off('typing:start', handleTypingStart);
+      socketService.off('typing:stop', handleTypingStop);
+    };
+  }, [conversation, user?._id]);
 
   useEffect(() => {
     // Scroll to bottom when new messages arrive
@@ -43,16 +84,36 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleSendMessage = async (data: { text?: string; type: 'text' }) => {
-    if (!conversation || !data.text) return;
+  const handleSendMessage = async (data: { text?: string; type: 'text' | 'audio' | 'image' | 'location'; audioBlob?: Blob; duration?: number }) => {
+    if (!conversation) return;
 
-    await dispatch(
-      sendMessage({
-        conversation: conversation._id,
-        type: data.type,
-        text: data.text,
-      })
-    );
+    if (data.type === 'audio' && data.audioBlob) {
+      // Handle voice note upload
+      // In a real implementation, you would upload to Cloudinary first
+      // For now, we'll create a local URL
+      const audioUrl = URL.createObjectURL(data.audioBlob);
+
+      await dispatch(
+        sendMessage({
+          conversation: conversation._id,
+          type: 'audio',
+          text: 'Voice message',
+          media: {
+            type: 'audio',
+            url: audioUrl,
+            duration: data.duration,
+          },
+        })
+      );
+    } else if (data.text) {
+      await dispatch(
+        sendMessage({
+          conversation: conversation._id,
+          type: data.type,
+          text: data.text,
+        })
+      );
+    }
 
     scrollToBottom();
   };
@@ -236,6 +297,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation }) => {
         )}
       </div>
 
+      {/* Typing Indicator */}
+      {typingUsers.length > 0 && (
+        <TypingIndicator userName={typingUsers[0].userName} />
+      )}
+
       {/* Message Input */}
       <MessageInput
         onSend={handleSendMessage}
@@ -245,6 +311,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversation }) => {
             ? 'Only admins can send messages'
             : 'Type a message...'
         }
+        conversationId={conversation._id}
       />
     </div>
   );

@@ -1,5 +1,6 @@
 const Message = require('../models/Message');
 const Conversation = require('../models/Conversation');
+const { getIO } = require('../config/socket');
 
 /**
  * @desc    Send a message
@@ -56,8 +57,24 @@ exports.sendMessage = async (req, res) => {
 
     await message.populate('sender', 'firstName lastName profilePicture');
 
-    // TODO: Emit socket.io event for real-time delivery
-    // TODO: Send push notification to other participants
+    // Emit socket.io event for real-time delivery
+    try {
+      const io = getIO();
+      io.to(`conversation:${conversation}`).emit('message:new', message);
+
+      // Also emit to individual users for notifications
+      conv.participants.forEach(participant => {
+        if (participant.user.toString() !== req.user.id) {
+          io.to(participant.user.toString()).emit('message:notification', {
+            conversation: conversation,
+            message
+          });
+        }
+      });
+    } catch (socketError) {
+      console.error('Socket emission error:', socketError);
+      // Continue - message was saved successfully
+    }
 
     res.status(201).json({
       success: true,
@@ -311,6 +328,17 @@ exports.addReaction = async (req, res) => {
     }
 
     await message.save();
+
+    // Emit socket event for real-time reaction update
+    try {
+      const io = getIO();
+      io.to(`conversation:${message.conversation}`).emit('message:reaction', {
+        messageId: message._id,
+        reactions: message.reactions
+      });
+    } catch (socketError) {
+      console.error('Socket emission error:', socketError);
+    }
 
     res.status(200).json({
       success: true,
