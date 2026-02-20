@@ -718,6 +718,144 @@ class SocketService {
       this.socket?.off('counter_offer:error');
     }
   }
+
+  // ===== ANALYTICS EVENTS (Task #75) =====
+
+  /**
+   * Subscribe to analytics updates
+   */
+  subscribeToAnalytics(): void {
+    this.socket?.emit('analytics:subscribe');
+  }
+
+  /**
+   * Unsubscribe from analytics updates
+   */
+  unsubscribeFromAnalytics(): void {
+    this.socket?.emit('analytics:unsubscribe');
+  }
+
+  /**
+   * Request current real-time metrics
+   */
+  requestRealtimeMetrics(): void {
+    this.socket?.emit('analytics:get_realtime');
+  }
+
+  /**
+   * Request historical trends
+   */
+  requestTrends(period: '24h' | '7d' | '30d' | '90d' = '7d'): void {
+    this.socket?.emit('analytics:get_trends', { period });
+  }
+
+  /**
+   * Listen for metrics update
+   */
+  onAnalyticsMetricsUpdate(callback: (data: any) => void): void {
+    this.socket?.on('analytics:metrics_update', callback);
+  }
+
+  /**
+   * Remove metrics update listener
+   */
+  offAnalyticsMetricsUpdate(callback?: (data: any) => void): void {
+    if (callback) {
+      this.socket?.off('analytics:metrics_update', callback);
+    } else {
+      this.socket?.off('analytics:metrics_update');
+    }
+  }
+
+  /**
+   * Listen for status distribution update
+   */
+  onAnalyticsStatusDistribution(callback: (data: any) => void): void {
+    this.socket?.on('analytics:status_distribution', callback);
+  }
+
+  /**
+   * Remove status distribution listener
+   */
+  offAnalyticsStatusDistribution(callback?: (data: any) => void): void {
+    if (callback) {
+      this.socket?.off('analytics:status_distribution', callback);
+    } else {
+      this.socket?.off('analytics:status_distribution');
+    }
+  }
+
+  /**
+   * Listen for new activity event
+   */
+  onAnalyticsActivity(callback: (data: any) => void): void {
+    this.socket?.on('analytics:activity', callback);
+  }
+
+  /**
+   * Remove activity listener
+   */
+  offAnalyticsActivity(callback?: (data: any) => void): void {
+    if (callback) {
+      this.socket?.off('analytics:activity', callback);
+    } else {
+      this.socket?.off('analytics:activity');
+    }
+  }
+
+  /**
+   * Listen for activity feed
+   */
+  onAnalyticsActivityFeed(callback: (data: any[]) => void): void {
+    this.socket?.on('analytics:activity_feed', callback);
+  }
+
+  /**
+   * Remove activity feed listener
+   */
+  offAnalyticsActivityFeed(callback?: (data: any[]) => void): void {
+    if (callback) {
+      this.socket?.off('analytics:activity_feed', callback);
+    } else {
+      this.socket?.off('analytics:activity_feed');
+    }
+  }
+
+  /**
+   * Listen for trends data
+   */
+  onAnalyticsTrends(callback: (data: any) => void): void {
+    this.socket?.on('analytics:trends', callback);
+  }
+
+  /**
+   * Remove trends listener
+   */
+  offAnalyticsTrends(callback?: (data: any) => void): void {
+    if (callback) {
+      this.socket?.off('analytics:trends', callback);
+    } else {
+      this.socket?.off('analytics:trends');
+    }
+  }
+
+  /**
+   * Listen for analytics errors
+   */
+  onAnalyticsError(callback: (error: { error: string }) => void): void {
+    this.socket?.on('analytics:error', callback);
+  }
+
+  /**
+   * Remove analytics error listener
+   */
+  offAnalyticsError(callback?: (error: { error: string }) => void): void {
+    if (callback) {
+      this.socket?.off('analytics:error', callback);
+    } else {
+      this.socket?.off('analytics:error');
+    }
+  }
 }
 
 // Export singleton instance
