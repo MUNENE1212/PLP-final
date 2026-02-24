@@ -7,16 +7,34 @@
  * - Visual progress indicator
  * - Timeout handling
  * - Retry option if failed
+ * - Payment success celebration animation
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { CheckCircle, XCircle, Clock, Loader2, RefreshCw, AlertTriangle } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import PaymentSuccessCelebration from './PaymentSuccessCelebration';
 import mpesaService from '@/services/mpesa.service';
 import type { MPesaPaymentStatus } from '@/types/mpesa';
 
 interface PaymentStatusTrackerProps {
   transactionId: string;
+  /** Payment amount for celebration display */
+  amount?: number;
+  /** Currency code */
+  currency?: string;
+  /** Recipient name for celebration display */
+  recipientName?: string;
+  /** Booking reference for celebration display */
+  bookingReference?: string;
+  /** Custom next steps for celebration */
+  nextSteps?: string[];
+  /** Callback when user clicks View Booking in celebration */
+  onViewBooking?: () => void;
+  /** Callback when user clicks Continue in celebration */
+  onContinue?: () => void;
+  /** Whether to show celebration animation on success */
+  showCelebration?: boolean;
   onStatusChange?: (status: MPesaPaymentStatus) => void;
   onSuccess?: () => void;
   onFailure?: (error: string) => void;
@@ -30,6 +48,14 @@ type TrackerStatus = 'idle' | 'polling' | 'success' | 'failed' | 'timeout';
 
 const PaymentStatusTracker: React.FC<PaymentStatusTrackerProps> = ({
   transactionId,
+  amount,
+  currency = 'KES',
+  recipientName,
+  bookingReference,
+  nextSteps,
+  onViewBooking,
+  onContinue,
+  showCelebration = true,
   onStatusChange,
   onSuccess,
   onFailure,
@@ -43,6 +69,7 @@ const PaymentStatusTracker: React.FC<PaymentStatusTrackerProps> = ({
   const [attempts, setAttempts] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
+  const [showCelebrationModal, setShowCelebrationModal] = useState(false);
 
   // Poll for payment status
   const pollStatus = useCallback(async () => {
@@ -65,6 +92,10 @@ const PaymentStatusTracker: React.FC<PaymentStatusTrackerProps> = ({
       if (status === 'completed') {
         setTrackerStatus('success');
         setProgress(100);
+        // Show celebration animation
+        if (showCelebration) {
+          setShowCelebrationModal(true);
+        }
         onSuccess?.();
         return;
       }
@@ -149,11 +180,25 @@ const PaymentStatusTracker: React.FC<PaymentStatusTrackerProps> = ({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
-      {/* Status Icon */}
-      <div className="flex flex-col items-center mb-4">
-        {getStatusIcon()}
-      </div>
+    <>
+      {/* Payment Success Celebration Modal */}
+      <PaymentSuccessCelebration
+        isVisible={showCelebrationModal}
+        transactionId={transactionId}
+        amount={amount ?? 0}
+        currency={currency}
+        recipientName={recipientName}
+        bookingReference={bookingReference}
+        nextSteps={nextSteps}
+        onViewBooking={onViewBooking}
+        onContinue={onContinue ?? (() => setShowCelebrationModal(false))}
+      />
+
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
+        {/* Status Icon */}
+        <div className="flex flex-col items-center mb-4">
+          {getStatusIcon()}
+        </div>
 
       {/* Progress Bar */}
       {trackerStatus === 'polling' && (
@@ -233,7 +278,8 @@ const PaymentStatusTracker: React.FC<PaymentStatusTrackerProps> = ({
           {Math.ceil((maxPollingAttempts * pollingInterval) / 1000 / 60)} minutes.
         </p>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 
