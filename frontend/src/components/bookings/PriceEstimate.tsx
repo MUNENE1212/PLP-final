@@ -199,13 +199,25 @@ const PriceEstimate: React.FC<PriceEstimateProps> = ({
               <Shield className="w-6 h-6 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
               <div>
                 <h4 className="font-bold text-blue-900 dark:text-blue-100 mb-1 text-base">
-                  💳 Payment Structure
+                  Payment Structure
                 </h4>
                 <p className="text-sm text-blue-700 dark:text-blue-300">
                   {pricing.details.bookingFee.description}
                 </p>
               </div>
             </div>
+
+            {/* Tier Badge */}
+            {pricing.details.bookingFee.tierLabel && (
+              <div className="mb-4 inline-flex items-center gap-2 px-3 py-1.5 bg-blue-200 dark:bg-blue-800 rounded-full">
+                <span className="text-xs font-medium text-blue-800 dark:text-blue-200">
+                  Fee Tier: {pricing.details.bookingFee.tierLabel}
+                </span>
+                <span className="text-xs font-bold text-blue-900 dark:text-blue-100">
+                  {pricing.details.bookingFee.percentage}% rate
+                </span>
+              </div>
+            )}
 
             <div className="space-y-3 bg-white dark:bg-gray-800 rounded-lg p-4 border border-blue-200 dark:border-blue-700">
               {/* Total Amount */}
@@ -247,11 +259,19 @@ const PriceEstimate: React.FC<PriceEstimateProps> = ({
               </div>
             </div>
 
-            <div className="mt-3 flex items-center gap-2 text-xs text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/40 rounded p-2">
-              <Info className="w-4 h-4 flex-shrink-0" />
-              <span className="font-medium">
-                ✅ 100% refundable if booking is cancelled before technician arrives
-              </span>
+            {/* Fee Transparency */}
+            <div className="mt-3 p-3 bg-blue-100 dark:bg-blue-900/40 rounded border border-blue-200 dark:border-blue-700">
+              <div className="flex items-start gap-2">
+                <Info className="w-4 h-4 text-blue-700 dark:text-blue-300 flex-shrink-0 mt-0.5" />
+                <div className="text-xs text-blue-800 dark:text-blue-200">
+                  <p className="font-medium mb-1">How Booking Fees Work:</p>
+                  <ul className="space-y-0.5 ml-2">
+                    <li>- Booking fees are tiered based on service cost</li>
+                    <li>- Larger jobs enjoy lower percentage fees</li>
+                    <li>- 100% refundable if cancelled before technician arrives</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
         )}

@@ -26,7 +26,7 @@ exports.sendEmail = async (options) => {
     const transporter = createTransporter();
 
     const mailOptions = {
-      from: `${process.env.EMAIL_FROM_NAME || 'BaiTech'} <${process.env.EMAIL_FROM}>`,
+      from: `${process.env.EMAIL_FROM_NAME || 'Dumu Waks'} <${process.env.EMAIL_FROM}>`,
       to: options.to,
       subject: options.subject,
       html: options.html,
@@ -49,9 +49,9 @@ exports.sendEmail = async (options) => {
 exports.sendWelcomeEmail = async (user) => {
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h1 style="color: #4CAF50;">Welcome to BaiTech! 🎉</h1>
+      <h1 style="color: #4CAF50;">Welcome to Dumu Waks! 🎉</h1>
       <p>Hi ${user.firstName},</p>
-      <p>Thank you for joining BaiTech - your AI-powered technician platform!</p>
+      <p>Thank you for joining Dumu Waks - your AI-powered technician platform!</p>
       <p>We're excited to have you on board. Here's what you can do next:</p>
       <ul>
         <li>Complete your profile</li>
@@ -60,13 +60,13 @@ exports.sendWelcomeEmail = async (user) => {
         <li>Join our community</li>
       </ul>
       <p>If you have any questions, feel free to reach out to our support team.</p>
-      <p>Best regards,<br>The BaiTech Team</p>
+      <p>Best regards,<br>The Dumu Waks Team</p>
     </div>
   `;
 
   return this.sendEmail({
     to: user.email,
-    subject: 'Welcome to BaiTech!',
+    subject: 'Welcome to Dumu Waks!',
     html
   });
 };
@@ -89,13 +89,13 @@ exports.sendVerificationEmail = async (user, verificationToken) => {
       <p style="word-break: break-all; color: #666;">${verificationUrl}</p>
       <p>This link will expire in 24 hours.</p>
       <p>If you didn't create an account, please ignore this email.</p>
-      <p>Best regards,<br>The BaiTech Team</p>
+      <p>Best regards,<br>The Dumu Waks Team</p>
     </div>
   `;
 
   return this.sendEmail({
     to: user.email,
-    subject: 'Verify Your Email - BaiTech',
+    subject: 'Verify Your Email - Dumu Waks',
     html
   });
 };
@@ -118,13 +118,13 @@ exports.sendPasswordResetEmail = async (user, resetToken) => {
       <p style="word-break: break-all; color: #666;">${resetUrl}</p>
       <p>This link will expire in 30 minutes.</p>
       <p>If you didn't request a password reset, please ignore this email and your password will remain unchanged.</p>
-      <p>Best regards,<br>The BaiTech Team</p>
+      <p>Best regards,<br>The Dumu Waks Team</p>
     </div>
   `;
 
   return this.sendEmail({
     to: user.email,
-    subject: 'Reset Your Password - BaiTech',
+    subject: 'Reset Your Password - Dumu Waks',
     html
   });
 };
@@ -148,7 +148,7 @@ exports.sendBookingConfirmationEmail = async (booking, customer, technician) => 
         <p><strong>Location:</strong> ${booking.location.address}</p>
       </div>
       <p>The technician will contact you shortly to confirm details.</p>
-      <p>Best regards,<br>The BaiTech Team</p>
+      <p>Best regards,<br>The Dumu Waks Team</p>
     </div>
   `;
 
@@ -181,7 +181,7 @@ exports.sendNewBookingToTechnician = async (booking, technician, customer) => {
       <a href="${process.env.CLIENT_WEB_URL}/bookings/${booking._id}" style="display: inline-block; padding: 12px 24px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 4px; margin: 20px 0;">
         View Booking
       </a>
-      <p>Best regards,<br>The BaiTech Team</p>
+      <p>Best regards,<br>The Dumu Waks Team</p>
     </div>
   `;
 
@@ -209,8 +209,8 @@ exports.sendPaymentReceipt = async (transaction, user) => {
         <p><strong>Status:</strong> ${transaction.status}</p>
         <p><strong>Date:</strong> ${new Date(transaction.createdAt).toLocaleString()}</p>
       </div>
-      <p>Thank you for using BaiTech!</p>
-      <p>Best regards,<br>The BaiTech Team</p>
+      <p>Thank you for using Dumu Waks!</p>
+      <p>Best regards,<br>The Dumu Waks Team</p>
     </div>
   `;
 

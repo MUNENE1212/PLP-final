@@ -2,11 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { updateProfile, updateAvailability, clearError } from '@/store/slices/authSlice';
+import {
+  fetchMyGallery,
+  addGalleryImage,
+  removeGalleryImage,
+  updateGalleryImage,
+  reorderGalleryImages,
+} from '@/store/slices/workGallerySlice';
 import Button from '@/components/ui/Button';
 import Loading from '@/components/ui/Loading';
 import Alert from '@/components/ui/Alert';
 import SkillsManager from '@/components/profile/SkillsManager';
+import MyServicesManager from '@/components/profile/MyServicesManager';
 import ImageUpload from '@/components/upload/ImageUpload';
+import { WorkGallerySettings } from '@/components/workgallery';
 import {
   User,
   Settings,
@@ -19,6 +28,7 @@ import {
   CheckCircle,
   Navigation,
   Loader2,
+  Briefcase,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { geocodeAddress, getCurrentCoordinates } from '@/services/geocoding.service';
@@ -50,6 +60,12 @@ const ProfileSettings: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { user, isLoading, error } = useAppSelector((state) => state.auth);
+  const {
+    images: workGalleryImages,
+    isLoading: isGalleryLoading,
+    isUploading: isGalleryUploading,
+    remainingSlots,
+  } = useAppSelector((state) => state.workGallery);
 
   const [formData, setFormData] = useState<FormData>({
     firstName: '',
@@ -91,8 +107,13 @@ const ProfileSettings: React.FC = () => {
       });
       setIsAvailable(user.availability?.isAvailable || false);
       setProfilePictureUrl(user.profilePicture || '');
+
+      // Fetch work gallery for technicians
+      if (user.role === 'technician') {
+        dispatch(fetchMyGallery());
+      }
     }
-  }, [user]);
+  }, [user, dispatch]);
 
   const handleSkillsChange = (skills: Skill[]) => {
     setFormData((prev) => ({
@@ -273,6 +294,26 @@ const ProfileSettings: React.FC = () => {
     }
   };
 
+  // Work Gallery Handlers
+  const handleWorkGalleryUpload = async (data: any) => {
+    await dispatch(addGalleryImage(data)).unwrap();
+    toast.success('Work image added successfully!');
+  };
+
+  const handleWorkGalleryDelete = async (imageId: string) => {
+    await dispatch(removeGalleryImage(imageId)).unwrap();
+    toast.success('Work image deleted successfully!');
+  };
+
+  const handleWorkGalleryUpdate = async (imageId: string, data: any) => {
+    await dispatch(updateGalleryImage({ imageId, data })).unwrap();
+    toast.success('Work image updated successfully!');
+  };
+
+  const handleWorkGalleryReorder = async (imageIds: string[]) => {
+    await dispatch(reorderGalleryImages(imageIds)).unwrap();
+  };
+
   if (!user) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -287,11 +328,11 @@ const ProfileSettings: React.FC = () => {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="flex items-center text-3xl font-bold text-gray-900 dark:text-gray-100">
-              <Settings className="mr-3 h-8 w-8 text-primary-600" />
+            <h1 className="flex items-center text-3xl font-bold text-bone">
+              <Settings className="mr-3 h-8 w-8 text-circuit" />
               Profile Settings
             </h1>
-            <p className="mt-2 text-gray-600 dark:text-gray-400">
+            <p className="mt-2 text-steel">
               Manage your personal information and preferences
             </p>
           </div>
@@ -326,9 +367,9 @@ const ProfileSettings: React.FC = () => {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Profile Picture Section */}
-        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm">
-          <h2 className="mb-4 flex items-center text-xl font-semibold text-gray-900 dark:text-gray-100">
-            <Camera className="mr-2 h-5 w-5 text-primary-600" />
+        <div className="glass-card rounded-lg p-6">
+          <h2 className="mb-4 flex items-center text-xl font-semibold text-bone">
+            <Camera className="mr-2 h-5 w-5 text-circuit" />
             Profile Picture
           </h2>
           <div className="space-y-4">
@@ -336,14 +377,14 @@ const ProfileSettings: React.FC = () => {
               <img
                 src={profilePictureUrl || user.profilePicture || `https://ui-avatars.com/api/?name=${user.firstName}+${user.lastName}&background=random`}
                 alt="Profile"
-                className="h-20 w-20 rounded-full object-cover ring-4 ring-gray-100 dark:ring-gray-700"
+                className="h-20 w-20 rounded-full object-cover ring-4 ring-circuit/30"
               />
               <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                <p className="text-sm font-medium text-bone">
                   {user.firstName} {user.lastName}
                 </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
-                <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-steel">{user.email}</p>
+                <p className="mt-1 text-xs text-steel">
                   Upload a new picture below (max 10MB)
                 </p>
               </div>
@@ -359,16 +400,16 @@ const ProfileSettings: React.FC = () => {
         </div>
 
         {/* Basic Information */}
-        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm">
-          <h2 className="mb-4 flex items-center text-xl font-semibold text-gray-900 dark:text-gray-100">
-            <User className="mr-2 h-5 w-5 text-primary-600" />
+        <div className="glass-card rounded-lg p-6">
+          <h2 className="mb-4 flex items-center text-xl font-semibold text-bone">
+            <User className="mr-2 h-5 w-5 text-circuit" />
             Basic Information
           </h2>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label
                 htmlFor="firstName"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                className="block text-sm font-medium text-bone"
               >
                 First Name
               </label>
@@ -378,7 +419,7 @@ const ProfileSettings: React.FC = () => {
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleInputChange}
-                className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-4 py-2 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20"
+                className="mt-1 w-full rounded-lg border border-subtle bg-charcoal text-bone px-4 py-2 focus:border-circuit focus:outline-none focus:ring-2 focus:ring-circuit/20"
                 required
               />
             </div>
@@ -386,7 +427,7 @@ const ProfileSettings: React.FC = () => {
             <div>
               <label
                 htmlFor="lastName"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                className="block text-sm font-medium text-bone"
               >
                 Last Name
               </label>
@@ -396,7 +437,7 @@ const ProfileSettings: React.FC = () => {
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleInputChange}
-                className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-4 py-2 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20"
+                className="mt-1 w-full rounded-lg border border-subtle bg-charcoal text-bone px-4 py-2 focus:border-circuit focus:outline-none focus:ring-2 focus:ring-circuit/20"
                 required
               />
             </div>
@@ -404,21 +445,21 @@ const ProfileSettings: React.FC = () => {
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                className="block text-sm font-medium text-bone"
               >
                 Email Address
               </label>
               <div className="relative mt-1">
-                <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-steel" />
                 <input
                   type="email"
                   id="email"
                   value={user.email}
                   disabled
-                  className="w-full rounded-lg border border-gray-300 bg-gray-50 dark:bg-gray-900 py-2 pl-10 pr-4 text-gray-500 dark:text-gray-400"
+                  className="w-full rounded-lg border border-subtle bg-mahogany py-2 pl-10 pr-4 text-steel"
                 />
               </div>
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              <p className="mt-1 text-xs text-steel">
                 Email cannot be changed
               </p>
             </div>
@@ -426,19 +467,19 @@ const ProfileSettings: React.FC = () => {
             <div>
               <label
                 htmlFor="phoneNumber"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                className="block text-sm font-medium text-bone"
               >
                 Phone Number
               </label>
               <div className="relative mt-1">
-                <Phone className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                <Phone className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-steel" />
                 <input
                   type="tel"
                   id="phoneNumber"
                   name="phoneNumber"
                   value={formData.phoneNumber}
                   onChange={handleInputChange}
-                  className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 py-2 pl-10 pr-4 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20"
+                  className="w-full rounded-lg border border-subtle bg-charcoal text-bone py-2 pl-10 pr-4 focus:border-circuit focus:outline-none focus:ring-2 focus:ring-circuit/20"
                 />
               </div>
             </div>
@@ -446,7 +487,7 @@ const ProfileSettings: React.FC = () => {
             <div className="sm:col-span-2">
               <label
                 htmlFor="bio"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                className="block text-sm font-medium text-bone"
               >
                 Bio
               </label>
@@ -456,10 +497,10 @@ const ProfileSettings: React.FC = () => {
                 value={formData.bio}
                 onChange={handleInputChange}
                 rows={4}
-                className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-4 py-2 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20 placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                className="mt-1 w-full rounded-lg border border-subtle bg-charcoal text-bone px-4 py-2 focus:border-circuit focus:outline-none focus:ring-2 focus:ring-circuit/20 placeholder:text-steel"
                 placeholder="Tell us about yourself..."
               />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              <p className="mt-1 text-xs text-steel">
                 Brief description for your profile
               </p>
             </div>
@@ -467,12 +508,12 @@ const ProfileSettings: React.FC = () => {
         </div>
 
         {/* Location Information */}
-        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm">
-          <h2 className="mb-4 flex items-center text-xl font-semibold text-gray-900 dark:text-gray-100">
-            <MapPin className="mr-2 h-5 w-5 text-primary-600" />
+        <div className="glass-card rounded-lg p-6">
+          <h2 className="mb-4 flex items-center text-xl font-semibold text-bone">
+            <MapPin className="mr-2 h-5 w-5 text-circuit" />
             Location Information
           </h2>
-          <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+          <p className="mb-4 text-sm text-steel">
             Location coordinates are used to match you with nearby customers/technicians.
             Enter your address and click "Get Coordinates from Address" or use your current location.
           </p>
@@ -481,7 +522,7 @@ const ProfileSettings: React.FC = () => {
             <div className="sm:col-span-2">
               <label
                 htmlFor="location.address"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                className="block text-sm font-medium text-bone"
               >
                 Address
               </label>
@@ -491,7 +532,7 @@ const ProfileSettings: React.FC = () => {
                 name="location.address"
                 value={formData.location.address}
                 onChange={handleInputChange}
-                className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-4 py-2 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20 placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                className="mt-1 w-full rounded-lg border border-subtle bg-charcoal text-bone px-4 py-2 focus:border-circuit focus:outline-none focus:ring-2 focus:ring-circuit/20 placeholder:text-steel"
                 placeholder="Street address"
               />
             </div>
@@ -499,9 +540,9 @@ const ProfileSettings: React.FC = () => {
             <div>
               <label
                 htmlFor="location.city"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                className="block text-sm font-medium text-bone"
               >
-                City <span className="text-red-500">*</span>
+                City <span className="text-error">*</span>
               </label>
               <input
                 type="text"
@@ -509,7 +550,7 @@ const ProfileSettings: React.FC = () => {
                 name="location.city"
                 value={formData.location.city}
                 onChange={handleInputChange}
-                className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-4 py-2 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20 placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                className="mt-1 w-full rounded-lg border border-subtle bg-charcoal text-bone px-4 py-2 focus:border-circuit focus:outline-none focus:ring-2 focus:ring-circuit/20 placeholder:text-steel"
                 placeholder="e.g., Nairobi"
                 required
               />
@@ -518,7 +559,7 @@ const ProfileSettings: React.FC = () => {
             <div>
               <label
                 htmlFor="location.county"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                className="block text-sm font-medium text-bone"
               >
                 County
               </label>
@@ -528,7 +569,7 @@ const ProfileSettings: React.FC = () => {
                 name="location.county"
                 value={formData.location.county}
                 onChange={handleInputChange}
-                className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-4 py-2 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20 placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                className="mt-1 w-full rounded-lg border border-subtle bg-charcoal text-bone px-4 py-2 focus:border-circuit focus:outline-none focus:ring-2 focus:ring-circuit/20 placeholder:text-steel"
                 placeholder="e.g., Nairobi County"
               />
             </div>
@@ -536,7 +577,7 @@ const ProfileSettings: React.FC = () => {
             <div>
               <label
                 htmlFor="location.country"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                className="block text-sm font-medium text-bone"
               >
                 Country
               </label>
@@ -546,27 +587,27 @@ const ProfileSettings: React.FC = () => {
                 name="location.country"
                 value={formData.location.country}
                 onChange={handleInputChange}
-                className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-4 py-2 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-20 placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                className="mt-1 w-full rounded-lg border border-subtle bg-charcoal text-bone px-4 py-2 focus:border-circuit focus:outline-none focus:ring-2 focus:ring-circuit/20 placeholder:text-steel"
                 placeholder="Kenya"
               />
             </div>
 
             {/* Coordinates Display */}
             <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Coordinates <span className="text-red-500">*</span>
+              <label className="block text-sm font-medium text-bone mb-2">
+                Coordinates <span className="text-error">*</span>
               </label>
               <div className="flex items-center gap-2 mb-2">
-                <div className="flex-1 rounded-lg border border-gray-300 bg-gray-50 dark:bg-gray-900 px-4 py-2 text-sm text-gray-700 dark:text-gray-300">
-                  <span className="font-medium">Longitude:</span> {formData.location.coordinates[0].toFixed(6)}
+                <div className="flex-1 glass rounded-lg px-4 py-2 text-sm text-steel">
+                  <span className="font-medium text-bone">Longitude:</span> {formData.location.coordinates[0].toFixed(6)}
                   {' | '}
-                  <span className="font-medium">Latitude:</span> {formData.location.coordinates[1].toFixed(6)}
+                  <span className="font-medium text-bone">Latitude:</span> {formData.location.coordinates[1].toFixed(6)}
                 </div>
                 {formData.location.coordinates[0] === 0 && formData.location.coordinates[1] === 0 && (
-                  <span className="text-xs text-red-500">Not set</span>
+                  <span className="text-xs text-error">Not set</span>
                 )}
                 {formData.location.coordinates[0] !== 0 && formData.location.coordinates[1] !== 0 && (
-                  <span className="text-xs text-green-600">Set ✓</span>
+                  <span className="text-xs text-success">Set</span>
                 )}
               </div>
 
@@ -612,7 +653,7 @@ const ProfileSettings: React.FC = () => {
                   )}
                 </Button>
               </div>
-              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+              <p className="mt-2 text-xs text-steel">
                 Coordinates are required for location-based matching. Click one of the buttons above to set them.
               </p>
             </div>
@@ -623,22 +664,22 @@ const ProfileSettings: React.FC = () => {
         {user.role === 'technician' && (
           <>
             {/* Availability Toggle */}
-            <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm">
-              <h2 className="mb-4 flex items-center text-xl font-semibold text-gray-900 dark:text-gray-100">
-                <CheckCircle className="mr-2 h-5 w-5 text-primary-600" />
+            <div className="glass-card rounded-lg p-6">
+              <h2 className="mb-4 flex items-center text-xl font-semibold text-bone">
+                <CheckCircle className="mr-2 h-5 w-5 text-circuit" />
                 Availability Status
               </h2>
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  <p className="text-sm font-medium text-bone">
                     Currently{' '}
                     {isAvailable ? (
-                      <span className="text-green-600">Available</span>
+                      <span className="text-success">Available</span>
                     ) : (
-                      <span className="text-gray-600 dark:text-gray-400">Unavailable</span>
+                      <span className="text-steel">Unavailable</span>
                     )}
                   </p>
-                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                  <p className="mt-1 text-sm text-steel">
                     Toggle your availability to let customers know if you're
                     accepting new jobs
                   </p>
@@ -649,12 +690,12 @@ const ProfileSettings: React.FC = () => {
                   disabled={isLoading}
                   className={cn(
                     'relative inline-flex h-8 w-14 items-center rounded-full transition-colors',
-                    isAvailable ? 'bg-green-600' : 'bg-gray-300'
+                    isAvailable ? 'bg-success' : 'bg-steel/30'
                   )}
                 >
                   <span
                     className={cn(
-                      'inline-block h-6 w-6 transform rounded-full bg-white transition-transform',
+                      'inline-block h-6 w-6 transform rounded-full bg-bone transition-transform',
                       isAvailable ? 'translate-x-7' : 'translate-x-1'
                     )}
                   />
@@ -663,17 +704,43 @@ const ProfileSettings: React.FC = () => {
             </div>
 
             {/* Skills Management */}
-            <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm">
+            <div className="glass-card rounded-lg p-6">
               <SkillsManager
                 skills={formData.skills || []}
                 onChange={handleSkillsChange}
               />
             </div>
+
+            {/* My Services - WORD BANK Integration */}
+            <div className="glass-card rounded-lg p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Briefcase className="h-5 w-5 text-circuit" />
+                <h2 className="text-xl font-semibold text-bone">
+                  My Services
+                </h2>
+              </div>
+              <p className="text-sm text-steel mb-4">
+                Select services you offer from our WORD BANK. Customers will find you when they search for these services.
+              </p>
+              <MyServicesManager />
+            </div>
+
+            {/* Work Gallery Management */}
+            <WorkGallerySettings
+              images={workGalleryImages}
+              isLoading={isGalleryLoading}
+              isUploading={isGalleryUploading}
+              onUpload={handleWorkGalleryUpload}
+              onDelete={handleWorkGalleryDelete}
+              onUpdate={handleWorkGalleryUpdate}
+              onReorder={handleWorkGalleryReorder}
+              remainingSlots={remainingSlots}
+            />
           </>
         )}
 
         {/* Form Actions */}
-        <div className="flex items-center justify-end space-x-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 p-4">
+        <div className="flex items-center justify-end space-x-4 glass rounded-lg p-4">
           <Button type="button" variant="outline" onClick={handleCancel}>
             Cancel
           </Button>
@@ -681,6 +748,7 @@ const ProfileSettings: React.FC = () => {
             type="submit"
             variant="primary"
             disabled={!hasChanges || isLoading}
+            className="glass-button"
           >
             {isLoading ? (
               <>

@@ -67,7 +67,7 @@ exports.initiateMpesaPayment = async (phoneNumber, amount, accountReference, tra
         PhoneNumber: formattedPhone,
         CallBackURL: process.env.MPESA_CALLBACK_URL,
         AccountReference: accountReference,
-        TransactionDesc: transactionDesc || 'Payment for BaiTech services'
+        TransactionDesc: transactionDesc || 'Payment for Dumu Waks services'
       },
       {
         headers: {

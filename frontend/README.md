@@ -426,9 +426,9 @@ npm run build
 netlify deploy --prod --dir=dist
 ```
 
-### Deploy to Render (with Backend)
+### Production (VPS)
 
-Connected automatically via `render.yaml` in root directory.
+Deployed automatically via GitHub Actions on push to `master`. See [VPS Deployment Guide](../docs/deployment/VPS_DEPLOYMENT.md).
 
 ## 🎨 Logo Assets
 

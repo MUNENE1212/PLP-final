@@ -15,7 +15,7 @@ exports.uploadImage = async (file, options = {}) => {
     }
 
     const result = await cloudinaryConfig.uploader.upload(file.path, {
-      folder: options.folder || 'baitech/images',
+      folder: options.folder || 'dumuwaks/images',
       transformation: [
         { width: 1200, height: 1200, crop: 'limit' },
         { quality: 'auto' },
@@ -58,7 +58,7 @@ exports.uploadMultipleImages = async (files, options = {}) => {
 
     const uploadPromises = files.map((file, index) =>
       cloudinaryConfig.uploader.upload(file.path, {
-        folder: options.folder || 'baitech/images',
+        folder: options.folder || 'dumuwaks/images',
         transformation: [
           { width: 1200, height: 1200, crop: 'limit' },
           { quality: 'auto' },
@@ -104,7 +104,7 @@ exports.uploadVideo = async (file, options = {}) => {
     }
 
     const result = await cloudinaryConfig.uploader.upload(file.path, {
-      folder: options.folder || 'baitech/videos',
+      folder: options.folder || 'dumuwaks/videos',
       resource_type: 'video',
       eager: [
         { width: 300, height: 300, crop: 'pad', format: 'jpg' } // Thumbnail
@@ -152,7 +152,7 @@ exports.uploadMedia = async (files, options = {}) => {
 
       if (isVideo) {
         return cloudinaryConfig.uploader.upload(file.path, {
-          folder: options.folder || 'baitech/videos',
+          folder: options.folder || 'dumuwaks/videos',
           resource_type: 'video',
           eager: [
             { width: 300, height: 300, crop: 'pad', format: 'jpg' }
@@ -172,7 +172,7 @@ exports.uploadMedia = async (files, options = {}) => {
         }));
       } else {
         return cloudinaryConfig.uploader.upload(file.path, {
-          folder: options.folder || 'baitech/images',
+          folder: options.folder || 'dumuwaks/images',
           transformation: [
             { width: 1200, height: 1200, crop: 'limit' },
             { quality: 'auto' },
@@ -217,7 +217,7 @@ exports.uploadProfilePicture = async (file) => {
     }
 
     const result = await cloudinaryConfig.uploader.upload(file.path, {
-      folder: 'baitech/profiles',
+      folder: 'dumuwaks/profiles',
       transformation: [
         { width: 500, height: 500, crop: 'fill', gravity: 'face' },
         { quality: 'auto' },
@@ -352,7 +352,7 @@ exports.generateUploadSignature = (options = {}) => {
 
   const params = {
     timestamp,
-    folder: options.folder || 'baitech',
+    folder: options.folder || 'dumuwaks',
     ...options
   };
 

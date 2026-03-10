@@ -12,6 +12,8 @@ import serviceReducer from './slices/serviceSlice';
 import profileCompletenessReducer from './slices/profileSlice';
 import mpesaReducer from './slices/mpesaSlice';
 import escrowReducer from './slices/escrowSlice';
+import paymentPlanReducer from './slices/paymentPlanSlice';
+import technicianServicesReducer from './slices/technicianServicesSlice';
 
 export const store = configureStore({
   reducer: {
@@ -28,6 +30,8 @@ export const store = configureStore({
     profileCompleteness: profileCompletenessReducer,
     mpesa: mpesaReducer,
     escrow: escrowReducer,
+    paymentPlans: paymentPlanReducer,
+    technicianServices: technicianServicesReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

@@ -1,20 +1,44 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { createBooking, CreateBookingData } from '@/store/slices/bookingSlice';
 import { acceptMatch, AcceptMatchParams } from '@/store/slices/matchingSlice';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
-import Textarea from '@/components/ui/Textarea';
-import { Calendar, MapPin, Clock, FileText, DollarSign, User, ArrowLeft } from 'lucide-react';
+import { Calendar, FileText, DollarSign, ArrowLeft, Check, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { format } from 'date-fns';
 import { formatRating } from '@/utils/rating';
 import BookingFeePaymentModal from '@/components/bookings/BookingFeePaymentModal';
 import PriceEstimate from '@/components/bookings/PriceEstimate';
 import ServiceTypeSelector from '@/components/bookings/ServiceTypeSelector';
+import LocationInput, { LocationData } from '@/components/booking/LocationInput';
+import StickyButton from '@/components/booking/StickyButton';
 import { getPriceEstimate, calculatePrice, PricingBreakdown } from '@/services/pricing.service';
+import { clsx } from 'clsx';
+
+/**
+ * DEPRECATION NOTICE
+ *
+ * This component is DEPRECATED and will be removed in a future version.
+ *
+ * Please use CreateBookingFlow (/booking-flow) instead, which provides:
+ * - 5-step wizard with better UX
+ * - WORD BANK integration
+ * - Payment plans support
+ * - Matching flow integration
+ * - Real-time price estimation
+ *
+ * This file is kept for backward compatibility only.
+ * All new features should be implemented in CreateBookingFlow.tsx
+ */
+
+// Log deprecation warning in development
+if (import.meta.env.DEV) {
+  console.warn(
+    '[DEPRECATED] CreateBooking.tsx is deprecated. Use CreateBookingFlow (/booking-flow) instead.'
+  );
+}
 
 const SERVICE_CATEGORIES = [
   { value: 'plumbing', label: 'Plumbing' },
@@ -35,20 +59,30 @@ const SERVICE_CATEGORIES = [
   { value: 'other', label: 'Other' },
 ];
 
-const URGENCY_LEVELS = [
-  { value: 'low', label: 'Low - Within a week', color: 'text-gray-600' },
-  { value: 'medium', label: 'Medium - Within 2-3 days', color: 'text-blue-600' },
-  { value: 'high', label: 'High - Within 24 hours', color: 'text-orange-600' },
-  { value: 'emergency', label: 'Emergency - ASAP', color: 'text-red-600' },
-];
-
 interface LocationState {
   matchId?: string;
-  technician?: any;
+  technician?: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    profilePicture?: string;
+    rating?: number;
+    hourlyRate?: number;
+    location?: { coordinates: [number, number] };
+  };
   serviceCategory?: string;
   location?: { coordinates: [number, number]; address: string };
 }
 
+/**
+ * CreateBooking Page
+ *
+ * Enhanced booking creation page with:
+ * - "Use My Location" button for automatic location detection
+ * - Pre-fill address from user profile
+ * - Sticky continue button on mobile
+ * - Improved address form UX with Kenya-specific counties
+ */
 const CreateBooking: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -58,6 +92,41 @@ const CreateBooking: React.FC = () => {
 
   const locationState = location.state as LocationState | null;
 
+  // Initialize location data with profile data or state data
+  const getInitialLocationData = useCallback((): LocationData => {
+    // Priority: URL state > User profile > Empty
+    if (locationState?.location) {
+      return {
+        address: locationState.location.address || '',
+        city: '',
+        county: '',
+        landmarks: '',
+        accessInstructions: '',
+        coordinates: locationState.location.coordinates,
+      };
+    }
+
+    if (user?.location) {
+      return {
+        address: user.location.address || '',
+        city: user.location.city || '',
+        county: user.location.county || '',
+        landmarks: '',
+        accessInstructions: '',
+        coordinates: user.location.coordinates || [0, 0],
+      };
+    }
+
+    return {
+      address: '',
+      city: '',
+      county: '',
+      landmarks: '',
+      accessInstructions: '',
+      coordinates: [0, 0],
+    };
+  }, [locationState, user]);
+
   const [formData, setFormData] = useState<CreateBookingData>({
     serviceType: '',
     serviceCategory: locationState?.serviceCategory || '',
@@ -66,10 +135,10 @@ const CreateBooking: React.FC = () => {
     scheduledTime: '',
     estimatedDuration: 120, // Default 2 hours in minutes
     serviceLocation: {
-      coordinates: locationState?.location?.coordinates || [0, 0],
-      address: locationState?.location?.address || '',
-      landmarks: '',
-      accessInstructions: '',
+      coordinates: getInitialLocationData().coordinates,
+      address: getInitialLocationData().address,
+      landmarks: getInitialLocationData().landmarks,
+      accessInstructions: getInitialLocationData().accessInstructions,
     },
     technician: locationState?.technician?._id || '',
     urgency: 'medium',
@@ -77,19 +146,62 @@ const CreateBooking: React.FC = () => {
     quantity: 1, // Default quantity for per-unit services
   });
 
+  const [locationData, setLocationData] = useState<LocationData>(getInitialLocationData());
+  const [useSavedAddress, setUseSavedAddress] = useState(!!user?.location?.address && !locationState?.location);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [createdBooking, setCreatedBooking] = useState<any>(null);
+  const [createdBooking, setCreatedBooking] = useState<{
+    _id: string;
+    bookingFee?: { amount: number };
+    pricing?: { currency: string };
+    details?: { bookingFee?: { amount: number } };
+  } | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [priceEstimate, setPriceEstimate] = useState<PricingBreakdown | null>(null);
   const [isLoadingEstimate, setIsLoadingEstimate] = useState(false);
 
+  // Check if user has a saved address in profile
+  const hasSavedAddress = useMemo(() => {
+    return !!(user?.location?.address);
+  }, [user?.location?.address]);
+
+  // Set minimum date to today on mount
   useEffect(() => {
-    // Set minimum date to today
     const today = new Date().toISOString().split('T')[0];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     if (!formData.scheduledDate) {
       setFormData((prev) => ({ ...prev, scheduledDate: today }));
     }
   }, []);
+
+  // Sync locationData with formData.serviceLocation
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      serviceLocation: {
+        coordinates: locationData.coordinates,
+        address: locationData.address,
+        landmarks: locationData.landmarks,
+        accessInstructions: locationData.accessInstructions,
+      },
+    }));
+  }, [locationData]);
+
+  // Handle "Use Saved Address" toggle
+  const handleUseSavedAddressToggle = useCallback(() => {
+    if (!useSavedAddress && user?.location) {
+      // Enable saved address - populate from profile
+      const savedLocation: LocationData = {
+        address: user.location.address || '',
+        city: user.location.city || '',
+        county: user.location.county || '',
+        landmarks: '',
+        accessInstructions: '',
+        coordinates: user.location.coordinates || [0, 0],
+      };
+      setLocationData(savedLocation);
+    }
+    setUseSavedAddress(!useSavedAddress);
+  }, [useSavedAddress, user?.location]);
 
   // Fetch price estimate when relevant fields change
   useEffect(() => {
@@ -110,14 +222,6 @@ const CreateBooking: React.FC = () => {
 
           // If technician is selected (from matching), use calculatePrice for accurate estimate with distance
           if (locationState?.technician?._id) {
-            console.log('=== CALCULATING PRICE WITH TECHNICIAN ===');
-            console.log('Technician ID:', locationState.technician._id);
-            console.log('Technician Location:', locationState.technician.location);
-            console.log('Service Category:', formData.serviceCategory);
-            console.log('Service Type:', formData.serviceType);
-            console.log('Urgency:', formData.urgency);
-            console.log('Quantity:', formData.quantity || 1);
-
             const response = await calculatePrice({
               serviceCategory: formData.serviceCategory,
               serviceType: formData.serviceType,
@@ -132,17 +236,7 @@ const CreateBooking: React.FC = () => {
               quantity: formData.quantity || 1,
             });
 
-            console.log('=== PRICE CALCULATION RESPONSE ===');
-            console.log('Full response:', response);
-            console.log('Success:', response.success);
-            console.log('response.pricing:', response.pricing);
-            console.log('Total Amount:', response.pricing?.totalAmount);
-            console.log('Booking Fee:', response.pricing?.bookingFee);
-            console.log('Distance Fee:', response.pricing?.distanceFee);
-            console.log('===================================');
-
             if (response.success && response.pricing) {
-              console.log('✅ Setting priceEstimate to:', response.pricing);
               setPriceEstimate(response.pricing);
             }
           } else {
@@ -150,7 +244,7 @@ const CreateBooking: React.FC = () => {
             const response = await getPriceEstimate({
               serviceCategory: formData.serviceCategory,
               serviceType: formData.serviceType,
-              urgency: formData.urgency as any,
+              urgency: formData.urgency as 'low' | 'medium' | 'high' | 'emergency',
               serviceLocation: {
                 type: 'Point',
                 coordinates: coordinates as [number, number],
@@ -218,6 +312,25 @@ const CreateBooking: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Check if form is valid for sticky button
+  const isFormValid = useMemo(() => {
+    return (
+      formData.serviceType.trim() !== '' &&
+      formData.serviceCategory !== '' &&
+      formData.description.trim() !== '' &&
+      formData.scheduledDate !== '' &&
+      formData.scheduledTime !== '' &&
+      formData.serviceLocation.address.trim() !== ''
+    );
+  }, [
+    formData.serviceType,
+    formData.serviceCategory,
+    formData.description,
+    formData.scheduledDate,
+    formData.scheduledTime,
+    formData.serviceLocation.address,
+  ]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
 
@@ -240,6 +353,14 @@ const CreateBooking: React.FC = () => {
     // Clear error for this field
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const { value } = e.target;
+    setFormData((prev) => ({ ...prev, description: value }));
+    if (errors.description) {
+      setErrors((prev) => ({ ...prev, description: '' }));
     }
   };
 
@@ -267,13 +388,6 @@ const CreateBooking: React.FC = () => {
         const result = await dispatch(acceptMatch(acceptParams)).unwrap();
         const booking = result.data.booking;
 
-        // Debug: Log the booking data to verify structure
-        console.log('Created booking from match data:', booking);
-        console.log('Booking fee from booking:', booking.bookingFee);
-        console.log('Booking fee amount from booking:', booking.bookingFee?.amount);
-        console.log('Price estimate available:', priceEstimate);
-        console.log('Booking fee from price estimate:', priceEstimate?.bookingFee);
-
         // Show payment modal instead of navigating
         setCreatedBooking(booking);
         setShowPaymentModal(true);
@@ -283,57 +397,57 @@ const CreateBooking: React.FC = () => {
         const result = await dispatch(createBooking(formData)).unwrap();
         const booking = result.booking;
 
-        // Debug: Log the booking data to verify structure
-        console.log('Created booking data:', booking);
-        console.log('Booking fee from booking:', booking.bookingFee);
-        console.log('Booking fee amount from booking:', booking.bookingFee?.amount);
-        console.log('Price estimate available:', priceEstimate);
-        console.log('Booking fee from price estimate:', priceEstimate?.bookingFee);
-
         // Show payment modal instead of navigating
         setCreatedBooking(booking);
         setShowPaymentModal(true);
         toast.success('Booking created! Please complete payment to proceed.');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to create booking:', error);
-      toast.error(error || 'Failed to create booking');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create booking';
+      toast.error(errorMessage);
     }
   };
 
-  const handlePaymentSuccess = (transactionId: string) => {
+  const handlePaymentSuccess = (_transactionId: string) => {
     toast.success('Payment successful! Your booking is now being matched with technicians.');
     setShowPaymentModal(false);
-    navigate(`/bookings/${createdBooking._id}`);
+    if (createdBooking) {
+      navigate(`/bookings/${createdBooking._id}`);
+    }
   };
 
   const handlePaymentClose = () => {
     // Don't allow closing without payment
-    const confirm = window.confirm(
+    const confirmClose = window.confirm(
       'Payment is required to proceed with booking. Close without paying? Your booking will remain pending.'
     );
-    if (confirm) {
+    if (confirmClose && createdBooking) {
       setShowPaymentModal(false);
       navigate(`/bookings/${createdBooking._id}`);
     }
   };
 
+  // Character count for description
+  const descriptionLength = formData.description.length;
+  const maxDescriptionLength = 1000;
+
   return (
-    <div className="mx-auto max-w-4xl">
+    <div className="mx-auto max-w-4xl pb-24 md:pb-0">
       {/* Header */}
       <div className="mb-8">
         <button
           onClick={() => navigate(-1)}
-          className="mb-4 flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-gray-100"
+          className="mb-4 flex items-center text-steel hover:text-bone transition-colors"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
         </button>
 
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+        <h1 className="text-2xl font-bold text-bone md:text-3xl">
           {locationState?.matchId ? 'Complete Your Booking' : 'Create New Booking'}
         </h1>
-        <p className="mt-2 text-gray-600 dark:text-gray-400">
+        <p className="mt-2 text-steel">
           {locationState?.matchId
             ? `Booking with ${locationState.technician?.firstName} ${locationState.technician?.lastName}`
             : 'Fill in the details for your service request'}
@@ -342,7 +456,7 @@ const CreateBooking: React.FC = () => {
 
       {/* Technician Info (if from matching) */}
       {locationState?.technician && (
-        <div className="mb-6 rounded-lg border border-primary-200 bg-primary-50 p-4">
+        <div className="mb-6 rounded-lg border border-circuit/30 bg-circuit/10 p-4">
           <div className="flex items-center space-x-4">
             {locationState.technician.profilePicture ? (
               <img
@@ -351,16 +465,16 @@ const CreateBooking: React.FC = () => {
                 className="h-16 w-16 rounded-full object-cover"
               />
             ) : (
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-200 text-2xl font-bold text-primary-700">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-circuit/30 text-2xl font-bold text-circuit">
                 {locationState.technician.firstName[0]}
                 {locationState.technician.lastName[0]}
               </div>
             )}
             <div className="flex-1">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              <h3 className="text-lg font-semibold text-bone">
                 {locationState.technician.firstName} {locationState.technician.lastName}
               </h3>
-              <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
+              <div className="flex items-center space-x-4 text-sm text-steel">
                 <span className="flex items-center">
                   ⭐ {formatRating(locationState.technician.rating)}
                 </span>
@@ -379,9 +493,9 @@ const CreateBooking: React.FC = () => {
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Service Details */}
-        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm">
-          <h2 className="mb-4 flex items-center text-lg font-semibold text-gray-900 dark:text-gray-100">
-            <FileText className="mr-2 h-5 w-5 text-primary-600" />
+        <div className="rounded-lg border border-steel/30 bg-charcoal p-6 shadow-glass">
+          <h2 className="mb-4 flex items-center text-lg font-semibold text-bone">
+            <FileText className="mr-2 h-5 w-5 text-circuit" />
             Service Details
           </h2>
 
@@ -424,26 +538,48 @@ const CreateBooking: React.FC = () => {
 
             {/* Show error if category not selected */}
             {!formData.serviceCategory && (
-              <div className="rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800 p-4">
-                <p className="text-sm text-blue-700 dark:text-blue-300">
+              <div className="rounded-lg border border-circuit/30 bg-circuit/10 p-4">
+                <p className="text-sm text-circuit">
                   Please select a service category first to see available service types.
                 </p>
               </div>
             )}
 
-            <Textarea
-              label="Description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              rows={4}
-              placeholder="Describe the issue or service needed in detail..."
-              error={errors.description}
-              required
-            />
+            {/* Description with character count */}
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-bone">
+                Description <span className="text-error">*</span>
+              </label>
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleDescriptionChange}
+                rows={4}
+                placeholder="Describe the issue or service needed in detail..."
+                disabled={isCreating}
+                maxLength={maxDescriptionLength}
+                className={clsx(
+                  'flex w-full rounded-md border bg-charcoal px-3 py-2.5 text-sm text-bone',
+                  'placeholder:text-steel/60 focus:outline-none focus:ring-2 focus:ring-circuit focus:border-transparent',
+                  'disabled:cursor-not-allowed disabled:opacity-50 resize-none',
+                  errors.description ? 'border-error' : 'border-steel/40'
+                )}
+              />
+              <div className="flex items-center justify-between">
+                {errors.description && (
+                  <p className="text-sm text-error">{errors.description}</p>
+                )}
+                <p className={clsx(
+                  'text-xs ml-auto',
+                  descriptionLength >= maxDescriptionLength ? 'text-warning' : 'text-steel'
+                )}>
+                  {descriptionLength}/{maxDescriptionLength}
+                </p>
+              </div>
+            </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-bone mb-1">
                 Quantity / Units
               </label>
               <Input
@@ -454,17 +590,18 @@ const CreateBooking: React.FC = () => {
                 min={1}
                 max={100}
                 placeholder="Enter number of units"
+                disabled={isCreating}
               />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              <p className="mt-1 text-xs text-steel">
                 For per-unit services (e.g., number of sockets, fans, fixtures to install)
               </p>
             </div>
 
-            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-700">
-              <p className="text-sm text-blue-800 dark:text-blue-200">
-                <span className="font-semibold">💡 Pricing Tip:</span> Urgency level is automatically calculated based on your scheduled date and time:
+            <div className="bg-circuit/10 rounded-lg p-4 border border-circuit/30">
+              <p className="text-sm text-bone">
+                <span className="font-semibold text-circuit">Pricing Tip:</span> Urgency level is automatically calculated based on your scheduled date and time:
               </p>
-              <ul className="mt-2 text-xs text-blue-700 dark:text-blue-300 space-y-1 ml-4">
+              <ul className="mt-2 text-xs text-steel space-y-1 ml-4">
                 <li>• Within 4 hours = Emergency (2.0× base price)</li>
                 <li>• Within 24 hours = High urgency (1.5× base price)</li>
                 <li>• Within 3 days = Medium urgency (1.2× base price)</li>
@@ -475,16 +612,16 @@ const CreateBooking: React.FC = () => {
         </div>
 
         {/* Scheduling */}
-        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm">
-          <h2 className="mb-4 flex items-center text-lg font-semibold text-gray-900 dark:text-gray-100">
-            <Calendar className="mr-2 h-5 w-5 text-primary-600" />
+        <div className="rounded-lg border border-steel/30 bg-charcoal p-6 shadow-glass">
+          <h2 className="mb-4 flex items-center text-lg font-semibold text-bone">
+            <Calendar className="mr-2 h-5 w-5 text-circuit" />
             Scheduling
           </h2>
 
           <div className="grid gap-4 md:grid-cols-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Date <span className="text-red-500">*</span>
+              <label className="block text-sm font-medium text-bone">
+                Date <span className="text-error">*</span>
               </label>
               <Input
                 type="date"
@@ -493,12 +630,13 @@ const CreateBooking: React.FC = () => {
                 onChange={handleChange}
                 min={new Date().toISOString().split('T')[0]}
                 error={errors.scheduledDate}
+                disabled={isCreating}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Time <span className="text-red-500">*</span>
+              <label className="block text-sm font-medium text-bone">
+                Time <span className="text-error">*</span>
               </label>
               <Input
                 type="time"
@@ -506,11 +644,12 @@ const CreateBooking: React.FC = () => {
                 value={formData.scheduledTime}
                 onChange={handleChange}
                 error={errors.scheduledTime}
+                disabled={isCreating}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="block text-sm font-medium text-bone">
                 Estimated Duration (hours)
               </label>
               <Input
@@ -525,91 +664,87 @@ const CreateBooking: React.FC = () => {
                 min="0.5"
                 step="0.5"
                 placeholder="e.g., 2 for 2 hours"
+                disabled={isCreating}
               />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              <p className="mt-1 text-xs text-steel">
                 Default: 2 hours
               </p>
             </div>
           </div>
         </div>
 
-        {/* Location */}
-        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm">
-          <h2 className="mb-4 flex items-center text-lg font-semibold text-gray-900 dark:text-gray-100">
-            <MapPin className="mr-2 h-5 w-5 text-primary-600" />
-            Service Location
-          </h2>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Address <span className="text-red-500">*</span>
-              </label>
-              <Input
-                type="text"
-                name="serviceLocation.address"
-                value={formData.serviceLocation.address}
-                onChange={handleChange}
-                placeholder="Street address, city, county"
-                error={errors.address}
-              />
+        {/* Location - Enhanced with LocationInput */}
+        <div className="rounded-lg border border-steel/30 bg-charcoal p-6 shadow-glass">
+          {/* Use Saved Address Option */}
+          {hasSavedAddress && (
+            <div className="mb-4 flex items-center">
+              <button
+                type="button"
+                onClick={handleUseSavedAddressToggle}
+                disabled={isCreating}
+                className={clsx(
+                  'flex items-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200',
+                  'text-sm font-medium',
+                  useSavedAddress
+                    ? 'bg-circuit/20 border-circuit text-circuit'
+                    : 'bg-transparent border-steel/40 text-steel hover:border-circuit hover:text-circuit',
+                  isCreating && 'opacity-50 cursor-not-allowed'
+                )}
+              >
+                <div className={clsx(
+                  'w-4 h-4 rounded border flex items-center justify-center transition-colors',
+                  useSavedAddress
+                    ? 'bg-circuit border-circuit'
+                    : 'border-steel/60 bg-transparent'
+                )}>
+                  {useSavedAddress && <Check className="w-3 h-3 text-white" />}
+                </div>
+                <span>Use my saved address</span>
+              </button>
+              {useSavedAddress && (
+                <span className="ml-2 text-xs text-steel">
+                  ({user?.location?.address})
+                </span>
+              )}
             </div>
+          )}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nearby Landmarks</label>
-              <Input
-                type="text"
-                name="serviceLocation.landmarks"
-                value={formData.serviceLocation.landmarks}
-                onChange={handleChange}
-                placeholder="e.g., Near City Mall, opposite Barclays Bank"
-              />
-            </div>
-
-            <Textarea
-              label="Access Instructions"
-              name="serviceLocation.accessInstructions"
-              value={formData.serviceLocation.accessInstructions}
-              onChange={handleChange}
-              rows={2}
-              placeholder="Any special instructions for finding or accessing the location..."
-            />
-          </div>
+          <LocationInput
+            value={locationData}
+            onChange={setLocationData}
+            errors={{
+              address: errors.address,
+              city: errors.city,
+              county: errors.county,
+            }}
+            disabled={isCreating || useSavedAddress}
+          />
         </div>
 
         {/* Price Estimate */}
-        {(() => {
-          console.log('=== PRICE ESTIMATE RENDER CHECK ===');
-          console.log('priceEstimate exists:', !!priceEstimate);
-          console.log('priceEstimate data:', priceEstimate);
-          console.log('isLoadingEstimate:', isLoadingEstimate);
-          console.log('===================================');
-          return null;
-        })()}
-
         {priceEstimate && (
           <PriceEstimate pricing={priceEstimate} isEstimate={true} className="mt-6" />
         )}
 
         {!priceEstimate && !isLoadingEstimate && formData.serviceCategory && formData.serviceType && (
-          <div className="mt-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
-            <p className="text-sm text-yellow-800">
-              ⚠️ No price estimate available. Please check your service selection.
+          <div className="mt-6 rounded-lg border border-warning/30 bg-warning/10 p-4">
+            <p className="text-sm text-warning">
+              No price estimate available. Please check your service selection.
             </p>
           </div>
         )}
 
         {isLoadingEstimate && (
-          <div className="mt-6 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm">
+          <div className="mt-6 rounded-lg border border-steel/30 bg-charcoal p-6 shadow-glass">
             <div className="flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-              <span className="ml-3 text-gray-600 dark:text-gray-400">Calculating price estimate...</span>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-circuit"></div>
+              <span className="ml-3 text-steel">Calculating price estimate...</span>
             </div>
           </div>
         )}
 
-        {/* Actions */}
-        <div className="flex items-center justify-between space-x-4">
+        {/* Desktop Actions */}
+        <div className="hidden md:flex items-center justify-between space-x-4">
           <Button
             type="button"
             variant="outline"
@@ -630,22 +765,25 @@ const CreateBooking: React.FC = () => {
         </div>
       </form>
 
+      {/* Mobile Sticky Button */}
+      <StickyButton
+        type="submit"
+        variant="primary"
+        isValid={isFormValid}
+        disabled={isCreating}
+        onClick={handleSubmit}
+        className="md:hidden"
+      >
+        {isCreating ? 'Creating...' : locationState?.matchId ? 'Confirm Booking' : 'Create Booking'}
+      </StickyButton>
+
       {/* Payment Modal */}
       {createdBooking && (() => {
-        // Debug: Calculate amount with all fallbacks
+        // Calculate amount with all fallbacks
         const amount = createdBooking.bookingFee?.amount ||
                        priceEstimate?.bookingFee ||
                        priceEstimate?.details?.bookingFee?.amount ||
                        0;
-
-        console.log('=== PAYMENT MODAL PROPS DEBUG ===');
-        console.log('createdBooking.bookingFee?.amount:', createdBooking.bookingFee?.amount);
-        console.log('priceEstimate?.bookingFee:', priceEstimate?.bookingFee);
-        console.log('priceEstimate?.details?.bookingFee?.amount:', priceEstimate?.details?.bookingFee?.amount);
-        console.log('Final amount being passed:', amount);
-        console.log('Currency:', createdBooking.pricing?.currency || priceEstimate?.currency || 'KES');
-        console.log('Booking ID:', createdBooking._id);
-        console.log('=================================');
 
         return (
           <BookingFeePaymentModal

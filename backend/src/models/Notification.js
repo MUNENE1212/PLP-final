@@ -107,7 +107,7 @@ const NotificationSchema = new Schema({
   },
 
   // Deep Link (for mobile apps)
-  deepLink: String, // e.g., 'baitech://booking/123'
+  deepLink: String, // e.g., 'dumuwaks://booking/123'
 
   // Related Documents
   relatedBooking: {

@@ -1,7 +1,13 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axios from '@/lib/axios';
 import toast from 'react-hot-toast';
 import * as bookingService from '@/services/booking.service';
+import type {
+  Service,
+  AvailableTechnician,
+  PaymentPlan,
+  BookingFlowState,
+} from '@/types/booking';
 
 // Types
 export interface ServiceLocation {
@@ -119,6 +125,9 @@ interface BookingState {
     total: number;
     byStatus: Array<{ _id: string; count: number; totalRevenue: number }>;
   } | null;
+
+  // WORD BANK integration state
+  bookingFlow: BookingFlowState;
 }
 
 const initialState: BookingState = {
@@ -135,6 +144,39 @@ const initialState: BookingState = {
     pages: 0,
   },
   stats: null,
+
+  // WORD BANK integration initial state
+  bookingFlow: {
+    currentStep: 1,
+    selectedService: null,
+    selectedTechnician: null,
+    selectedPaymentPlan: null,
+    availableTechnicians: [],
+    scheduledDate: '',
+    scheduledTime: '',
+    location: {
+      address: '',
+      coordinates: undefined,
+    },
+    description: '',
+    attachments: [],
+    quantity: 1,
+    escrowDeposit: 0,
+    isSubmitting: false,
+    createdBooking: null,
+    // Pre-selection state for matching flow integration
+    preSelectedTechnicianId: null,
+    preSelectedServiceId: null,
+    matchingRequestId: null,
+    isFromMatching: false,
+    // Price estimation state
+    priceEstimate: null,
+    isLoadingEstimate: false,
+    // Urgency display
+    urgency: 'medium',
+    // Estimated duration
+    estimatedDuration: 120,
+  },
 };
 
 // Async thunks
@@ -400,6 +442,282 @@ const bookingSlice = createSlice({
     },
     clearCurrentBooking: (state) => {
       state.currentBooking = null;
+    },
+
+    // ===== WORD BANK BOOKING FLOW REDUCERS =====
+
+    /**
+     * Set current booking step
+     */
+    setBookingStep: (state, action: PayloadAction<number>) => {
+      state.bookingFlow.currentStep = action.payload;
+    },
+
+    /**
+     * Set selected service from WORD BANK
+     */
+    setSelectedService: (state, action: PayloadAction<Service | null>) => {
+      state.bookingFlow.selectedService = action.payload;
+      // Reset dependent fields when service changes
+      state.bookingFlow.selectedTechnician = null;
+      state.bookingFlow.selectedPaymentPlan = null;
+      state.bookingFlow.availableTechnicians = [];
+    },
+
+    /**
+     * Set selected technician
+     */
+    setSelectedTechnician: (state, action: PayloadAction<AvailableTechnician | null>) => {
+      state.bookingFlow.selectedTechnician = action.payload;
+      // Reset payment plan when technician changes
+      state.bookingFlow.selectedPaymentPlan = null;
+    },
+
+    /**
+     * Set selected payment plan
+     */
+    setSelectedPaymentPlan: (state, action: PayloadAction<PaymentPlan | null>) => {
+      state.bookingFlow.selectedPaymentPlan = action.payload;
+      // Update escrow deposit based on payment plan
+      if (action.payload && state.bookingFlow.selectedService) {
+        const basePrice = (state.bookingFlow.selectedService as Service).basePriceMin || 0;
+        state.bookingFlow.escrowDeposit = Math.round(
+          basePrice * (action.payload.depositPercentage / 100)
+        );
+      }
+    },
+
+    /**
+     * Set available technicians for selected service
+     */
+    setAvailableTechnicians: (state, action: PayloadAction<AvailableTechnician[]>) => {
+      state.bookingFlow.availableTechnicians = action.payload;
+    },
+
+    /**
+     * Set scheduled date
+     */
+    setScheduledDate: (state, action: PayloadAction<string>) => {
+      state.bookingFlow.scheduledDate = action.payload;
+    },
+
+    /**
+     * Set scheduled time
+     */
+    setScheduledTime: (state, action: PayloadAction<string>) => {
+      state.bookingFlow.scheduledTime = action.payload;
+    },
+
+    /**
+     * Set service location
+     */
+    setBookingLocation: (state, action: PayloadAction<{
+      address: string;
+      coordinates?: { lat: number; lng: number };
+      landmarks?: string;
+      accessInstructions?: string;
+    }>) => {
+      state.bookingFlow.location = action.payload;
+    },
+
+    /**
+     * Set job description
+     */
+    setBookingDescription: (state, action: PayloadAction<string>) => {
+      state.bookingFlow.description = action.payload;
+    },
+
+    /**
+     * Set attachments
+     */
+    setBookingAttachments: (state, action: PayloadAction<File[]>) => {
+      state.bookingFlow.attachments = action.payload;
+    },
+
+    /**
+     * Set quantity
+     */
+    setBookingQuantity: (state, action: PayloadAction<number>) => {
+      state.bookingFlow.quantity = action.payload;
+    },
+
+    /**
+     * Set escrow deposit amount
+     */
+    setEscrowDeposit: (state, action: PayloadAction<number>) => {
+      state.bookingFlow.escrowDeposit = action.payload;
+    },
+
+    /**
+     * Set submitting state
+     */
+    setBookingSubmitting: (state, action: PayloadAction<boolean>) => {
+      state.bookingFlow.isSubmitting = action.payload;
+    },
+
+    /**
+     * Set created booking
+     */
+    setCreatedBooking: (state, action: PayloadAction<any>) => {
+      state.bookingFlow.createdBooking = action.payload;
+    },
+
+    /**
+     * Reset booking flow to initial state
+     */
+    resetBookingFlow: (state) => {
+      state.bookingFlow = initialState.bookingFlow;
+    },
+
+    /**
+     * Go to next step
+     */
+    nextBookingStep: (state) => {
+      if (state.bookingFlow.currentStep < 5) {
+        state.bookingFlow.currentStep += 1;
+      }
+    },
+
+    /**
+     * Go to previous step
+     */
+    prevBookingStep: (state) => {
+      if (state.bookingFlow.currentStep > 1) {
+        state.bookingFlow.currentStep -= 1;
+      }
+    },
+
+    /**
+     * Set pre-selected technician from matching
+     */
+    setPreSelectedTechnician: (state, action: PayloadAction<{
+      technicianId: string;
+      technician: AvailableTechnician;
+      matchingRequestId?: string;
+    }>) => {
+      state.bookingFlow.preSelectedTechnicianId = action.payload.technicianId;
+      state.bookingFlow.selectedTechnician = action.payload.technician;
+      state.bookingFlow.matchingRequestId = action.payload.matchingRequestId || null;
+      state.bookingFlow.isFromMatching = true;
+      // Reset payment plan when technician changes
+      state.bookingFlow.selectedPaymentPlan = null;
+    },
+
+    /**
+     * Set pre-selected service from service page
+     */
+    setPreSelectedService: (state, action: PayloadAction<{
+      serviceId: string;
+      service: Service;
+    }>) => {
+      state.bookingFlow.preSelectedServiceId = action.payload.serviceId;
+      state.bookingFlow.selectedService = action.payload.service;
+      // Reset dependent fields when service changes
+      state.bookingFlow.selectedTechnician = null;
+      state.bookingFlow.selectedPaymentPlan = null;
+      state.bookingFlow.availableTechnicians = [];
+    },
+
+    /**
+     * Clear pre-selection state
+     */
+    clearPreSelection: (state) => {
+      state.bookingFlow.preSelectedTechnicianId = null;
+      state.bookingFlow.preSelectedServiceId = null;
+      state.bookingFlow.matchingRequestId = null;
+      state.bookingFlow.isFromMatching = false;
+    },
+
+    /**
+     * Set price estimate
+     */
+    setPriceEstimate: (state, action: PayloadAction<any>) => {
+      state.bookingFlow.priceEstimate = action.payload;
+    },
+
+    /**
+     * Set loading estimate state
+     */
+    setLoadingEstimate: (state, action: PayloadAction<boolean>) => {
+      state.bookingFlow.isLoadingEstimate = action.payload;
+    },
+
+    /**
+     * Set urgency level
+     */
+    setBookingUrgency: (state, action: PayloadAction<'low' | 'medium' | 'high' | 'emergency'>) => {
+      state.bookingFlow.urgency = action.payload;
+    },
+
+    /**
+     * Set estimated duration
+     */
+    setEstimatedDuration: (state, action: PayloadAction<number>) => {
+      state.bookingFlow.estimatedDuration = action.payload;
+    },
+
+    /**
+     * Restore booking flow state from localStorage draft
+     * This restores all saved state except for File objects (attachments)
+     */
+    restoreBookingDraft: (state, action: PayloadAction<{
+      currentStep: number;
+      selectedService: Service | null;
+      selectedTechnician: AvailableTechnician | null;
+      selectedPaymentPlan: PaymentPlan | null;
+      scheduledDate: string;
+      scheduledTime: string;
+      location: {
+        address: string;
+        coordinates?: { lat: number; lng: number };
+        landmarks?: string;
+        accessInstructions?: string;
+      };
+      description: string;
+      quantity: number;
+      escrowDeposit: number;
+      urgency: 'low' | 'medium' | 'high' | 'emergency';
+      estimatedDuration: number;
+      preSelectedTechnicianId: string | null;
+      preSelectedServiceId: string | null;
+      matchingRequestId: string | null;
+      isFromMatching: boolean;
+    }>) => {
+      const draft = action.payload;
+      state.bookingFlow = {
+        ...state.bookingFlow,
+        currentStep: draft.currentStep,
+        selectedService: draft.selectedService,
+        selectedTechnician: draft.selectedTechnician,
+        selectedPaymentPlan: draft.selectedPaymentPlan,
+        scheduledDate: draft.scheduledDate,
+        scheduledTime: draft.scheduledTime,
+        location: draft.location,
+        description: draft.description,
+        // Attachments cannot be restored from localStorage, user must re-upload
+        attachments: [],
+        quantity: draft.quantity,
+        escrowDeposit: draft.escrowDeposit,
+        urgency: draft.urgency,
+        estimatedDuration: draft.estimatedDuration,
+        preSelectedTechnicianId: draft.preSelectedTechnicianId,
+        preSelectedServiceId: draft.preSelectedServiceId,
+        matchingRequestId: draft.matchingRequestId,
+        isFromMatching: draft.isFromMatching,
+        isSubmitting: false,
+        createdBooking: null,
+        priceEstimate: null,
+        isLoadingEstimate: false,
+        availableTechnicians: [],
+      };
+    },
+
+    /**
+     * Clear the booking draft (for manual clear or after booking completion)
+     * This is an alias for resetBookingFlow but with clearer intent for persistence
+     */
+    clearBookingDraft: (state) => {
+      state.bookingFlow = initialState.bookingFlow;
     },
   },
   extraReducers: (builder) => {
@@ -741,5 +1059,39 @@ const bookingSlice = createSlice({
   },
 });
 
-export const { clearError, clearCurrentBooking } = bookingSlice.actions;
+export const {
+  clearError,
+  clearCurrentBooking,
+  // WORD BANK flow actions
+  setBookingStep,
+  setSelectedService,
+  setSelectedTechnician,
+  setSelectedPaymentPlan,
+  setAvailableTechnicians,
+  setScheduledDate,
+  setScheduledTime,
+  setBookingLocation,
+  setBookingDescription,
+  setBookingAttachments,
+  setBookingQuantity,
+  setEscrowDeposit,
+  setBookingSubmitting,
+  setCreatedBooking,
+  resetBookingFlow,
+  nextBookingStep,
+  prevBookingStep,
+  // Pre-selection actions
+  setPreSelectedTechnician,
+  setPreSelectedService,
+  clearPreSelection,
+  // Price estimation actions
+  setPriceEstimate,
+  setLoadingEstimate,
+  // Urgency and duration actions
+  setBookingUrgency,
+  setEstimatedDuration,
+  // Persistence actions
+  restoreBookingDraft,
+  clearBookingDraft,
+} = bookingSlice.actions;
 export default bookingSlice.reducer;

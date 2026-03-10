@@ -1,6 +1,6 @@
-# Contributing to BaiTech Backend
+# Contributing to Dumu Waks
 
-Thank you for considering contributing to BaiTech! We appreciate your time and effort in helping improve our platform.
+Thank you for considering contributing to Dumu Waks! We appreciate your time and effort in helping improve our platform.
 
 ## Table of Contents
 
@@ -55,13 +55,13 @@ We pledge to make participation in our project a harassment-free experience for 
 
 2. **Clone your fork**
 ```bash
-git clone https://github.com/YOUR_USERNAME/baitech-backend.git
-cd baitech-backend
+git clone https://github.com/YOUR_USERNAME/dumuwaks.git
+cd dumuwaks
 ```
 
 3. **Add upstream remote**
 ```bash
-git remote add upstream https://github.com/baitech/baitech-backend.git
+git remote add upstream <original-repo-url>
 ```
 
 4. **Install dependencies**
@@ -148,7 +148,7 @@ git commit -m "feat: add AI matching algorithm"
 5. **Keep your branch updated**
 ```bash
 git fetch upstream
-git rebase upstream/main
+git rebase upstream/master
 ```
 
 6. **Push to your fork**
@@ -464,12 +464,12 @@ BREAKING CHANGE: Payment integration now requires Stripe SDK v3"
 git fetch upstream
 
 # Update your main branch
-git checkout main
-git merge upstream/main
+git checkout master
+git merge upstream/master
 
 # Update your feature branch
 git checkout feature/your-feature
-git rebase upstream/main
+git rebase upstream/master
 ```
 
 ---
@@ -650,9 +650,7 @@ Contributors will be:
 
 ## Questions?
 
-- Open an issue for questions
-- Join our Discord community
-- Email: dev@baitech.com
+- Open a GitHub issue for questions
 
 ---
 
@@ -662,4 +660,4 @@ By contributing, you agree that your contributions will be licensed under the MI
 
 ---
 
-**Thank you for contributing to BaiTech!** 🎉
+**Thank you for contributing to Dumu Waks!**

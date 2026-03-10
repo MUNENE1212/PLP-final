@@ -4,6 +4,7 @@ export interface BookingFeeStatus {
   required: boolean;
   percentage: number;
   amount: number;
+  tierLabel?: string;
   status: 'pending' | 'paid' | 'held' | 'released' | 'refunded';
   paidAt?: string;
   releasedAt?: string;

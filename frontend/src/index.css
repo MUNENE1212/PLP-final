@@ -1,6 +1,8 @@
 /**
  * Dumu Waks Global Styles
- * X/Twitter-inspired dark theme (dark-first approach)
+ * RICH DARK DESIGN SYSTEM - Dark-First Approach
+ * Deep Mahogany (#261212) + Iron Charcoal (#1C1C1C) Base
+ * Circuit Blue (#0090C5) + Wrench Purple (#7D4E9F) Accents
  */
 
 @import './styles/tokens.css';
@@ -24,7 +26,7 @@
     /* Smooth scrolling */
     scroll-behavior: smooth;
 
-    /* Dark theme as default - no toggle needed */
+    /* Dark theme as default */
     color-scheme: dark;
 
     /* Prevent iOS text size adjust */
@@ -33,7 +35,7 @@
   }
 
   body {
-    /* X/Twitter dark theme colors */
+    /* Rich dark theme colors */
     background-color: var(--dw-bg-primary);
     color: var(--dw-text-primary);
 
@@ -101,7 +103,7 @@
   }
 
   a:hover {
-    color: var(--dw-color-info);
+    color: var(--dw-accent-secondary);
     text-decoration: underline;
   }
 
@@ -141,43 +143,49 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: var(--dw-color-medium-gray);
+    background: var(--dw-steel-600);
     border-radius: var(--dw-radius-full);
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--dw-color-light-gray);
+    background: var(--dw-steel-500);
   }
 
   /* Firefox */
   * {
     scrollbar-width: thin;
-    scrollbar-color: var(--dw-color-medium-gray) var(--dw-bg-secondary);
+    scrollbar-color: var(--dw-steel-600) var(--dw-bg-secondary);
   }
 }
 
 @layer components {
   /* ============================================
      BUTTON COMPONENTS
-     Using Dumu Waks orange accent
+     Using Circuit Blue accent with LED glow
      ============================================ */
 
   .btn {
-    @apply inline-flex items-center justify-center rounded-full text-sm font-medium transition-all duration-200;
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+    @apply inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200;
     @apply disabled:pointer-events-none disabled:opacity-50;
-    min-height: 44px; /* Touch target minimum */
+    min-height: 44px;
     padding: 0 var(--dw-spacing-6);
+  }
+
+  .btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--dw-accent-primary), 0 0 0 4px var(--dw-bg-primary);
   }
 
   .btn-primary {
     background: var(--dw-accent-primary);
     color: white;
     font-weight: var(--dw-weight-semibold);
+    box-shadow: var(--dw-shadow-led);
   }
 
   .btn-primary:hover {
     background: var(--dw-accent-hover);
+    box-shadow: var(--dw-shadow-led-lg);
   }
 
   .btn-primary:active {
@@ -185,15 +193,27 @@
   }
 
   .btn-secondary {
-    background: transparent;
-    color: var(--dw-text-primary);
-    border: 1px solid var(--dw-border-default);
+    background: var(--dw-accent-secondary);
+    color: white;
     font-weight: var(--dw-weight-semibold);
   }
 
   .btn-secondary:hover {
+    background: var(--dw-wrench-600);
+    box-shadow: var(--dw-shadow-led-purple);
+  }
+
+  .btn-outline {
+    background: transparent;
+    color: var(--dw-text-primary);
+    border: 1px solid var(--dw-border-strong);
+    font-weight: var(--dw-weight-semibold);
+  }
+
+  .btn-outline:hover {
     background: var(--dw-bg-hover);
-    border-color: var(--dw-border-strong);
+    border-color: var(--dw-accent-primary);
+    color: var(--dw-accent-primary);
   }
 
   .btn-ghost {
@@ -202,19 +222,19 @@
   }
 
   .btn-ghost:hover {
-    background: var(--dw-bg-active);
+    background: var(--dw-bg-hover);
   }
 
   .btn-glass {
-    background: rgba(22, 24, 28, 0.6);
+    background: rgba(28, 28, 28, 0.6);
     backdrop-filter: blur(12px);
-    border: 1px solid var(--dw-border-subtle);
+    border: 1px solid var(--dw-border-default);
     color: var(--dw-text-primary);
   }
 
   .btn-glass:hover {
-    background: rgba(22, 24, 28, 0.8);
-    border-color: var(--dw-border-default);
+    background: rgba(28, 28, 28, 0.8);
+    border-color: var(--dw-accent-primary);
   }
 
   /* Button Sizes */
@@ -236,18 +256,22 @@
 
   .input {
     @apply flex w-full rounded-lg text-sm transition-colors;
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background;
     @apply disabled:cursor-not-allowed disabled:opacity-50;
 
-    background: var(--dw-bg-primary);
+    background: var(--dw-bg-secondary);
     border: 1px solid var(--dw-border-default);
     color: var(--dw-text-primary);
     min-height: 44px;
     padding: 0 var(--dw-spacing-4);
   }
 
+  .input:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--dw-accent-primary), 0 0 0 4px var(--dw-bg-primary);
+  }
+
   .input::placeholder {
-    color: var(--dw-text-tertiary);
+    color: var(--dw-text-secondary);
   }
 
   .input:focus {
@@ -260,7 +284,7 @@
 
   .input-error:focus {
     border-color: var(--dw-color-error);
-    --tw-ring-color: var(--dw-color-error);
+    box-shadow: 0 0 0 2px var(--dw-color-error), 0 0 0 4px var(--dw-bg-primary);
   }
 
   /* ============================================
@@ -269,15 +293,16 @@
 
   .card {
     background: var(--dw-bg-secondary);
-    border: 1px solid var(--dw-border-subtle);
+    border: 1px solid var(--dw-border-default);
     border-radius: var(--dw-radius-xl);
     overflow: hidden;
-    transition: background-color var(--dw-duration-fast), border-color var(--dw-duration-fast);
+    transition: background-color var(--dw-duration-fast), border-color var(--dw-duration-fast), box-shadow var(--dw-duration-fast);
   }
 
   .card:hover {
     background: var(--dw-bg-elevated);
-    border-color: var(--dw-border-default);
+    border-color: var(--dw-border-strong);
+    box-shadow: var(--dw-shadow-mahogany);
   }
 
   .card-header {
@@ -306,14 +331,14 @@
 
   /* Glassmorphism utilities */
   .glass {
-    background: rgba(22, 24, 28, 0.6);
+    background: rgba(28, 28, 28, 0.6);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid var(--dw-border-subtle);
+    border: 1px solid var(--dw-border-default);
   }
 
   .glass-nav {
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(38, 18, 18, 0.85);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--dw-border-subtle);
@@ -321,10 +346,20 @@
 
   /* Text styles */
   .text-gradient {
-    background: linear-gradient(135deg, var(--dw-accent-primary), #fb923c);
+    background: linear-gradient(135deg, var(--dw-accent-primary), var(--dw-accent-secondary));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+  }
+
+  /* LED glow utility */
+  .led-glow {
+    box-shadow: var(--dw-shadow-led);
+    transition: box-shadow var(--dw-duration-normal) var(--dw-ease-out);
+  }
+
+  .led-glow:hover {
+    box-shadow: var(--dw-shadow-led-lg);
   }
 
   /* Shimmer loading effect */
@@ -332,7 +367,7 @@
     background: linear-gradient(
       90deg,
       var(--dw-bg-secondary) 0%,
-      var(--dw-color-medium-gray) 50%,
+      var(--dw-steel-700) 50%,
       var(--dw-bg-secondary) 100%
     );
     background-size: 200% 100%;
@@ -394,6 +429,15 @@
   }
 }
 
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(0, 144, 197, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(0, 144, 197, 0.8), 0 0 30px rgba(0, 144, 197, 0.4);
+  }
+}
+
 .animate-fade-in {
   animation: fadeIn 300ms ease-out;
 }
@@ -404,6 +448,10 @@
 
 .animate-scale-in {
   animation: scaleIn 200ms ease-out;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2s ease-in-out infinite;
 }
 
 /* ============================================
@@ -439,5 +487,49 @@
 @media (min-width: 1280px) {
   .container {
     max-width: var(--dw-container-xl);
+  }
+}
+
+/* ============================================
+   SAFE AREA UTILITIES (for notched devices)
+   ============================================ */
+
+.safe-area-inset-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.safe-area-inset-top {
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+.safe-area-inset-left {
+  padding-left: env(safe-area-inset-left, 0);
+}
+
+.safe-area-inset-right {
+  padding-right: env(safe-area-inset-right, 0);
+}
+
+/* ============================================
+   SCROLLBAR HIDE UTILITY
+   ============================================ */
+
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* ============================================
+   BOTTOM NAV SPACING
+   ============================================ */
+
+@media (max-width: 767px) {
+  /* Ensure WhatsApp button clears bottom nav */
+  .whatsapp-float {
+    bottom: calc(4rem + env(safe-area-inset-bottom, 0px) + 1rem) !important;
   }
 }

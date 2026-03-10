@@ -1,23 +1,27 @@
 import React from 'react';
-import { Moon, Sun } from 'lucide-react';
-import { useTheme } from '@/contexts/ThemeContext';
+import { Moon } from 'lucide-react';
 
+/**
+ * ThemeToggle Component
+ *
+ * Since this is a dark-only design system with the Rich Dark Theme,
+ * this component is now a visual indicator of the dark theme mode.
+ * It no longer toggles between light and dark modes.
+ *
+ * The design system uses:
+ * - Deep Mahogany (#261212) as primary background
+ * - Iron Charcoal (#1C1C1C) as secondary background
+ * - Circuit Blue (#0090C5) as primary accent
+ * - Wrench Purple (#7D4E9F) as secondary accent
+ */
 const ThemeToggle: React.FC = () => {
-  const { theme, toggleTheme } = useTheme();
-  const isDark = theme === 'dark';
-
   return (
     <button
-      onClick={toggleTheme}
-      className="p-2 rounded-lg bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors duration-200"
-      aria-label="Toggle theme"
-      title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+      className="p-2 rounded-lg bg-charcoal border border-subtle hover:bg-hover transition-colors duration-200"
+      aria-label="Dark theme enabled"
+      title="Dark theme (always on)"
     >
-      {isDark ? (
-        <Sun className="w-5 h-5 text-yellow-500" />
-      ) : (
-        <Moon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-      )}
+      <Moon className="w-5 h-5 text-circuit" />
     </button>
   );
 };

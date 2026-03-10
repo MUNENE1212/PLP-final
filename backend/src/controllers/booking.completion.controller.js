@@ -1,4 +1,30 @@
 const Booking = require('../models/Booking');
+const cloudinaryService = require('../services/cloudinary.service');
+const mongoose = require('mongoose');
+
+// Maximum number of completion media items allowed per booking
+const MAX_COMPLETION_MEDIA = 5;
+
+/**
+ * Validate file type for completion media
+ * @param {Object} file - File object from multer
+ * @returns {boolean} - Whether file is valid
+ */
+const validateMediaType = (file) => {
+  const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+  const allowedVideoTypes = ['video/mp4', 'video/webm', 'video/ogg'];
+
+  return allowedImageTypes.includes(file.mimetype) || allowedVideoTypes.includes(file.mimetype);
+};
+
+/**
+ * Determine media type from mimetype
+ * @param {string} mimetype - File MIME type
+ * @returns {string} - 'image' or 'video'
+ */
+const getMediaType = (mimetype) => {
+  return mimetype.startsWith('video/') ? 'video' : 'image';
+};
 
 /**
  * @desc    Support agent initiates follow-up for unresponsive customer
@@ -234,6 +260,415 @@ exports.getPendingCompletions = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching pending completions',
+      error: error.message
+    });
+  }
+};
+
+// ===== COMPLETION MEDIA MANAGEMENT =====
+
+/**
+ * @desc    Upload completion media (photos/videos) for a booking
+ * @route   POST /api/v1/bookings/:id/completion-media
+ * @access  Private (Technician only - assigned to booking)
+ */
+exports.uploadCompletionMedia = async (req, res) => {
+  try {
+    const { id: bookingId } = req.params;
+    const { caption } = req.body;
+    const files = req.files;
+
+    // Validate booking ID
+    if (!mongoose.Types.ObjectId.isValid(bookingId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid booking ID format'
+      });
+    }
+
+    // Find the booking
+    const booking = await Booking.findById(bookingId)
+      .populate('customer', 'firstName lastName')
+      .populate('technician', 'firstName lastName');
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Verify the user is the assigned technician
+    if (booking.technician?._id?.toString() !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Only the assigned technician can upload completion media'
+      });
+    }
+
+    // Verify booking is in a valid status for uploading completion media
+    // Allow uploads when: in_progress, completed (pending verification), or paused
+    const allowedStatuses = ['in_progress', 'completed', 'paused'];
+    if (!allowedStatuses.includes(booking.status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot upload completion media for booking in ${booking.status} status. ` +
+          'Media can only be uploaded when job is in progress, completed, or paused.'
+      });
+    }
+
+    // Check if files were uploaded
+    if (!files || files.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please upload at least one image or video file'
+      });
+    }
+
+    // Check current media count and new uploads don't exceed limit
+    const currentMediaCount = booking.completionMedia?.length || 0;
+    const newMediaCount = files.length;
+
+    if (currentMediaCount + newMediaCount > MAX_COMPLETION_MEDIA) {
+      return res.status(400).json({
+        success: false,
+        message: `Maximum ${MAX_COMPLETION_MEDIA} completion media items allowed. ` +
+          `Current: ${currentMediaCount}, Attempting to add: ${newMediaCount}`,
+        currentCount: currentMediaCount,
+        maxAllowed: MAX_COMPLETION_MEDIA
+      });
+    }
+
+    // Validate each file
+    for (const file of files) {
+      if (!validateMediaType(file)) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid file type: ${file.originalname}. ` +
+            'Only images (jpeg, jpg, png, gif, webp) and videos (mp4, webm, ogg) are allowed.'
+        });
+      }
+    }
+
+    // Upload files to Cloudinary
+    const uploadPromises = files.map(async (file) => {
+      try {
+        const uploadResult = await cloudinaryService.uploadFile(
+          {
+            buffer: file.buffer,
+            originalname: file.originalname,
+            mimetype: file.mimetype
+          },
+          'completion-media',
+          {
+            resource_type: getMediaType(file.mimetype) === 'video' ? 'video' : 'image',
+            transformation: getMediaType(file.mimetype) === 'image'
+              ? [{ width: 1280, height: 720, crop: 'limit', quality: 'auto' }, { fetch_format: 'auto' }]
+              : [{ quality: 'auto' }]
+          }
+        );
+
+        return {
+          url: uploadResult.url,
+          publicId: uploadResult.publicId,
+          type: getMediaType(file.mimetype),
+          caption: caption || '',
+          uploadedAt: new Date(),
+          uploadedBy: req.user.id
+        };
+      } catch (uploadError) {
+        console.error('Cloudinary upload error for file:', file.originalname, uploadError);
+        throw new Error(`Failed to upload ${file.originalname}: ${uploadError.message}`);
+      }
+    });
+
+    const uploadedMedia = await Promise.all(uploadPromises);
+
+    // Initialize completionMedia array if needed
+    if (!booking.completionMedia) {
+      booking.completionMedia = [];
+    }
+
+    // Add new media to booking
+    booking.completionMedia.push(...uploadedMedia);
+
+    await booking.save();
+
+    // Populate the uploadedBy field for response
+    await booking.populate('completionMedia.uploadedBy', 'firstName lastName');
+
+    res.status(201).json({
+      success: true,
+      message: `Successfully uploaded ${uploadedMedia.length} completion media file(s)`,
+      data: {
+        bookingId: booking._id,
+        bookingNumber: booking.bookingNumber,
+        completionMedia: booking.completionMedia,
+        totalMedia: booking.completionMedia.length,
+        remainingSlots: MAX_COMPLETION_MEDIA - booking.completionMedia.length
+      }
+    });
+
+  } catch (error) {
+    console.error('Upload completion media error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error uploading completion media',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Get all completion media for a booking
+ * @route   GET /api/v1/bookings/:id/completion-media
+ * @access  Private (Customer, Technician, Support, Admin)
+ */
+exports.getCompletionMedia = async (req, res) => {
+  try {
+    const { id: bookingId } = req.params;
+
+    // Validate booking ID
+    if (!mongoose.Types.ObjectId.isValid(bookingId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid booking ID format'
+      });
+    }
+
+    // Find the booking
+    const booking = await Booking.findById(bookingId)
+      .populate('customer', 'firstName lastName')
+      .populate('technician', 'firstName lastName')
+      .populate('completionMedia.uploadedBy', 'firstName lastName');
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Check authorization
+    const isCustomer = booking.customer?._id?.toString() === req.user.id;
+    const isTechnician = booking.technician?._id?.toString() === req.user.id;
+    const isSupport = ['support', 'admin'].includes(req.user.role);
+
+    if (!isCustomer && !isTechnician && !isSupport) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to view completion media for this booking'
+      });
+    }
+
+    // Get completion media with additional context
+    const completionMedia = booking.completionMedia || [];
+
+    // Also get problem images for before/after comparison
+    const problemImages = booking.images || [];
+
+    res.status(200).json({
+      success: true,
+      data: {
+        bookingId: booking._id,
+        bookingNumber: booking.bookingNumber,
+        status: booking.status,
+        completionMedia,
+        problemImages,
+        totalCompletionMedia: completionMedia.length,
+        totalProblemImages: problemImages.length,
+        maxAllowed: MAX_COMPLETION_MEDIA,
+        remainingSlots: MAX_COMPLETION_MEDIA - completionMedia.length
+      }
+    });
+
+  } catch (error) {
+    console.error('Get completion media error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching completion media',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Delete a specific completion media item
+ * @route   DELETE /api/v1/bookings/:id/completion-media/:mediaId
+ * @access  Private (Technician who uploaded, or Support/Admin)
+ */
+exports.deleteCompletionMedia = async (req, res) => {
+  try {
+    const { id: bookingId, mediaId } = req.params;
+
+    // Validate IDs
+    if (!mongoose.Types.ObjectId.isValid(bookingId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid booking ID format'
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(mediaId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid media ID format'
+      });
+    }
+
+    // Find the booking
+    const booking = await Booking.findById(bookingId);
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Find the media item
+    const mediaIndex = booking.completionMedia?.findIndex(
+      (media) => media._id.toString() === mediaId
+    );
+
+    if (mediaIndex === -1 || mediaIndex === undefined) {
+      return res.status(404).json({
+        success: false,
+        message: 'Completion media not found'
+      });
+    }
+
+    const mediaItem = booking.completionMedia[mediaIndex];
+
+    // Check authorization - only uploader, support, or admin can delete
+    const isUploader = mediaItem.uploadedBy?.toString() === req.user.id;
+    const isSupport = ['support', 'admin'].includes(req.user.role);
+
+    if (!isUploader && !isSupport) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to delete this media item'
+      });
+    }
+
+    // Delete from Cloudinary
+    try {
+      await cloudinaryService.deleteFile(mediaItem.publicId, mediaItem.type);
+    } catch (cloudinaryError) {
+      console.warn('Failed to delete from Cloudinary:', cloudinaryError.message);
+      // Continue with database deletion even if Cloudinary fails
+    }
+
+    // Remove from array
+    booking.completionMedia.splice(mediaIndex, 1);
+
+    await booking.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Completion media deleted successfully',
+      data: {
+        bookingId: booking._id,
+        remainingMedia: booking.completionMedia.length,
+        remainingSlots: MAX_COMPLETION_MEDIA - booking.completionMedia.length
+      }
+    });
+
+  } catch (error) {
+    console.error('Delete completion media error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting completion media',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Update caption for a completion media item
+ * @route   PATCH /api/v1/bookings/:id/completion-media/:mediaId
+ * @access  Private (Technician who uploaded, or Support/Admin)
+ */
+exports.updateCompletionMediaCaption = async (req, res) => {
+  try {
+    const { id: bookingId, mediaId } = req.params;
+    const { caption } = req.body;
+
+    // Validate IDs
+    if (!mongoose.Types.ObjectId.isValid(bookingId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid booking ID format'
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(mediaId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid media ID format'
+      });
+    }
+
+    // Validate caption length
+    if (caption && caption.length > 500) {
+      return res.status(400).json({
+        success: false,
+        message: 'Caption must be 500 characters or less'
+      });
+    }
+
+    // Find the booking
+    const booking = await Booking.findById(bookingId);
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Find the media item
+    const mediaItem = booking.completionMedia?.find(
+      (media) => media._id.toString() === mediaId
+    );
+
+    if (!mediaItem) {
+      return res.status(404).json({
+        success: false,
+        message: 'Completion media not found'
+      });
+    }
+
+    // Check authorization
+    const isUploader = mediaItem.uploadedBy?.toString() === req.user.id;
+    const isSupport = ['support', 'admin'].includes(req.user.role);
+
+    if (!isUploader && !isSupport) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to update this media item'
+      });
+    }
+
+    // Update caption
+    mediaItem.caption = caption || '';
+
+    await booking.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Caption updated successfully',
+      data: {
+        mediaId: mediaItem._id,
+        caption: mediaItem.caption
+      }
+    });
+
+  } catch (error) {
+    console.error('Update completion media caption error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating caption',
       error: error.message
     });
   }

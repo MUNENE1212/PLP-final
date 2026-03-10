@@ -17,7 +17,7 @@ cloudinary.config({
 exports.uploadImage = async (filePath, options = {}) => {
   try {
     const defaultOptions = {
-      folder: options.folder || 'baitech',
+      folder: options.folder || 'dumuwaks',
       resource_type: 'image',
       transformation: [
         { width: 1200, height: 1200, crop: 'limit' },
@@ -53,7 +53,7 @@ exports.uploadImage = async (filePath, options = {}) => {
 exports.uploadVideo = async (filePath, options = {}) => {
   try {
     const defaultOptions = {
-      folder: options.folder || 'baitech/videos',
+      folder: options.folder || 'dumuwaks/videos',
       resource_type: 'video',
       eager: [
         { width: 300, height: 300, crop: 'pad', format: 'jpg' } // Thumbnail
@@ -88,7 +88,7 @@ exports.uploadVideo = async (filePath, options = {}) => {
 exports.uploadProfilePicture = async (filePath) => {
   try {
     const result = await cloudinary.uploader.upload(filePath, {
-      folder: 'baitech/profiles',
+      folder: 'dumuwaks/profiles',
       transformation: [
         { width: 500, height: 500, crop: 'fill', gravity: 'face' },
         { quality: 'auto' },
@@ -170,7 +170,7 @@ exports.generateSignedUploadUrl = (options = {}) => {
 
   const params = {
     timestamp,
-    folder: options.folder || 'baitech',
+    folder: options.folder || 'dumuwaks',
     ...options
   };
 

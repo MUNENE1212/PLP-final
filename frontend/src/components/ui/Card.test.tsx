@@ -186,8 +186,8 @@ describe('Card Sub-Components', () => {
     });
 
     it('should accept custom className', () => {
-      render(<CardHeader className="custom-header">Header</CardHeader>);
-      const header = screen.getByText('Header').parentElement;
+      render(<CardHeader className="custom-header" data-testid="header">Header</CardHeader>);
+      const header = screen.getByTestId('header');
       expect(header).toHaveClass('custom-header');
     });
   });
@@ -212,8 +212,8 @@ describe('Card Sub-Components', () => {
     });
 
     it('should accept custom className', () => {
-      render(<CardTitle className="custom-title">Title</CardTitle>);
-      const title = screen.getByText('Title');
+      render(<CardTitle className="custom-title" data-testid="title">Title</CardTitle>);
+      const title = screen.getByTestId('title');
       expect(title).toHaveClass('custom-title');
     });
   });
@@ -237,8 +237,8 @@ describe('Card Sub-Components', () => {
     });
 
     it('should accept custom className', () => {
-      render(<CardDescription className="custom-desc">Description</CardDescription>);
-      const desc = screen.getByText('Description');
+      render(<CardDescription className="custom-desc" data-testid="desc">Description</CardDescription>);
+      const desc = screen.getByTestId('desc');
       expect(desc).toHaveClass('custom-desc');
     });
   });
@@ -256,8 +256,8 @@ describe('Card Sub-Components', () => {
     });
 
     it('should accept custom className', () => {
-      render(<CardContent className="custom-content">Content</CardContent>);
-      const content = screen.getByText('Content').parentElement;
+      render(<CardContent className="custom-content" data-testid="content">Content</CardContent>);
+      const content = screen.getByTestId('content');
       expect(content).toHaveClass('custom-content');
     });
   });
@@ -276,8 +276,8 @@ describe('Card Sub-Components', () => {
     });
 
     it('should accept custom className', () => {
-      render(<CardFooter className="custom-footer">Footer</CardFooter>);
-      const footer = screen.getByText('Footer').parentElement;
+      render(<CardFooter className="custom-footer" data-testid="footer">Footer</CardFooter>);
+      const footer = screen.getByTestId('footer');
       expect(footer).toHaveClass('custom-footer');
     });
   });

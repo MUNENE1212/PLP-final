@@ -1,11 +1,10 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode } from 'react';
 
-type Theme = 'light' | 'dark';
+type Theme = 'dark'; // Dark-only theme now
 
 interface ThemeContextType {
   theme: Theme;
-  toggleTheme: () => void;
-  setTheme: (theme: Theme) => void;
+  isDarkOnly: boolean; // Indicates this is a dark-only design system
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -14,55 +13,33 @@ interface ThemeProviderProps {
   children: ReactNode;
 }
 
+/**
+ * ThemeProvider for Rich Dark Design System
+ *
+ * This design system is dark-only, featuring:
+ * - Deep Mahogany (#261212) primary background
+ * - Iron Charcoal (#1C1C1C) secondary background
+ * - Circuit Blue (#0090C5) primary accent
+ * - Wrench Purple (#7D4E9F) secondary accent
+ * - Soft Bone (#E0E0E0) primary text
+ * - Steel Grey (#9BA4B0) secondary text and borders
+ */
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    // Check localStorage first
-    const savedTheme = localStorage.getItem('theme') as Theme;
-    if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
-      return savedTheme;
-    }
-    // Check system preference
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  });
+  // Always use dark theme
+  const theme: Theme = 'dark';
+  const isDarkOnly = true;
 
-  useEffect(() => {
+  // Set dark class on document root
+  React.useEffect(() => {
     const root = window.document.documentElement;
-
-    // Remove old theme class
-    root.classList.remove('light', 'dark');
-
-    // Add new theme class
-    root.classList.add(theme);
-
-    // Save to localStorage
-    localStorage.setItem('theme', theme);
-  }, [theme]);
-
-  // Listen for system preference changes
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-
-    const handleChange = (e: MediaQueryListEvent) => {
-      // Only auto-switch if user hasn't manually set a preference
-      if (!localStorage.getItem('theme')) {
-        setThemeState(e.matches ? 'dark' : 'light');
-      }
-    };
-
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
+    root.classList.add('dark');
+    root.classList.remove('light');
+    // Set color scheme to dark
+    root.style.colorScheme = 'dark';
   }, []);
 
-  const toggleTheme = () => {
-    setThemeState((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
-  };
-
-  const setTheme = (newTheme: Theme) => {
-    setThemeState(newTheme);
-  };
-
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
+    <ThemeContext.Provider value={{ theme, isDarkOnly }}>
       {children}
     </ThemeContext.Provider>
   );

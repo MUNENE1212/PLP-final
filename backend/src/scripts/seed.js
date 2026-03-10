@@ -13,7 +13,7 @@ const sampleUsers = [
   {
     firstName: 'John',
     lastName: 'Admin',
-    email: 'admin@baitech.com',
+    email: 'admin@ementech.co.ke',
     phoneNumber: '+254712345678',
     password: 'Admin@123',
     role: 'admin',
@@ -31,7 +31,7 @@ const sampleUsers = [
   {
     firstName: 'Mike',
     lastName: 'Technician',
-    email: 'tech1@baitech.com',
+    email: 'tech1@ementech.co.ke',
     phoneNumber: '+254723456789',
     password: 'Tech@123',
     role: 'technician',
@@ -78,7 +78,7 @@ const sampleUsers = [
   {
     firstName: 'Sarah',
     lastName: 'Electrician',
-    email: 'tech2@baitech.com',
+    email: 'tech2@ementech.co.ke',
     phoneNumber: '+254734567890',
     password: 'Tech@123',
     role: 'technician',
@@ -136,7 +136,7 @@ const sampleUsers = [
   {
     firstName: 'Jane',
     lastName: 'Support',
-    email: 'support@baitech.com',
+    email: 'support@ementech.co.ke',
     phoneNumber: '+254756789012',
     password: 'Support@123',
     role: 'support',
@@ -201,19 +201,19 @@ const seedDatabase = async () => {
     console.log('\nSample Credentials:');
     console.log('==========================================');
     console.log('Admin:');
-    console.log('  Email: admin@baitech.com');
+    console.log('  Email: admin@ementech.co.ke');
     console.log('  Password: Admin@123\n');
     console.log('Technician 1:');
-    console.log('  Email: tech1@baitech.com');
+    console.log('  Email: tech1@ementech.co.ke');
     console.log('  Password: Tech@123\n');
     console.log('Technician 2:');
-    console.log('  Email: tech2@baitech.com');
+    console.log('  Email: tech2@ementech.co.ke');
     console.log('  Password: Tech@123\n');
     console.log('Customer:');
     console.log('  Email: customer1@gmail.com');
     console.log('  Password: Customer@123\n');
     console.log('Support:');
-    console.log('  Email: support@baitech.com');
+    console.log('  Email: support@ementech.co.ke');
     console.log('  Password: Support@123');
     console.log('==========================================\n');
 

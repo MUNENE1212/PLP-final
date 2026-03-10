@@ -1,0 +1,28 @@
+# Dumuwaks Robots.txt
+# Allow all crawlers
+
+User-agent: *
+Allow: /
+
+# Disallow admin or private areas (if any)
+# Disallow: /admin/
+# Disallow: /private/
+# Disallow: /api/
+
+# Sitemap location
+Sitemap: https://dumuwaks.com/sitemap.xml
+
+# Crawl-delay (optional, adjust if needed)
+# Crawl-delay: 1
+
+# Disallow specific file types
+Disallow: /src/
+Disallow: /node_modules/
+Disallow: /.env*
+
+# Allow common assets
+Allow: /images/
+Allow: /pwa-icons/
+Allow: /fonts/
+Allow: /css/
+Allow: /js/
