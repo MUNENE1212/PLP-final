@@ -1,126 +1,75 @@
-import React, { HTMLAttributes, forwardRef } from 'react';
-import { cn } from '@/lib/utils';
+import React from 'react';
+import { clsx } from 'clsx';
 
-export interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  variant?: 'default' | 'elevated' | 'outlined' | 'interactive';
-  padding?: 'none' | 'sm' | 'md' | 'lg';
-  hover?: boolean;
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  children: React.ReactNode;
+  className?: string;
+  variant?: 'default' | 'glass' | 'elevated';
 }
 
-/**
- * Card component for content grouping
- *
- * @example
- * ```tsx
- * <Card variant="elevated" padding="md" hover>
- *   <CardHeader>
- *     <CardTitle>Title</CardTitle>
- *   </CardHeader>
- *   <CardContent>Content</CardContent>
- * </Card>
- * ```
- */
-const Card = forwardRef<HTMLDivElement, CardProps>(
-  (
-    {
-      className,
-      variant = 'default',
-      padding = 'md',
-      hover = false,
-      children,
-      ...props
-    },
-    ref
-  ) => {
-    const baseClasses = 'rounded-2xl transition-all duration-300';
+export const Card: React.FC<CardProps> = ({ children, className, variant = 'default', ...props }) => {
+  const variantStyles = {
+    default: 'bg-charcoal border-steel hover:border-strong hover:shadow-mahogany',
+    glass: 'glass-card hover:border-strong hover:shadow-mahogany',
+    elevated: 'bg-elevated border-steel hover:border-strong hover:shadow-mahogany-lg',
+  };
 
-    const variantClasses = {
-      default: 'border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900',
-      elevated: 'border border-neutral-200 bg-white shadow-lg dark:border-neutral-800 dark:bg-neutral-900',
-      outlined: 'border-2 border-neutral-300 bg-transparent dark:border-neutral-700',
-      interactive: 'border border-neutral-200 bg-white cursor-pointer dark:border-neutral-800 dark:bg-neutral-900',
-    };
+  return (
+    <div className={clsx('rounded-lg border shadow-sm transition-all duration-200', variantStyles[variant], className)} {...props}>
+      {children}
+    </div>
+  );
+};
 
-    const paddingClasses = {
-      none: '',
-      sm: 'p-4',
-      md: 'p-6',
-      lg: 'p-8',
-    };
+interface CardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
+  children: React.ReactNode;
+  className?: string;
+}
 
-    const hoverClasses = hover
-      ? 'hover:border-primary-300 hover:shadow-lg hover:-translate-y-0.5 dark:hover:border-primary-700'
-      : '';
+export const CardHeader: React.FC<CardHeaderProps> = ({ children, className, ...props }) => {
+  return (
+    <div className={clsx('flex flex-col space-y-1.5 p-6 border-b border-subtle', className)} {...props}>
+      {children}
+    </div>
+  );
+};
 
-    const combinedClasses = cn(
-      baseClasses,
-      variantClasses[variant],
-      paddingClasses[padding],
-      hoverClasses,
-      variant === 'interactive' && 'active:scale-95',
-      className
-    );
+interface CardTitleProps extends React.HTMLAttributes<HTMLHeadingElement> {
+  children: React.ReactNode;
+  className?: string;
+}
 
-    return (
-      <div ref={ref} className={combinedClasses} {...props}>
-        {children}
-      </div>
-    );
-  }
-);
+export const CardTitle: React.FC<CardTitleProps> = ({ children, className, ...props }) => {
+  return (
+    <h3 className={clsx('text-xl font-semibold leading-none tracking-tight text-bone', className)} {...props}>
+      {children}
+    </h3>
+  );
+};
 
-Card.displayName = 'Card';
+interface CardDescriptionProps extends React.HTMLAttributes<HTMLParagraphElement> {
+  children: React.ReactNode;
+  className?: string;
+}
 
-// Card sub-components
-export const CardHeader = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
-    <div
-      ref={ref}
-      className={cn('flex flex-col space-y-1.5 p-6', className)}
-      {...props}
-    />
-  )
-);
-CardHeader.displayName = 'CardHeader';
+export const CardDescription: React.FC<CardDescriptionProps> = ({ children, className, ...props }) => {
+  return <p className={clsx('text-sm text-steel', className)} {...props}>{children}</p>;
+};
 
-export const CardTitle = forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLHeadingElement>>(
-  ({ className, ...props }, ref) => (
-    <h3
-      ref={ref}
-      className={cn('text-2xl font-semibold leading-none tracking-tight', className)}
-      {...props}
-    />
-  )
-);
-CardTitle.displayName = 'CardTitle';
+interface CardContentProps extends React.HTMLAttributes<HTMLDivElement> {
+  children: React.ReactNode;
+  className?: string;
+}
 
-export const CardDescription = forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(
-  ({ className, ...props }, ref) => (
-    <p
-      ref={ref}
-      className={cn('text-sm text-neutral-500 dark:text-neutral-400', className)}
-      {...props}
-    />
-  )
-);
-CardDescription.displayName = 'CardDescription';
+export const CardContent: React.FC<CardContentProps> = ({ children, className, ...props }) => {
+  return <div className={clsx('p-6 pt-0', className)} {...props}>{children}</div>;
+};
 
-export const CardContent = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn('p-6 pt-0', className)} {...props} />
-  )
-);
-CardContent.displayName = 'CardContent';
+interface CardFooterProps extends React.HTMLAttributes<HTMLDivElement> {
+  children: React.ReactNode;
+  className?: string;
+}
 
-export const CardFooter = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
-    <div
-      ref={ref}
-      className={cn('flex items-center p-6 pt-0', className)}
-      {...props}
-    />
-  )
-);
-CardFooter.displayName = 'CardFooter';
-
-export { Card };
+export const CardFooter: React.FC<CardFooterProps> = ({ children, className, ...props }) => {
+  return <div className={clsx('flex items-center p-6 pt-0 border-t border-subtle', className)} {...props}>{children}</div>;
+};

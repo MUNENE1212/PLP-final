@@ -4,12 +4,12 @@ const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'BaiTech API Documentation',
+      title: 'Dumu Waks API Documentation',
       version: '1.0.0',
       description: 'AI-Powered Technician & Community Platform API',
       contact: {
-        name: 'BaiTech Team',
-        email: 'support@baitech.com'
+        name: 'Dumu Waks Team',
+        email: 'support@ementech.co.ke'
       },
       license: {
         name: 'MIT',
@@ -22,7 +22,7 @@ const options = {
         description: 'Development server'
       },
       {
-        url: 'https://api.baitech.com',
+        url: 'https://api.ementech.co.ke',
         description: 'Production server'
       }
     ],

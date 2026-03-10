@@ -1,97 +1,45 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode } from 'react';
 
-type Theme = 'light' | 'dark' | 'system';
+type Theme = 'dark'; // Dark-only theme now
 
 interface ThemeContextType {
   theme: Theme;
-  actualTheme: 'light' | 'dark';
-  toggleTheme: () => void;
-  setTheme: (theme: Theme) => void;
+  isDarkOnly: boolean; // Indicates this is a dark-only design system
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 interface ThemeProviderProps {
   children: ReactNode;
-  defaultTheme?: Theme;
-  storageKey?: string;
 }
 
-export const ThemeProvider: React.FC<ThemeProviderProps> = ({
-  children,
-  defaultTheme = 'system',
-  storageKey = 'dumuwaks-theme',
-}) => {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    const stored = localStorage.getItem(storageKey) as Theme | null;
-    return stored || defaultTheme;
-  });
+/**
+ * ThemeProvider for Rich Dark Design System
+ *
+ * This design system is dark-only, featuring:
+ * - Deep Mahogany (#261212) primary background
+ * - Iron Charcoal (#1C1C1C) secondary background
+ * - Circuit Blue (#0090C5) primary accent
+ * - Wrench Purple (#7D4E9F) secondary accent
+ * - Soft Bone (#E0E0E0) primary text
+ * - Steel Grey (#9BA4B0) secondary text and borders
+ */
+export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
+  // Always use dark theme
+  const theme: Theme = 'dark';
+  const isDarkOnly = true;
 
-  const [actualTheme, setActualTheme] = useState<'light' | 'dark'>(() => {
-    if (theme === 'system') {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
-    return theme;
-  });
-
-  useEffect(() => {
+  // Set dark class on document root
+  React.useEffect(() => {
     const root = window.document.documentElement;
-    root.classList.remove('light', 'dark');
-
-    let resolvedTheme: 'light' | 'dark' = actualTheme;
-
-    if (theme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      resolvedTheme = systemTheme;
-      setActualTheme(systemTheme);
-    } else {
-      resolvedTheme = theme;
-      setActualTheme(theme);
-    }
-
-    root.classList.add(resolvedTheme);
-
-    // Update meta theme-color for PWA
-    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
-    if (metaThemeColor) {
-      metaThemeColor.setAttribute(
-        'content',
-        resolvedTheme === 'dark' ? '#000000' : '#ffffff'
-      );
-    }
-
-    // Save to localStorage
-    localStorage.setItem(storageKey, theme);
-  }, [theme, storageKey]);
-
-  // Listen for system theme changes
-  useEffect(() => {
-    if (theme !== 'system') return;
-
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
-      const systemTheme = e.matches ? 'dark' : 'light';
-      setActualTheme(systemTheme);
-    };
-
-    // Set initial value
-    handleChange(mediaQuery);
-
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    const newTheme: Theme = actualTheme === 'light' ? 'dark' : 'light';
-    setThemeState(newTheme);
-  };
-
-  const setTheme = (newTheme: Theme) => {
-    setThemeState(newTheme);
-  };
+    root.classList.add('dark');
+    root.classList.remove('light');
+    // Set color scheme to dark
+    root.style.colorScheme = 'dark';
+  }, []);
 
   return (
-    <ThemeContext.Provider value={{ theme, actualTheme, toggleTheme, setTheme }}>
+    <ThemeContext.Provider value={{ theme, isDarkOnly }}>
       {children}
     </ThemeContext.Provider>
   );

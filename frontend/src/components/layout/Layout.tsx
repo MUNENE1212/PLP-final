@@ -1,32 +1,29 @@
 import React from 'react';
-import { Outlet, useParams } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { useAppSelector } from '@/store/hooks';
 import Navbar from './Navbar';
-import BottomNavigation from './BottomNavigation';
 import Footer from './Footer';
-import { QRQuickAccess } from '@/components/qrcode';
+import BottomNavigation from './BottomNavigation';
+import WhatsAppButton from '../common/WhatsAppButton';
 
 const Layout: React.FC = () => {
-  const { isAuthenticated, user } = useAppSelector((state) => state.auth);
-  const params = useParams();
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
+  const location = useLocation();
 
-  // Get current booking ID if on booking detail page
-  const bookingId = params.id?.startsWith('booking') ? params.id : undefined;
+  // Home page handles its own full-width layout
+  const isHomePage = location.pathname === '/' && !isAuthenticated;
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900 transition-colors duration-200 flex flex-col">
+    <div className="min-h-screen bg-mahogany flex flex-col">
       <Navbar />
-      <main className="flex-1 mx-auto max-w-7xl w-full px-4 py-6 md:py-8 md:px-6 lg:px-8">
+      <main className={`flex-1 ${isHomePage ? '' : 'mx-auto max-w-7xl w-full px-3 py-4 sm:px-4 sm:py-6 md:px-6 lg:px-8 lg:py-8'} pb-20 md:pb-0`}>
         <Outlet />
       </main>
-      <Footer />
+      <div className="hidden md:block">
+        <Footer />
+      </div>
       {isAuthenticated && <BottomNavigation />}
-      {isAuthenticated && (
-        <QRQuickAccess
-          technicianId={user?.role === 'technician' ? user._id : undefined}
-          bookingId={bookingId}
-        />
-      )}
+      <WhatsAppButton />
     </div>
   );
 };

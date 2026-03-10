@@ -17,6 +17,7 @@ import ServiceApprovalDashboard from '@/components/admin/ServiceApprovalDashboar
 import EscrowManagementPanel from '@/components/admin/EscrowManagementPanel';
 import TransactionHistory from '@/components/admin/TransactionHistory';
 import UserManagement from '@/components/admin/UserManagement';
+import FeeConfiguration from '@/pages/admin/FeeConfiguration';
 import { getDashboardStats, getEscrowStats } from '@/services/admin.service';
 import type { DashboardMetrics } from '@/types/admin';
 
@@ -154,6 +155,11 @@ const AdminDashboard: React.FC = () => {
     // User management
     if (path === '/admin/users') {
       return <UserManagement />;
+    }
+
+    // Fee configuration
+    if (path === '/admin/fee-config') {
+      return <FeeConfiguration />;
     }
 
     // Placeholder for other routes

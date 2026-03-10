@@ -15,6 +15,7 @@ import TechnicianProfile from './pages/TechnicianProfile';
 import UserProfile from './pages/UserProfile';
 import MyBookings from './pages/MyBookings';
 import CreateBooking from './pages/CreateBooking';
+import CreateBookingFlow from './pages/CreateBookingFlow';
 import BookingDetail from './pages/BookingDetail';
 import MatchingPreferences from './pages/MatchingPreferences';
 import ProfileSettings from './pages/ProfileSettings';
@@ -73,23 +74,24 @@ const App: React.FC = () => {
             position="top-right"
             toastOptions={{
               duration: 4000,
-              className: 'dark:bg-gray-800 dark:text-gray-100',
               style: {
-                background: '#fff',
-                color: '#363636',
+                background: '#1C1C1C',
+                color: '#E0E0E0',
+                border: '1px solid rgba(155, 164, 176, 0.3)',
+                borderRadius: '12px',
               },
               success: {
                 duration: 3000,
                 iconTheme: {
-                  primary: '#10b981',
-                  secondary: '#fff',
+                  primary: '#00ba7c',
+                  secondary: '#1C1C1C',
                 },
               },
               error: {
                 duration: 4000,
                 iconTheme: {
-                  primary: '#ef4444',
-                  secondary: '#fff',
+                  primary: '#f4212e',
+                  secondary: '#1C1C1C',
                 },
               },
             }}
@@ -120,7 +122,12 @@ const App: React.FC = () => {
               <Route path="find-technicians" element={<FindTechnicians />} />
               <Route path="technicians/:id" element={<TechnicianProfile />} />
               <Route path="profile/:id" element={<UserProfile />} />
+              {/* Unified booking flow - primary route */}
+              <Route path="booking-flow" element={<CreateBookingFlow />} />
+              {/* Legacy route - redirects to new flow while preserving state */}
               <Route path="booking/create" element={<CreateBooking />} />
+              {/* Book route alias - redirects to unified flow */}
+              <Route path="book" element={<Navigate to="/booking-flow" replace />} />
               <Route path="bookings/:id" element={<BookingDetail />} />
               <Route path="bookings" element={<MyBookings />} />
               <Route path="messages" element={<Messages />} />

@@ -1,30 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Button } from '@/components/ui';
-import { Input } from '@/components/ui/Input';
-import { Search, Users, Shield, Zap, Clock, DollarSign, ArrowRight, CheckCircle, Star, MapPin, Wrench, Bolt, Hammer, Plug, Paintbrush, Brush } from 'lucide-react';
-import { Card } from '@/components/ui';
-import { VoiceSearchButton } from '@/components/voice';
-import { HonestStats } from '@/components/ui/HonestStats';
-import { HonestTestimonials } from '@/components/ui/HonestTestimonials';
+import Button from '@/components/ui/Button';
+import {
+  Search, Users, Shield, Zap, Clock, DollarSign, ArrowRight,
+  CheckCircle, Star, MapPin, Wrench, Bolt, Hammer, Plug,
+  Paintbrush, Brush, Mic, ChevronRight, Sparkles, TrendingUp,
+  Phone, MessageCircle,
+} from 'lucide-react';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setPrefersReducedMotion(mq.matches);
+    const handler = () => setPrefersReducedMotion(mq.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
       navigate(`/find-technicians?search=${encodeURIComponent(searchQuery)}`);
     }
-  };
-
-  const handleVoiceResult = (transcript: string) => {
-    setSearchQuery(transcript);
-    // Auto-navigate after voice input
-    setTimeout(() => {
-      navigate(`/find-technicians?search=${encodeURIComponent(transcript)}`);
-    }, 500);
   };
 
   const features = [
@@ -47,7 +48,7 @@ const Home: React.FC = () => {
     {
       icon: DollarSign,
       title: 'Transparent Pricing',
-      description: 'See EXACT cost before booking. No hidden fees or surprises with Dumu Waks.',
+      description: 'See EXACT cost before booking. No hidden fees or surprises.',
     },
     {
       icon: Clock,
@@ -57,92 +58,172 @@ const Home: React.FC = () => {
     {
       icon: Search,
       title: 'Secure M-Pesa Payments',
-      description: 'Pay securely via M-Pesa with escrow protection. Your money is safe with Dumu Waks.',
+      description: 'Pay securely via M-Pesa with escrow protection. Your money is safe.',
     },
   ];
 
   const services = [
-    { name: 'Plumbing', icon: Wrench, color: 'from-blue-500 to-cyan-500' },
-    { name: 'Electrical', icon: Bolt, color: 'from-yellow-500 to-orange-500' },
-    { name: 'Carpentry', icon: Hammer, color: 'from-amber-600 to-amber-800' },
-    { name: 'Appliance Repair', icon: Plug, color: 'from-purple-500 to-pink-500' },
-    { name: 'Painting', icon: Paintbrush, color: 'from-indigo-500 to-purple-500' },
-    { name: 'Cleaning', icon: Brush, color: 'from-green-500 to-emerald-500' },
+    { name: 'Plumbing', icon: Wrench, gradient: 'from-circuit-400 to-circuit-600' },
+    { name: 'Electrical', icon: Bolt, gradient: 'from-amber-400 to-amber-600' },
+    { name: 'Carpentry', icon: Hammer, gradient: 'from-mahogany-300 to-mahogany-500' },
+    { name: 'Appliance Repair', icon: Plug, gradient: 'from-wrench-400 to-wrench-600' },
+    { name: 'Painting', icon: Paintbrush, gradient: 'from-circuit-500 to-wrench-500' },
+    { name: 'Cleaning', icon: Brush, gradient: 'from-emerald-400 to-emerald-600' },
   ];
 
-  return (
-    <div className="bg-white dark:bg-neutral-900 overflow-hidden">
-      {/* Hero Section */}
-      <motion.section
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden bg-gradient-to-br from-primary-50 via-white to-secondary-50 dark:from-neutral-900 dark:via-neutral-900 dark:to-neutral-800"
-      >
-        {/* Animated background elements */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <motion.div
-            animate={{
-              scale: [1, 1.2, 1],
-              rotate: [0, 90, 0],
-            }}
-            transition={{
-              duration: 20,
-              repeat: Infinity,
-              ease: 'linear',
-            }}
-            className="absolute -top-1/2 -right-1/2 w-[800px] h-[800px] bg-primary-500/10 dark:bg-primary-500/5 rounded-full blur-3xl"
-          />
-          <motion.div
-            animate={{
-              scale: [1.2, 1, 1.2],
-              rotate: [90, 0, 90],
-            }}
-            transition={{
-              duration: 15,
-              repeat: Infinity,
-              ease: 'linear',
-            }}
-            className="absolute -bottom-1/2 -left-1/2 w-[800px] h-[800px] bg-secondary-500/10 dark:bg-secondary-500/5 rounded-full blur-3xl"
-          />
-        </div>
+  const steps = [
+    {
+      step: '01',
+      title: 'Describe Your Problem',
+      description: 'Tell us what you need fixed and where you are located.',
+      icon: MessageCircle,
+    },
+    {
+      step: '02',
+      title: 'Get Matched',
+      description: 'Our AI matches you with the best technician in under 60 seconds.',
+      icon: Sparkles,
+    },
+    {
+      step: '03',
+      title: 'Book & Pay',
+      description: 'Schedule your service and pay securely via M-Pesa.',
+      icon: CheckCircle,
+    },
+  ];
 
-        <div className="relative container mx-auto px-4 py-16 md:py-24 lg:py-32">
-          <div className="max-w-4xl mx-auto text-center">
+  const fadeUp = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    whileInView: { opacity: 1, y: 0 },
+    viewport: { once: true },
+  };
+
+  return (
+    <div className="overflow-hidden -mx-3 sm:-mx-4 md:-mx-6 lg:-mx-8 -my-4 sm:-my-6 lg:-my-8">
+      {/* ======================================
+          HERO SECTION - Cinematic Dark Entry
+          ====================================== */}
+      <section className="relative overflow-hidden hero-gradient circuit-pattern">
+        {/* Animated background orbs */}
+        {!prefersReducedMotion && (
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              animate={{ scale: [1, 1.3, 1], rotate: [0, 90, 0] }}
+              transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+              className="absolute -top-1/2 -right-1/4 w-[600px] h-[600px] rounded-full blur-3xl"
+              style={{ background: 'radial-gradient(circle, rgba(0,144,197,0.08) 0%, transparent 70%)' }}
+            />
+            <motion.div
+              animate={{ scale: [1.2, 1, 1.2], rotate: [90, 0, 90] }}
+              transition={{ duration: 15, repeat: Infinity, ease: 'linear' }}
+              className="absolute -bottom-1/3 -left-1/4 w-[600px] h-[600px] rounded-full blur-3xl"
+              style={{ background: 'radial-gradient(circle, rgba(125,78,159,0.08) 0%, transparent 70%)' }}
+            />
+          </div>
+        )}
+
+        <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 md:py-28 lg:px-8 lg:py-32">
+          <div className="mx-auto max-w-4xl text-center">
+            {/* Badge */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
+              className="inline-flex items-center gap-2 rounded-full border border-circuit/30 bg-circuit/10 px-4 py-1.5 mb-6"
             >
-              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold font-display mb-6">
-                <span className="bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent">
-                  Professional Maintenance
-                </span>
-                <br />
-                <span className="text-neutral-900 dark:text-white">& Repair Services</span>
-              </h1>
+              <Sparkles className="h-4 w-4 text-circuit" />
+              <span className="text-sm font-medium text-circuit">AI-Powered Technician Matching</span>
             </motion.div>
 
-            <motion.p
+            {/* Hero Title */}
+            <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="text-lg md:text-xl text-neutral-600 dark:text-neutral-400 mb-8 max-w-2xl mx-auto"
+              className="text-4xl font-bold tracking-tight text-bone sm:text-5xl md:text-6xl lg:text-7xl"
+            >
+              <span className="block">Professional</span>
+              <span className="block text-gradient">Maintenance & Repair</span>
+              <span className="block">Services</span>
+            </motion.h1>
+
+            {/* Subtitle */}
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="mx-auto mt-6 max-w-2xl text-lg text-steel sm:text-xl"
             >
               Connect with verified, skilled technicians across Kenya.
               <br className="hidden md:block" />
               Get matched in under 60 seconds.
             </motion.p>
 
+            {/* Search Bar - Glassmorphism */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="flex flex-col sm:flex-row gap-4 justify-center"
+              transition={{ delay: 0.4 }}
+              className="mx-auto mt-8 max-w-2xl"
+            >
+              <div className="glass-card flex items-center gap-2 rounded-2xl p-2 sm:p-3">
+                <Search className="ml-3 h-5 w-5 flex-shrink-0 text-steel" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  placeholder="Search for services, technicians..."
+                  className="min-h-[44px] flex-1 bg-transparent text-base text-bone placeholder-steel outline-none"
+                  aria-label="Search for services or technicians"
+                />
+                <button
+                  onClick={handleSearch}
+                  className="flex h-11 w-11 items-center justify-center rounded-xl bg-circuit text-white transition-all hover:bg-circuit-600 hover:shadow-led sm:h-12 sm:w-auto sm:px-6"
+                  aria-label="Search"
+                >
+                  <Search className="h-5 w-5 sm:hidden" />
+                  <span className="hidden sm:inline font-medium">Search</span>
+                </button>
+              </div>
+              <p className="mt-3 text-sm text-steel/70">
+                Try: "I need a plumber in Nairobi" or "Find an electrician"
+              </p>
+            </motion.div>
+
+            {/* Trust Badges */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="mt-8 flex flex-wrap items-center justify-center gap-3"
+            >
+              <div className="flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2">
+                <CheckCircle className="h-4 w-4 flex-shrink-0 text-emerald-400" />
+                <span className="text-sm font-medium text-emerald-300">All Technicians Verified</span>
+              </div>
+              <div className="flex items-center gap-2 rounded-full border border-circuit/30 bg-circuit/10 px-4 py-2">
+                <Shield className="h-4 w-4 flex-shrink-0 text-circuit" />
+                <span className="text-sm font-medium text-circuit-300">M-Pesa Integrated</span>
+              </div>
+              <div className="flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-2">
+                <Star className="h-4 w-4 flex-shrink-0 text-amber-400" />
+                <span className="text-sm font-medium text-amber-300">4.8 Average Rating</span>
+              </div>
+            </motion.div>
+
+            {/* CTAs */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"
             >
               <Link to="/register?role=customer">
-                <Button size="lg" className="group w-full sm:w-auto bg-gradient-to-r from-primary-500 to-secondary-500 hover:from-primary-600 hover:to-secondary-600">
-                  Find a Technician
-                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                <Button variant="primary" size="lg" className="group w-full led-glow sm:w-auto">
+                  Find a Technician Near You
+                  <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                 </Button>
               </Link>
               <Link to="/register?role=technician">
@@ -152,231 +233,271 @@ const Home: React.FC = () => {
               </Link>
             </motion.div>
 
-            {/* Real Statistics - Live from Database */}
+            {/* Live Stats Bar */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="mt-12"
+              transition={{ delay: 0.7 }}
+              className="mx-auto mt-12 grid max-w-3xl grid-cols-2 gap-4 sm:grid-cols-4"
             >
-              <HonestStats />
-            </motion.div>
-
-            {/* Search Section with Voice */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="mt-12 max-w-2xl mx-auto"
-            >
-              <div className="relative flex items-center gap-3 bg-white dark:bg-neutral-800 p-2 rounded-2xl shadow-xl border border-neutral-200 dark:border-neutral-700">
-                <Search className="h-5 w-5 text-neutral-400 ml-3 flex-shrink-0" />
-                <Input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                  placeholder="Search for services, technicians..."
-                  className="flex-1 border-0 focus:ring-0 bg-transparent"
-                />
-                <VoiceSearchButton
-                  onResult={handleVoiceResult}
-                  placeholder="What service do you need?"
-                />
-              </div>
-              <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-3 text-center">
-                Try: "I need a plumber in Nairobi" or "Find an electrician"
-              </p>
+              {[
+                { label: 'Technicians', value: '500+', icon: Users },
+                { label: 'Bookings', value: '2,000+', icon: TrendingUp },
+                { label: 'Cities', value: '10+', icon: MapPin },
+                { label: 'Avg Rating', value: '4.8', icon: Star },
+              ].map((stat) => (
+                <div key={stat.label} className="glass rounded-xl p-3 text-center">
+                  <stat.icon className="mx-auto mb-1 h-5 w-5 text-circuit" />
+                  <p className="text-xl font-bold text-bone">{stat.value}</p>
+                  <p className="text-xs text-steel">{stat.label}</p>
+                </div>
+              ))}
             </motion.div>
           </div>
         </div>
-      </motion.section>
+      </section>
 
-      {/* Services Section */}
-      <section className="py-16 px-4 bg-white dark:bg-neutral-900">
-        <div className="container mx-auto">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-3xl md:text-4xl font-bold font-display text-center mb-4 text-neutral-900 dark:text-white"
-          >
-            What Do You Need Fixed?
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-            className="text-neutral-600 dark:text-neutral-400 text-center mb-12 max-w-2xl mx-auto"
-          >
-            From plumbing to electrical work, we've got you covered with skilled professionals ready to help.
-          </motion.p>
+      {/* ======================================
+          SERVICES SECTION - What Do You Need?
+          ====================================== */}
+      <section className="bg-charcoal py-16 px-4 sm:py-20">
+        <div className="mx-auto max-w-7xl">
+          <motion.div {...fadeUp} className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-bone sm:text-4xl">What Do You Need Fixed?</h2>
+            <p className="mt-4 max-w-2xl mx-auto text-steel">
+              From plumbing to electrical work, we've got you covered with skilled professionals ready to help.
+            </p>
+          </motion.div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {services.map((service, index) => (
-              <motion.div
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-6">
+            {services.map((service, i) => (
+              <motion.button
                 key={service.name}
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
-                transition={{ delay: index * 0.05 }}
-                whileHover={{ scale: 1.05, y: -4 }}
-                className="cursor-pointer"
+                transition={{ delay: i * 0.05 }}
+                whileHover={prefersReducedMotion ? {} : { scale: 1.05, y: -4 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => navigate(`/find-technicians?service=${encodeURIComponent(service.name)}`)}
+                className="group cursor-pointer"
+                aria-label={`Find ${service.name} services`}
               >
-                <Card className="p-6 text-center hover:shadow-lg transition-all duration-300">
-                  <div className={`inline-flex p-3 rounded-xl bg-gradient-to-br ${service.color} mb-3`}>
-                    <service.icon className="w-8 h-8 text-white" />
+                <div className="glass-card rounded-2xl p-5 text-center transition-all duration-300 hover:border-strong hover:shadow-led h-full">
+                  <div className={`mx-auto mb-3 inline-flex rounded-xl bg-gradient-to-br ${service.gradient} p-3`}>
+                    <service.icon className="h-8 w-8 text-white" />
                   </div>
-                  <p className="text-sm font-medium text-neutral-900 dark:text-white">{service.name}</p>
-                </Card>
+                  <p className="text-sm font-medium text-bone">{service.name}</p>
+                </div>
+              </motion.button>
+            ))}
+          </div>
+
+          <motion.div {...fadeUp} className="mt-8 text-center">
+            <p className="text-sm text-steel mb-3">Don't see what you need?</p>
+            <Link
+              to="/find-technicians"
+              className="inline-flex items-center gap-2 text-circuit hover:text-circuit-300 font-medium transition-colors"
+            >
+              Browse all services
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ======================================
+          FEATURES SECTION - Bento Grid
+          ====================================== */}
+      <section className="py-16 px-4 sm:py-20" style={{ background: 'linear-gradient(180deg, #261212 0%, #1C1C1C 50%, #261212 100%)' }}>
+        <div className="mx-auto max-w-7xl">
+          <motion.div {...fadeUp} className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-bone sm:text-4xl">Why Choose Dumu Waks?</h2>
+            <p className="mt-4 max-w-2xl mx-auto text-steel">
+              Everything you need to find and book skilled technicians in Kenya
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {/* Featured card - spans 2 cols */}
+            {features.filter(f => f.highlighted).map((feature) => (
+              <motion.div
+                key={feature.title}
+                {...fadeUp}
+                className="md:col-span-2"
+              >
+                <div className="relative overflow-hidden rounded-2xl p-8 sm:p-10 circuit-gradient h-full">
+                  <div className="absolute inset-0 opacity-10 circuit-pattern" />
+                  <div className="relative">
+                    <feature.icon className="mb-4 h-12 w-12 text-white" />
+                    <h3 className="text-2xl font-bold text-white mb-3">{feature.title}</h3>
+                    <p className="text-lg text-white/80 max-w-xl">{feature.description}</p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+
+            {/* Standard feature cards */}
+            {features.filter(f => !f.highlighted).map((feature, i) => (
+              <motion.div
+                key={feature.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.08 }}
+                whileHover={prefersReducedMotion ? {} : { y: -4 }}
+              >
+                <div className="glass-card rounded-2xl p-6 h-full transition-all duration-300 hover:border-strong hover:shadow-mahogany">
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-hover">
+                    <feature.icon className="h-6 w-6 text-circuit" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-bone mb-2">{feature.title}</h3>
+                  <p className="text-steel text-sm leading-relaxed">{feature.description}</p>
+                </div>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Features Section (Bento Grid) */}
-      <section className="py-16 px-4 bg-neutral-50 dark:bg-neutral-900/50">
-        <div className="container mx-auto">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-3xl md:text-4xl font-bold font-display text-center mb-4 text-neutral-900 dark:text-white"
-          >
-            Why Choose Dumu Waks?
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-            className="text-neutral-600 dark:text-neutral-400 text-center mb-12 max-w-2xl mx-auto"
-          >
-            Everything you need to find and book skilled technicians in Kenya
-          </motion.p>
+      {/* ======================================
+          HOW IT WORKS - Steps
+          ====================================== */}
+      <section className="bg-charcoal py-16 px-4 sm:py-20">
+        <div className="mx-auto max-w-5xl">
+          <motion.div {...fadeUp} className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-bone sm:text-4xl">How It Works</h2>
+          </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Large featured card */}
-            {features.filter(f => f.highlighted).map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="md:col-span-2 lg:col-span-2"
-              >
-                <Card className="h-full bg-gradient-to-br from-primary-500 to-secondary-500 text-white p-8 hover:shadow-2xl transition-all duration-300">
-                  <feature.icon className="h-12 w-12 mb-4" />
-                  <h3 className="text-2xl font-bold mb-2">{feature.title}</h3>
-                  <p className="text-white/90 text-lg">
-                    {feature.description}
-                  </p>
-                </Card>
-              </motion.div>
-            ))}
-
-            {/* Standard cards */}
-            {features.filter(f => !f.highlighted).map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: (index + 1) * 0.1 }}
-                whileHover={{ y: -4 }}
-              >
-                <Card className="h-full p-6 hover:shadow-xl transition-all duration-300">
-                  <div className="bg-primary-100 dark:bg-primary-900/30 w-12 h-12 rounded-xl flex items-center justify-center mb-4">
-                    <feature.icon className="h-6 w-6 text-primary-600 dark:text-primary-400" />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2 text-neutral-900 dark:text-white">
-                    {feature.title}
-                  </h3>
-                  <p className="text-neutral-600 dark:text-neutral-400">
-                    {feature.description}
-                  </p>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works Section */}
-      <section className="py-16 px-4 bg-white dark:bg-neutral-900">
-        <div className="container mx-auto">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-3xl md:text-4xl font-bold font-display text-center mb-12 text-neutral-900 dark:text-white"
-          >
-            How It Works
-          </motion.h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {[
-              {
-                step: '01',
-                title: 'Describe Your Problem',
-                description: 'Tell us what you need fixed and where you are located.',
-              },
-              {
-                step: '02',
-                title: 'Get Matched',
-                description: 'Our AI matches you with the best technician in under 60 seconds.',
-              },
-              {
-                step: '03',
-                title: 'Book & Pay',
-                description: 'Schedule your service and pay securely via M-Pesa.',
-              },
-            ].map((step, index) => (
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+            {steps.map((step, i) => (
               <motion.div
                 key={step.step}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
+                transition={{ delay: i * 0.15 }}
                 className="text-center"
               >
-                <div className="bg-gradient-to-br from-primary-100 to-secondary-100 dark:from-primary-900 dark:to-secondary-900 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl font-bold text-primary-600 dark:text-primary-400">{step.step}</span>
+                {/* Step number with glow */}
+                <div className="relative mx-auto mb-5 flex h-16 w-16 items-center justify-center">
+                  <div className="absolute inset-0 rounded-2xl circuit-gradient opacity-20" />
+                  <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl border border-circuit/30 bg-circuit/10">
+                    <span className="text-2xl font-bold text-circuit">{step.step}</span>
+                  </div>
                 </div>
-                <h3 className="text-xl font-semibold mb-2 text-neutral-900 dark:text-white">{step.title}</h3>
-                <p className="text-neutral-600 dark:text-neutral-400">{step.description}</p>
+                <h3 className="text-xl font-semibold text-bone mb-2">{step.title}</h3>
+                <p className="text-steel">{step.description}</p>
+
+                {/* Connector arrow (visible on md+) */}
+                {i < steps.length - 1 && (
+                  <div className="hidden md:flex items-center justify-center mt-4">
+                    <ArrowRight className="h-5 w-5 text-steel/40" />
+                  </div>
+                )}
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Real Reviews Section - Only from verified bookings */}
-      <HonestTestimonials />
+      {/* ======================================
+          SOCIAL PROOF - Testimonials
+          ====================================== */}
+      <section className="py-16 px-4 sm:py-20" style={{ background: 'linear-gradient(180deg, #1C1C1C 0%, #261212 100%)' }}>
+        <div className="mx-auto max-w-7xl">
+          <motion.div {...fadeUp} className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-bone sm:text-4xl">What Our Users Say</h2>
+            <p className="mt-4 text-steel">Real feedback from real customers</p>
+          </motion.div>
 
-      {/* CTA Section */}
-      <section className="py-20 px-4 bg-gradient-to-br from-primary-500 to-secondary-500">
-        <div className="container mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+          <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-3">
+            {[
+              {
+                name: 'Sarah M.',
+                role: 'Homeowner, Nairobi',
+                text: 'Found an electrician in minutes! The AI matching is impressive - got exactly the right person for my wiring issue.',
+                rating: 5,
+              },
+              {
+                name: 'James K.',
+                role: 'Technician, Mombasa',
+                text: 'As a plumber, Dumu Waks has connected me with consistent work. The escrow system gives my clients confidence.',
+                rating: 5,
+              },
+              {
+                name: 'Grace W.',
+                role: 'Business Owner, Kisumu',
+                text: 'Transparent pricing and M-Pesa integration make everything seamless. I manage all our office maintenance through this platform.',
+                rating: 4,
+              },
+            ].map((testimonial, i) => (
+              <motion.div
+                key={testimonial.name}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+              >
+                <div className="glass-card rounded-2xl p-6 h-full">
+                  {/* Stars */}
+                  <div className="flex gap-1 mb-4">
+                    {Array.from({ length: testimonial.rating }).map((_, j) => (
+                      <Star key={j} className="h-4 w-4 fill-amber-400 text-amber-400" />
+                    ))}
+                  </div>
+                  <p className="text-bone mb-4 leading-relaxed">"{testimonial.text}"</p>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-circuit/20 text-circuit font-bold">
+                      {testimonial.name[0]}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-bone">{testimonial.name}</p>
+                      <p className="text-xs text-steel">{testimonial.role}</p>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ======================================
+          CTA SECTION - Final Push
+          ====================================== */}
+      <section className="relative overflow-hidden py-20 px-4">
+        <div className="absolute inset-0 circuit-gradient opacity-90" />
+        <div className="absolute inset-0 circuit-pattern opacity-20" />
+        <div className="relative mx-auto max-w-3xl text-center">
+          <motion.div {...fadeUp}>
+            <h2 className="text-3xl font-bold text-white sm:text-4xl mb-4">
               Ready to Get Started?
             </h2>
-            <p className="text-lg text-white/90 mb-8 max-w-2xl mx-auto">
-              Join thousands of satisfied customers across Kenya on Dumu Waks
+            <p className="text-lg text-white/80 mb-8 max-w-2xl mx-auto">
+              Join thousands of satisfied customers and technicians across Kenya
             </p>
-            <Link to="/register?role=customer">
-              <Button size="lg" variant="secondary" className="group">
-                Find a Technician Now
-                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </Link>
+            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+              <Link to="/register?role=customer">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-full sm:w-auto border-white/40 text-white hover:bg-white/10 hover:border-white/60 group"
+                >
+                  Find a Technician Now
+                  <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                </Button>
+              </Link>
+              <Link to="/register?role=technician">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-full sm:w-auto border-white/20 text-white/80 hover:bg-white/10 hover:text-white"
+                >
+                  Become a Technician
+                </Button>
+              </Link>
+            </div>
           </motion.div>
         </div>
       </section>

@@ -586,35 +586,12 @@ curl -X POST http://localhost:5000/api/v1/auth/login \
 
 ### Deployment Options
 
-#### 1. Render (Recommended)
-See [RENDER_DEPLOYMENT.md](../docs/deployment/RENDER_DEPLOYMENT.md) for complete guide.
+#### 1. VPS (Production)
+Deployed automatically via GitHub Actions on push to `master`. See [VPS Deployment Guide](../docs/deployment/VPS_DEPLOYMENT.md).
 
-```bash
-# Push to GitHub
-git push origin master
+**Production URL:** https://api.ementech.co.ke
 
-# Deploy via Render Dashboard
-# - Connect GitHub repository
-# - Render auto-detects render.yaml
-# - Configure environment variables
-# - Deploy
-```
-
-#### 2. Heroku
-```bash
-# Install Heroku CLI
-heroku create dumuwaks-api
-
-# Set environment variables
-heroku config:set NODE_ENV=production
-heroku config:set MONGODB_URI=your-mongodb-uri
-# ... set other variables
-
-# Deploy
-git push heroku main
-```
-
-#### 3. Docker
+#### 2. Docker
 ```bash
 # Build image
 docker build -t dumuwaks-backend .
@@ -623,7 +600,7 @@ docker build -t dumuwaks-backend .
 docker run -p 5000:5000 --env-file .env dumuwaks-backend
 ```
 
-#### 4. VPS (Ubuntu)
+#### 3. VPS (Manual)
 ```bash
 # Install Node.js
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
@@ -638,7 +615,7 @@ cd /var/www/dumuwaks-backend
 npm install --production
 
 # Start with PM2
-pm2 start src/server.js --name dumuwaks-api
+pm2 start src/server.js --name dumuwaks-backend
 pm2 save
 pm2 startup
 ```

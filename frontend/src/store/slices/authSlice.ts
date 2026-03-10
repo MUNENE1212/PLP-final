@@ -4,7 +4,7 @@ import { User, LoginCredentials, RegisterData, AuthResponse } from '@/types';
 import { STORAGE_KEYS } from '@/config/constants';
 import toast from 'react-hot-toast';
 
-interface AuthState {
+export interface AuthState {
   user: User | null;
   token: string | null;
   refreshToken: string | null;

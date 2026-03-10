@@ -1,7 +1,8 @@
+import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Home, Search, Calendar, MessageCircle, User } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { clsx } from 'clsx';
 
 interface NavItem {
   path: string;
@@ -17,7 +18,7 @@ const navItems: NavItem[] = [
   { path: '/dashboard', icon: User, label: 'Profile' },
 ];
 
-const BottomNavigation = () => {
+const BottomNavigation: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -25,50 +26,67 @@ const BottomNavigation = () => {
     <motion.nav
       initial={{ y: 100 }}
       animate={{ y: 0 }}
-      className="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-xl border-t border-neutral-200 dark:border-neutral-800 safe-bottom z-50 md:hidden"
+      transition={{ type: 'spring', bounce: 0.15, duration: 0.5 }}
+      className="fixed bottom-0 left-0 right-0 z-50 md:hidden"
+      role="navigation"
+      aria-label="Main navigation"
     >
-      <div className="flex items-center justify-around h-16">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
-          const Icon = item.icon;
+      {/* Glassmorphism container */}
+      <div className="glass-nav border-t border-subtle safe-area-inset-bottom">
+        <div className="flex h-16 items-center justify-around">
+          {navItems.map((item) => {
+            const isActive =
+              location.pathname === item.path ||
+              (item.path !== '/' && location.pathname.startsWith(item.path));
+            const Icon = item.icon;
 
-          return (
-            <motion.button
-              key={item.path}
-              onClick={() => navigate(item.path)}
-              className="relative flex flex-col items-center justify-center flex-1 h-full"
-              whileTap={{ scale: 0.95 }}
-            >
-              {isActive && (
-                <motion.div
-                  layoutId="activeTab"
-                  className="absolute inset-0 bg-primary-50 dark:bg-primary-950"
-                  transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
-                />
-              )}
-
-              <Icon
-                className={cn(
-                  'h-6 w-6 relative z-10 transition-colors',
-                  isActive
-                    ? 'text-primary-600 dark:text-primary-400'
-                    : 'text-neutral-400 dark:text-neutral-600'
+            return (
+              <button
+                key={item.path}
+                onClick={() => navigate(item.path)}
+                className={clsx(
+                  'relative flex flex-1 flex-col items-center justify-center h-full min-w-[48px] min-h-[48px] transition-colors duration-200',
+                  isActive ? 'text-circuit' : 'text-steel'
                 )}
-              />
-
-              <span
-                className={cn(
-                  'text-xs mt-1 relative z-10 font-medium transition-colors',
-                  isActive
-                    ? 'text-primary-600 dark:text-primary-400'
-                    : 'text-neutral-500 dark:text-neutral-500'
-                )}
+                aria-label={item.label}
+                aria-current={isActive ? 'page' : undefined}
               >
-                {item.label}
-              </span>
-            </motion.button>
-          );
-        })}
+                {/* Active indicator bar */}
+                {isActive && (
+                  <motion.div
+                    layoutId="bottomNavActive"
+                    className="absolute top-0 left-1/4 right-1/4 h-0.5 bg-circuit rounded-full"
+                    transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                  />
+                )}
+
+                {/* Active glow background */}
+                {isActive && (
+                  <motion.div
+                    layoutId="bottomNavGlow"
+                    className="absolute inset-x-2 top-1 bottom-1 rounded-xl bg-circuit/8"
+                    transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                  />
+                )}
+
+                <Icon
+                  className={clsx(
+                    'relative z-10 h-5 w-5 transition-colors duration-200',
+                    isActive ? 'text-circuit' : 'text-steel'
+                  )}
+                />
+                <span
+                  className={clsx(
+                    'relative z-10 mt-0.5 text-[10px] font-medium transition-colors duration-200',
+                    isActive ? 'text-circuit' : 'text-steel/70'
+                  )}
+                >
+                  {item.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </motion.nav>
   );

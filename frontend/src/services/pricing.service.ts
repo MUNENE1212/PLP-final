@@ -52,6 +52,8 @@ export interface PricingBreakdown {
       percentage: number;
       amount: number;
       remainingAmount: number;
+      tierLabel: string;
+      isDefault: boolean;
       description: string;
       refundable: boolean;
       heldInEscrow: boolean;

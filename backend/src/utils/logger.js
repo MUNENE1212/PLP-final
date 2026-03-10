@@ -30,7 +30,7 @@ const consoleFormat = winston.format.combine(
 const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
   format: logFormat,
-  defaultMeta: { service: 'baitech-backend' },
+  defaultMeta: { service: 'dumuwaks-backend' },
   transports: [
     // Write all logs with level 'error' and below to error.log
     new winston.transports.File({

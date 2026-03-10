@@ -11,6 +11,7 @@
 import '@testing-library/jest-dom';
 import { vi, afterEach, afterAll } from 'vitest';
 import { cleanup } from '@testing-library/react';
+import type { User } from '@/types';
 
 // ============================================
 // CLEANUP AFTER EACH TEST
@@ -110,7 +111,7 @@ Object.defineProperty(window, 'ResizeObserver', {
 // ============================================
 // SCROLL TO MOCK
 // ============================================
-window.scrollTo = vi.fn();
+window.scrollTo = vi.fn() as unknown as typeof window.scrollTo;
 
 // ============================================
 // AXIOS MOCK
@@ -175,8 +176,9 @@ vi.mock('socket.io-client', () => ({
 // ============================================
 // TEST DATA FACTORIES
 // ============================================
-export const createMockUser = (overrides = {}) => ({
+export const createMockUser = (overrides: Partial<User> = {}): User => ({
   _id: 'user_123',
+  id: 'user_123', // Alias for _id for compatibility
   firstName: 'Test',
   lastName: 'User',
   email: 'test@example.com',
@@ -189,7 +191,7 @@ export const createMockUser = (overrides = {}) => ({
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
   ...overrides
-});
+} as User);
 
 export const createMockTechnician = (overrides = {}) => createMockUser({
   _id: 'tech_123',
@@ -198,9 +200,8 @@ export const createMockTechnician = (overrides = {}) => createMockUser({
   email: 'tech@example.com',
   role: 'technician',
   skills: [
-    { name: 'Plumbing', category: 'plumbing', yearsOfExperience: 5, verified: true }
+    { name: 'Plumbing', category: 'plumbing', yearsOfExperience: 5 }
   ],
-  hourlyRate: 1500,
   availability: { isAvailable: true },
   ...overrides
 });

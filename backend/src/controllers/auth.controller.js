@@ -519,7 +519,7 @@ exports.setup2FA = async (req, res) => {
 
     // Generate secret
     const secret = speakeasy.generateSecret({
-      name: `BaiTech (${user.email})`
+      name: `Dumu Waks (${user.email})`
     });
 
     // Generate QR code

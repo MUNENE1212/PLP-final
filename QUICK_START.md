@@ -7,8 +7,7 @@ Complete guide for local development, Docker setup, and production deployment.
 - [Prerequisites](#prerequisites)
 - [Local Development](#local-development)
 - [Docker Development](#docker-development)
-- [Production Deployment (Render.com)](#production-deployment-rendercom)
-- [Cloudinary Media Storage](#cloudinary-media-storage)
+- [Production Deployment (VPS)](#production-deployment-vps)
 - [Environment Variables](#environment-variables)
 - [Security Best Practices](#security-best-practices)
 - [Troubleshooting](#troubleshooting)
@@ -152,165 +151,21 @@ docker-compose -f docker-compose.prod.yml logs -f
 
 ---
 
-## Production Deployment (Render.com)
+## Production Deployment (VPS)
 
-Render.com is the recommended platform for production deployment.
+The app is deployed on a VPS with zero-downtime blue-green deployments via GitHub Actions.
 
-### Prerequisites
+**Production URLs:**
+- **Frontend:** [https://dumuwaks.ementech.co.ke](https://dumuwaks.ementech.co.ke)
+- **API:** [https://api.ementech.co.ke](https://api.ementech.co.ke)
+- **Health Check:** [https://api.ementech.co.ke/api/v1/health](https://api.ementech.co.ke/api/v1/health)
 
-- [ ] GitHub account with repository pushed
-- [ ] Render.com account (sign up free at https://render.com)
-- [ ] MongoDB Atlas account
-- [ ] M-Pesa developer credentials
-- [ ] Cloudinary account
+**Infrastructure:** Ubuntu 24.04, PM2, Nginx, Let's Encrypt SSL
 
-### Step 1: MongoDB Atlas (5 minutes)
+Pushing to `master` triggers automatic deployment via GitHub Actions.
 
-1. Go to https://www.mongodb.com/cloud/atlas
-2. Create a free M0 cluster (512MB)
-3. Choose AWS provider, closest region
-4. **Database Access:** Create user with password
-5. **Network Access:** Allow access from anywhere (0.0.0.0/0)
-6. Get connection string:
-   ```
-   mongodb+srv://dumuwaks_admin:PASSWORD@cluster.mongodb.net/dumuwaks?retryWrites=true&w=majority
-   ```
-
-### Step 2: Push to GitHub
-
-```bash
-git add .
-git commit -m "Ready for Render deployment"
-git push origin master
-```
-
-### Step 3: Deploy on Render
-
-1. Go to https://dashboard.render.com
-2. Click **New** > **Blueprint**
-3. Connect your GitHub repository
-4. Render will detect `render.yaml` automatically
-5. Click **Apply Blueprint**
-
-### Step 4: Configure Environment Variables
-
-**Backend Service:**
-```
-MONGODB_URI=mongodb+srv://dumuwaks_admin:PASSWORD@cluster.mongodb.net/dumuwaks?retryWrites=true&w=majority
-JWT_SECRET=<generate-64-char-secret>
-JWT_REFRESH_SECRET=<generate-64-char-secret>
-MPESA_CONSUMER_KEY=your_mpesa_key
-MPESA_CONSUMER_SECRET=your_mpesa_secret
-MPESA_PASSKEY=your_mpesa_passkey
-MPESA_CALLBACK_URL=https://your-backend.onrender.com/api/v1/payments/mpesa/callback
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
-```
-
-**Frontend Service:**
-```
-VITE_API_URL=https://your-backend.onrender.com/api/v1
-```
-
-**Auto-configured by Render:**
-```
-REDIS_HOST
-REDIS_PORT
-CORS_ORIGIN
-```
-
-### Step 5: Post-Deployment
-
-1. **Seed Pricing Data:**
-   - Go to backend service in Render dashboard
-   - Click **Shell** tab
-   - Run: `cd backend && npm run seed:pricing`
-
-2. **Update M-Pesa Callback URL** in M-Pesa developer portal
-
-3. **Test Application:**
-   - Frontend: `https://your-frontend.onrender.com`
-   - Backend: `https://your-backend.onrender.com/api/v1/health`
-
-### Render Service URLs
-
-After deployment, your services will be available at:
-
-- **Frontend:** `https://dumuwaks-frontend.onrender.com`
-- **Backend:** `https://dumuwaks-backend.onrender.com`
-- **API Docs:** `https://dumuwaks-backend.onrender.com/api-docs`
-- **Health Check:** `https://dumuwaks-backend.onrender.com/api/v1/health`
-
-### Cost Breakdown
-
-**Free Tier (Development):**
-| Service | Cost | Notes |
-|---------|------|-------|
-| Frontend | $0 | Static site |
-| Backend | $0 | Auto-sleeps after 15 min |
-| Redis | $0 | 25MB limit |
-| MongoDB | $0 | Atlas M0 (512MB) |
-| **Total** | **$0/month** | Cold starts |
-
-**Paid Tier (Production):**
-| Service | Cost | Benefits |
-|---------|------|----------|
-| Frontend | $0 | Same as free |
-| Backend | $7/month | Always-on, better CPU/RAM |
-| Redis | $7/month | 256MB, persistent |
-| MongoDB | $0 | Same as free (or $9 for M2) |
-| **Total** | **$14/month** | No cold starts |
-
----
-
-## Cloudinary Media Storage
-
-Dumu Waks uses Cloudinary for media storage (replacing Google Drive).
-
-### Setup Instructions
-
-1. **Create Cloudinary Account:**
-   - Go to https://cloudinary.com/
-   - Sign up for free account
-   - Verify email
-
-2. **Get Credentials:**
-   - From Dashboard, copy:
-     - Cloud Name
-     - API Key
-     - API Secret
-
-3. **Configure Environment:**
-   ```env
-   CLOUDINARY_CLOUD_NAME=your-cloud-name
-   CLOUDINARY_API_KEY=your-api-key
-   CLOUDINARY_API_SECRET=your-api-secret
-   ```
-
-4. **Test Configuration:**
-   ```bash
-   # Start backend and check logs
-   npm run dev
-   # Look for: "Cloudinary configured successfully"
-
-   # Test endpoint
-   curl http://localhost:5000/api/v1/upload/config
-   # Should return: {"configured": true}
-   ```
-
-### Features
-
-- **Automatic Optimization:** Images resized to 500x500, cropped to faces, WebP conversion
-- **Organized Folders:** `profile-pictures/`, `posts/`, `bookings/`
-- **Supported Types:** JPEG, JPG, PNG, GIF, WebP, MP4, MOV, AVI
-- **Max File Size:** 10MB
-
-### Free Tier Limits
-
-- 25 GB storage
-- 25 GB bandwidth per month
-- Unlimited transformations
+📖 **Full deployment guide:** [VPS Deployment Guide](./docs/deployment/VPS_DEPLOYMENT.md)
+📖 **CI/CD pipeline details:** [CI/CD Strategy](./docs/CI_CD_STRATEGY.md)
 
 ---
 
@@ -488,20 +343,6 @@ kill -9 <PID>
 - Verify `CORS_ORIGIN` includes frontend URL
 - Check backend is running (green status)
 
-### Cloudinary "Not Configured" Error
-
-- Check all three environment variables are set:
-  - `CLOUDINARY_CLOUD_NAME`
-  - `CLOUDINARY_API_KEY`
-  - `CLOUDINARY_API_SECRET`
-
-### Render Service Issues
-
-1. Check service logs in Render dashboard
-2. Verify all environment variables are set
-3. Check MongoDB Atlas network access
-4. Check Render status page: https://status.render.com/
-
 ---
 
 ## Additional Resources
@@ -510,10 +351,9 @@ kill -9 <PID>
 - **Database Schema:** [docs/backend/DATABASE_SCHEMA_SUMMARY.md](./docs/backend/DATABASE_SCHEMA_SUMMARY.md)
 - **Pricing System:** [docs/features/PRICING_SYSTEM_DOCUMENTATION.md](./docs/features/PRICING_SYSTEM_DOCUMENTATION.md)
 - **M-Pesa Integration:** [docs/features/MPESA_INTEGRATION_GUIDE.md](./docs/features/MPESA_INTEGRATION_GUIDE.md)
-- **Render Docs:** https://render.com/docs
+- **CI/CD Strategy:** [docs/CI_CD_STRATEGY.md](./docs/CI_CD_STRATEGY.md)
 - **MongoDB Atlas Docs:** https://www.mongodb.com/docs/atlas/
-- **Cloudinary Docs:** https://cloudinary.com/documentation
 
 ---
 
-**Need help?** Check the [README.md](./README.md) or contact the team at support@dumuwaks.com
+**Need help?** Check the [README.md](./README.md) or open a GitHub Issue.

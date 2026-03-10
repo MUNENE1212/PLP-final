@@ -13,18 +13,19 @@ import {
   DollarSign,
   ArrowLeft,
   Shield,
-  Share2,
 } from 'lucide-react';
-import { Button } from '@/components/ui';
+import Button from '@/components/ui/Button';
 import Loading from '@/components/ui/Loading';
-import { TechnicianQRCard, QRConnectionCard, BusinessCardQR } from '@/components/qrcode';
 import { cn } from '@/lib/utils';
 import axios from '@/lib/axios';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { createConversation, fetchConversations } from '@/store/slices/messagingSlice';
+import { fetchTechnicianGallery } from '@/store/slices/workGallerySlice';
 import toast from 'react-hot-toast';
 import { MessageCircle } from 'lucide-react';
 import { formatRating } from '@/utils/rating';
+import { WorkGalleryCarousel, WorkGalleryLightbox } from '@/components/workgallery';
+import type { WorkGalleryImage } from '@/types/workGallery';
 
 interface Technician {
   _id: string;
@@ -67,12 +68,17 @@ const TechnicianProfile: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
+  const { images: workGalleryImages, isLoading: isGalleryLoading } = useAppSelector(
+    (state) => state.workGallery
+  );
 
   const [technician, setTechnician] = useState<Technician | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasActiveBooking, setHasActiveBooking] = useState(false);
   const [isCheckingBooking, setIsCheckingBooking] = useState(true);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxInitialIndex, setLightboxInitialIndex] = useState(0);
 
   useEffect(() => {
     const fetchTechnician = async () => {
@@ -115,8 +121,10 @@ const TechnicianProfile: React.FC = () => {
       } else {
         setIsCheckingBooking(false);
       }
+      // Fetch work gallery
+      dispatch(fetchTechnicianGallery(id));
     }
-  }, [id, user]);
+  }, [id, user, dispatch]);
 
   const getProfilePicture = () => {
     if (!technician) return '';
@@ -164,12 +172,12 @@ const TechnicianProfile: React.FC = () => {
   if (error || !technician) {
     return (
       <div className="mx-auto max-w-2xl">
-        <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
-          <h3 className="text-lg font-semibold text-red-900">Error Loading Profile</h3>
-          <p className="mt-2 text-red-700">{error || 'Technician not found'}</p>
+        <div className="glass-card rounded-lg p-6 text-center">
+          <h3 className="text-lg font-semibold text-error">Error Loading Profile</h3>
+          <p className="mt-2 text-steel">{error || 'Technician not found'}</p>
           <Button
             variant="primary"
-            className="mt-4"
+            className="mt-4 glass-button"
             onClick={() => navigate('/find-technicians')}
           >
             Back to Search
@@ -184,24 +192,24 @@ const TechnicianProfile: React.FC = () => {
       {/* Back Button */}
       <button
         onClick={() => navigate(-1)}
-        className="mb-6 flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-gray-100"
+        className="mb-6 flex items-center text-steel hover:text-bone"
       >
         <ArrowLeft className="mr-2 h-4 w-4" />
         Back
       </button>
 
       {/* Header */}
-      <div className="mb-6 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm">
+      <div className="mb-6 glass-card rounded-lg p-6">
         <div className="flex items-start space-x-6">
           {/* Profile Picture */}
           <div className="relative">
             <img
               src={getProfilePicture()}
               alt={technician.firstName}
-              className="h-32 w-32 rounded-full object-cover ring-4 ring-gray-100"
+              className="h-32 w-32 rounded-full object-cover ring-4 ring-circuit/30"
             />
             {technician.availability?.status === 'available' && (
-              <div className="absolute bottom-2 right-2 h-6 w-6 rounded-full border-4 border-white bg-green-500" />
+              <div className="absolute bottom-2 right-2 h-6 w-6 rounded-full border-4 border-charcoal bg-success" />
             )}
           </div>
 
@@ -209,24 +217,24 @@ const TechnicianProfile: React.FC = () => {
           <div className="flex-1">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                <h1 className="text-3xl font-bold text-bone">
                   {technician.firstName} {technician.lastName}
                 </h1>
                 <div className="mt-2 flex items-center space-x-4">
                   <div className="flex items-center space-x-1">
-                    <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                    <span className="text-lg font-semibold">
+                    <Star className="h-5 w-5 fill-warning text-warning" />
+                    <span className="text-lg font-semibold text-bone">
                       {formatRating(technician.rating)}
                     </span>
                   </div>
                   {technician.completedJobs && (
-                    <div className="flex items-center space-x-1 text-gray-600 dark:text-gray-400">
+                    <div className="flex items-center space-x-1 text-steel">
                       <Briefcase className="h-4 w-4" />
                       <span>{technician.completedJobs} jobs completed</span>
                     </div>
                   )}
                   {technician.yearsOfExperience && (
-                    <div className="flex items-center space-x-1 text-gray-600 dark:text-gray-400">
+                    <div className="flex items-center space-x-1 text-steel">
                       <Award className="h-4 w-4" />
                       <span>{technician.yearsOfExperience} years experience</span>
                     </div>
@@ -235,7 +243,7 @@ const TechnicianProfile: React.FC = () => {
               </div>
 
               {technician.availability?.status === 'available' && (
-                <div className="rounded-full bg-green-100 px-4 py-2 text-sm font-semibold text-green-800">
+                <div className="rounded-full bg-success-bg px-4 py-2 text-sm font-semibold text-success led-glow">
                   Available Now
                 </div>
               )}
@@ -245,19 +253,19 @@ const TechnicianProfile: React.FC = () => {
             {technician.verification && (
               <div className="mt-4 flex flex-wrap gap-2">
                 {technician.verification.isVerified && (
-                  <div className="flex items-center space-x-1 rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800">
+                  <div className="flex items-center space-x-1 rounded-full bg-info-bg px-3 py-1 text-sm font-medium text-circuit">
                     <Shield className="h-4 w-4" />
                     <span>Verified</span>
                   </div>
                 )}
                 {technician.verification.backgroundCheck && (
-                  <div className="flex items-center space-x-1 rounded-full bg-purple-100 px-3 py-1 text-sm font-medium text-purple-800">
+                  <div className="flex items-center space-x-1 rounded-full bg-wrench/20 px-3 py-1 text-sm font-medium text-wrench">
                     <CheckCircle className="h-4 w-4" />
                     <span>Background Check</span>
                   </div>
                 )}
                 {technician.verification.insurance && (
-                  <div className="flex items-center space-x-1 rounded-full bg-indigo-100 px-3 py-1 text-sm font-medium text-indigo-800">
+                  <div className="flex items-center space-x-1 rounded-full bg-circuit/20 px-3 py-1 text-sm font-medium text-circuit">
                     <Shield className="h-4 w-4" />
                     <span>Insured</span>
                   </div>
@@ -267,17 +275,17 @@ const TechnicianProfile: React.FC = () => {
 
             {/* Bio */}
             {technician.bio && (
-              <p className="mt-4 text-gray-700 dark:text-gray-300">{technician.bio}</p>
+              <p className="mt-4 text-steel">{technician.bio}</p>
             )}
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="mt-6 flex flex-wrap gap-3 border-t border-gray-200 dark:border-gray-700 pt-6">
+        <div className="mt-6 flex space-x-3 border-t border-subtle pt-6">
           <Button
             variant="primary"
             size="lg"
-            className="flex-1 min-w-[200px]"
+            className="flex-1 glass-button"
             onClick={() => navigate('/find-technicians')}
           >
             Book This Technician
@@ -297,33 +305,11 @@ const TechnicianProfile: React.FC = () => {
             <MessageCircle className="h-4 w-4" />
             <span>Message</span>
           </Button>
-          <Button
-            variant="outline"
-            size="lg"
-            className="flex items-center space-x-2"
-            onClick={() => {
-              // Handle share functionality
-              const profileUrl = window.location.href;
-              if (navigator.share) {
-                navigator.share({
-                  title: `${technician.firstName} ${technician.lastName} - Dumu Waks`,
-                  text: `Check out ${technician.firstName}'s profile on Dumu Waks`,
-                  url: profileUrl,
-                });
-              } else {
-                navigator.clipboard.writeText(profileUrl);
-                toast.success('Profile link copied to clipboard');
-              }
-            }}
-          >
-            <Share2 className="h-4 w-4" />
-            <span>Share</span>
-          </Button>
         </div>
 
         {/* Booking Required Notice */}
         {!isCheckingBooking && !hasActiveBooking && (
-          <div className="mt-4 rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
+          <div className="mt-4 rounded-lg bg-warning-bg border border-warning/30 p-3 text-sm text-warning">
             <div className="flex items-start space-x-2">
               <Shield className="h-4 w-4 mt-0.5 flex-shrink-0" />
               <p>
@@ -337,31 +323,31 @@ const TechnicianProfile: React.FC = () => {
       {/* Details Grid */}
       <div className="grid gap-6 md:grid-cols-2">
         {/* Skills */}
-        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm">
-          <h2 className="mb-4 flex items-center text-lg font-bold text-gray-900 dark:text-gray-100">
-            <Award className="mr-2 h-5 w-5 text-primary-600" />
+        <div className="glass-card rounded-lg p-6">
+          <h2 className="mb-4 flex items-center text-lg font-bold text-bone">
+            <Award className="mr-2 h-5 w-5 text-circuit" />
             Skills & Expertise
           </h2>
           <div className="space-y-3">
             {technician.skills.map((skill, index) => (
-              <div key={index} className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+              <div key={index} className="glass rounded-lg p-3">
                 <div className="flex items-center justify-between">
-                  <span className="font-medium text-gray-900 dark:text-gray-100">
+                  <span className="font-medium text-bone">
                     {skill.category.replace('_', ' ')}
                   </span>
                   <span
                     className={cn('rounded-full px-3 py-1 text-xs font-semibold', {
-                      'bg-green-100 text-green-800': skill.proficiency === 'expert',
-                      'bg-blue-100 text-blue-800': skill.proficiency === 'advanced',
-                      'bg-yellow-100 text-yellow-800': skill.proficiency === 'intermediate',
-                      'bg-gray-100 text-gray-800': skill.proficiency === 'beginner',
+                      'bg-success-bg text-success': skill.proficiency === 'expert',
+                      'bg-info-bg text-circuit': skill.proficiency === 'advanced',
+                      'bg-warning-bg text-warning': skill.proficiency === 'intermediate',
+                      'bg-hover text-steel': skill.proficiency === 'beginner',
                     })}
                   >
                     {skill.proficiency}
                   </span>
                 </div>
                 {skill.yearsOfExperience > 0 && (
-                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                  <p className="mt-1 text-sm text-steel">
                     {skill.yearsOfExperience} years experience
                   </p>
                 )}
@@ -374,17 +360,17 @@ const TechnicianProfile: React.FC = () => {
         <div className="space-y-6">
           {/* Pricing */}
           {technician.hourlyRate && (
-            <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm">
-              <h2 className="mb-4 flex items-center text-lg font-bold text-gray-900 dark:text-gray-100">
-                <DollarSign className="mr-2 h-5 w-5 text-primary-600" />
+            <div className="glass-card rounded-lg p-6">
+              <h2 className="mb-4 flex items-center text-lg font-bold text-bone">
+                <DollarSign className="mr-2 h-5 w-5 text-circuit" />
                 Pricing
               </h2>
-              <div className="rounded-lg bg-primary-50 p-4">
-                <div className="text-3xl font-bold text-primary-900">
+              <div className="glass rounded-lg p-4">
+                <div className="text-3xl font-bold text-circuit">
                   KES {technician.hourlyRate}
-                  <span className="text-lg text-primary-700">/hour</span>
+                  <span className="text-lg text-steel">/hour</span>
                 </div>
-                <p className="mt-2 text-sm text-primary-700">
+                <p className="mt-2 text-sm text-steel">
                   Final price may vary based on job complexity
                 </p>
               </div>
@@ -392,39 +378,39 @@ const TechnicianProfile: React.FC = () => {
           )}
 
           {/* Contact Info */}
-          <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm">
-            <h2 className="mb-4 flex items-center text-lg font-bold text-gray-900 dark:text-gray-100">
-              <MapPin className="mr-2 h-5 w-5 text-primary-600" />
+          <div className="glass-card rounded-lg p-6">
+            <h2 className="mb-4 flex items-center text-lg font-bold text-bone">
+              <MapPin className="mr-2 h-5 w-5 text-circuit" />
               Location
             </h2>
             <div className="space-y-3">
               {technician.location?.address ? (
-                <div className="flex items-center space-x-3 text-gray-700 dark:text-gray-300">
-                  <MapPin className="h-4 w-4 text-gray-400" />
+                <div className="flex items-center space-x-3 text-steel">
+                  <MapPin className="h-4 w-4 text-steel" />
                   <span>{technician.location.address}</span>
                 </div>
               ) : (
-                <p className="text-gray-500 dark:text-gray-400">Location not specified</p>
+                <p className="text-steel">Location not specified</p>
               )}
 
               {/* Only show contact info if user has active booking */}
               {hasActiveBooking ? (
                 <>
-                  <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Contact information (visible due to active booking):</p>
-                    <div className="flex items-center space-x-3 text-gray-700 dark:text-gray-300 mb-2">
-                      <Phone className="h-4 w-4 text-gray-400" />
+                  <div className="pt-3 border-t border-subtle">
+                    <p className="text-xs text-steel mb-2">Contact information (visible due to active booking):</p>
+                    <div className="flex items-center space-x-3 text-steel mb-2">
+                      <Phone className="h-4 w-4 text-steel" />
                       <span>{technician.phoneNumber}</span>
                     </div>
-                    <div className="flex items-center space-x-3 text-gray-700 dark:text-gray-300">
-                      <Mail className="h-4 w-4 text-gray-400" />
+                    <div className="flex items-center space-x-3 text-steel">
+                      <Mail className="h-4 w-4 text-steel" />
                       <span>{technician.email}</span>
                     </div>
                   </div>
                 </>
               ) : (
-                <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
-                  <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 text-sm text-gray-600 dark:text-gray-400">
+                <div className="pt-3 border-t border-subtle">
+                  <div className="glass rounded-lg p-3 text-sm text-steel">
                     <div className="flex items-start space-x-2">
                       <Shield className="h-4 w-4 mt-0.5 flex-shrink-0" />
                       <p>
@@ -440,16 +426,16 @@ const TechnicianProfile: React.FC = () => {
 
         {/* Certifications */}
         {technician.certifications && technician.certifications.length > 0 && (
-          <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 shadow-sm md:col-span-2">
-            <h2 className="mb-4 flex items-center text-lg font-bold text-gray-900 dark:text-gray-100">
-              <Award className="mr-2 h-5 w-5 text-primary-600" />
+          <div className="glass-card rounded-lg p-6 md:col-span-2">
+            <h2 className="mb-4 flex items-center text-lg font-bold text-bone">
+              <Award className="mr-2 h-5 w-5 text-circuit" />
               Certifications
             </h2>
             <div className="grid gap-3 sm:grid-cols-2">
               {technician.certifications.map((cert, index) => (
-                <div key={index} className="rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-                  <h3 className="font-semibold text-gray-900 dark:text-gray-100">{cert.name}</h3>
-                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                <div key={index} className="glass rounded-lg p-4">
+                  <h3 className="font-semibold text-bone">{cert.name}</h3>
+                  <p className="mt-1 text-sm text-steel">
                     {cert.issuer} • {cert.year}
                   </p>
                 </div>
@@ -459,44 +445,28 @@ const TechnicianProfile: React.FC = () => {
         )}
       </div>
 
-      {/* QR Code Section */}
-      <div className="mt-8 space-y-6">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Quick Connect</h2>
-
-        {/* Connection Options */}
-        <QRConnectionCard
-          type="profile"
-          data={{
-            id: technician._id,
-            name: `${technician.firstName} ${technician.lastName}`,
-            service: technician.skills[0]?.category.replace('_', ' ') || 'Service Provider',
-            rating: technician.rating
+      {/* Work Gallery Section */}
+      <div className="mt-6">
+        <WorkGalleryCarousel
+          images={workGalleryImages}
+          isLoading={isGalleryLoading}
+          technicianName={`${technician.firstName} ${technician.lastName}`}
+          onImageClick={(image) => {
+            setLightboxInitialIndex(workGalleryImages.findIndex((img) => img._id === image._id));
+            setLightboxOpen(true);
           }}
         />
-
-        {/* Business Card QR */}
-        {hasActiveBooking && (
-          <div className="mt-6">
-            <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Business Card</h3>
-            <BusinessCardQR
-              technicianName={`${technician.firstName} ${technician.lastName}`}
-              technicianId={technician._id}
-              service={technician.skills[0]?.category.replace('_', ' ') || 'Service Provider'}
-              phone={technician.phoneNumber}
-              email={technician.email}
-              location={technician.location?.address || 'Kenya'}
-            />
-          </div>
-        )}
-
-        {/* Original QR Card (kept for backward compatibility) */}
-        <TechnicianQRCard
-          technicianId={technician._id}
-          technicianName={`${technician.firstName} ${technician.lastName}`}
-          service={technician.skills[0]?.category.replace('_', ' ') || 'Service Provider'}
-          rating={technician.rating}
-        />
       </div>
+
+      {/* Lightbox */}
+      {lightboxOpen && (
+        <WorkGalleryLightbox
+          images={workGalleryImages}
+          initialIndex={lightboxInitialIndex}
+          isOpen={lightboxOpen}
+          onClose={() => setLightboxOpen(false)}
+        />
+      )}
     </div>
   );
 };

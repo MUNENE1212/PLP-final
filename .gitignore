@@ -131,3 +131,9 @@ firebase-service-account.json
 
 # Local development
 .local
+
+# Claude Code
+.claude/settings.local.json
+
+# AI orchestration artifacts
+.ai/

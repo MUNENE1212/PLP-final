@@ -5,7 +5,7 @@
   <br/>
   <br/>
 
-  <h3>🌐 <a href="https://ementech-frontend.onrender.com/">Live Demo</a></h3>
+  <h3>🌐 <a href="https://dumuwaks.ementech.co.ke">Live App</a></h3>
 
   <p><strong>Connecting skilled technicians with customers across Kenya</strong></p>
 </div>
@@ -17,21 +17,19 @@
 [![MongoDB](https://img.shields.io/badge/MongoDB-7.0-green)](https://www.mongodb.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18-61DAFB)](https://reactjs.org/)
-[![Live Demo](https://img.shields.io/badge/demo-online-success)](https://ementech-frontend.onrender.com/)
+[![Live Demo](https://img.shields.io/badge/demo-online-success)](https://dumuwaks.ementech.co.ke)
 
 ---
 
 ## 🌟 Live Application
 
-**🔗 Visit the app:** [https://ementech-frontend.onrender.com/](https://ementech-frontend.onrender.com/)
+**🔗 Visit the app:** [https://dumuwaks.ementech.co.ke](https://dumuwaks.ementech.co.ke)
 
 > **Production Ready!** The platform is live and accepting real users. Create your account to start:
 > - **Customers**: Find and book skilled technicians for your maintenance needs
 > - **Technicians**: Showcase your skills and connect with customers
 > - **Real Payments**: Integrated M-Pesa payment system (Kenya)
 > - **Real-Time Matching**: AI-powered technician matching algorithm
-
-**Note:** First load may take 30-60 seconds as the free tier services spin up from sleep mode.
 
 ---
 
@@ -125,10 +123,11 @@ cd frontend && npm install && npm run dev
 - **UI Components:** Custom component library
 
 ### DevOps
-- **Containerization:** Docker + Docker Compose
-- **Cloud Platform:** Render.com (recommended)
-- **CI/CD:** Auto-deploy on git push
-- **Monitoring:** Health checks + logging
+- **Server:** VPS (Ubuntu 24.04, PM2 + Nginx)
+- **CI/CD:** GitHub Actions (zero-downtime deploy)
+- **SSL:** Let's Encrypt / Certbot
+- **Containerization:** Docker + Docker Compose (local dev)
+- **Monitoring:** Health checks + PM2 logging
 - **Database:** MongoDB Atlas (managed)
 
 ## 📁 Project Structure
@@ -201,7 +200,7 @@ dumuwaks/
 ### 🛠️ Development
 - [Database Schema](./docs/backend/DATABASE_SCHEMA_SUMMARY.md) - MongoDB collections
 - [Implementation Summary](./docs/backend/IMPLEMENTATION_SUMMARY.md) - Architecture overview
-- [Contributing Guide](./backend/CONTRIBUTING.md) - How to contribute
+- [Contributing Guide](./CONTRIBUTING.md) - How to contribute
 
 ### 🐛 Fixes & Solutions
 - [Booking Fee Fixes](./docs/fixes/BOOKING_FEE_COMPLETE_DEBUGGING_SUMMARY.md)
@@ -209,9 +208,9 @@ dumuwaks/
 - [Pricing Model Updates](./docs/features/PRICING_MODEL_UPDATE.md)
 
 ### 🚀 Deployment
-- [Render Deployment Guide](./docs/deployment/RENDER_DEPLOYMENT.md) - Deploy to Render.com (Recommended)
-- [Docker Deployment Guide](./docs/deployment/DOCKER_DEPLOYMENT.md) - Full Docker setup
-- [Deployment Checklist](./docs/deployment/DEPLOYMENT_CHECKLIST.md) - Pre-deployment checklist
+- [VPS Deployment Guide](./docs/deployment/VPS_DEPLOYMENT.md) - Production VPS deployment
+- [CI/CD Strategy](./docs/CI_CD_STRATEGY.md) - Full CI/CD pipeline details
+- [Docker Deployment Guide](./docs/deployment/DOCKER_DEPLOYMENT.md) - Local Docker setup
 
 ## 💻 Development
 
@@ -279,70 +278,45 @@ npm test
 
 ## 🚀 Deployment
 
-### Render.com (Recommended for Production)
+### Production (VPS)
 
-**One-click deployment with Blueprint:**
+The app is deployed on a VPS with zero-downtime blue-green deployments via GitHub Actions.
 
-1. **Push to GitHub:**
-```bash
-git add .
-git commit -m "Ready for deployment"
-git push origin master
-```
+**Production URLs:**
+- **Frontend:** [https://dumuwaks.ementech.co.ke](https://dumuwaks.ementech.co.ke)
+- **API:** [https://api.ementech.co.ke](https://api.ementech.co.ke)
+- **Health Check:** [https://api.ementech.co.ke/api/v1/health](https://api.ementech.co.ke/api/v1/health)
 
-2. **Deploy on Render:**
-   - Go to [Render Dashboard](https://dashboard.render.com)
-   - Click "New" > "Blueprint"
-   - Connect your GitHub repository
-   - Render will detect `render.yaml` automatically
-   - Configure environment variables (see `.env.render.example`)
-   - Click "Apply"
+**Infrastructure:**
+- Ubuntu 24.04 VPS with PM2 + Nginx
+- SSL via Let's Encrypt
+- GitHub Actions CI/CD pipeline
+- Automated rollback on health check failure
 
-3. **Post-deployment:**
-   - Seed pricing data via backend shell
-   - Update M-Pesa callback URL
-   - Test the application
+Pushing to `master` triggers automatic deployment.
 
-📖 **Full guide**: [Render Deployment Guide](./docs/deployment/RENDER_DEPLOYMENT.md)
+📖 **Full guide**: [VPS Deployment Guide](./docs/deployment/VPS_DEPLOYMENT.md) | [CI/CD Strategy](./docs/CI_CD_STRATEGY.md)
 
-**Free tier includes:**
-- Backend API (with auto-sleep after 15 min)
-- Frontend static site
-- Redis cache (25MB)
-- MongoDB Atlas (512MB free tier)
-
-**Paid tier ($14/month):**
-- Always-on services
-- Better performance
-- 256MB Redis
-
-### Using Docker (Self-hosted)
+### Local Development (Docker)
 
 1. **Configure environment:**
 ```bash
 cp .env.docker.example .env.docker
-nano .env.docker  # Set production values
+nano .env.docker  # Set development values
 ```
 
-2. **Deploy:**
+2. **Start services:**
 ```bash
-./scripts/docker-prod.sh
+./scripts/docker-dev.sh
 ```
 
 3. **Verify:**
 ```bash
-docker-compose -f docker-compose.prod.yml ps
-docker-compose -f docker-compose.prod.yml logs -f
+docker-compose ps
+docker-compose logs -f
 ```
 
 📖 **Full guide**: [Docker Deployment Guide](./docs/deployment/DOCKER_DEPLOYMENT.md)
-
-### Other Cloud Platforms
-- **Render:** Recommended - See guide above
-- **Railway:** Similar to Render, use `railway up`
-- **AWS:** EC2 + RDS + S3 (advanced)
-- **DigitalOcean:** Droplet + Managed MongoDB
-- **Heroku:** Container deployment (deprecated)
 
 ## 🔐 Security
 
@@ -357,7 +331,7 @@ docker-compose -f docker-compose.prod.yml logs -f
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see [CONTRIBUTING.md](./backend/CONTRIBUTING.md) for details.
+We welcome contributions! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for details.
 
 ### Development Workflow
 1. Fork the repository
@@ -387,29 +361,16 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - **Documentation:** See [docs/](./docs/) folder
 - **Issues:** GitHub Issues
-- **Email:** support@dumuwaks.com
-
-## 🎨 Branding
-
-The platform was recently rebranded from EmEnTech to **Dumu Waks**. All branding assets have been updated:
-
-- ✅ **Logo Assets** - Transparent PNG variants (small, medium, full, loading, square)
-- ✅ **Favicons** - Comprehensive set for all devices (iOS, Android, Windows)
-- ✅ **PWA Support** - Progressive Web App manifest and icons
-- ✅ **Dark Mode Ready** - All logos work on light and dark backgrounds
-- ✅ **Documentation** - Complete rebranding guides available
-
-See [REBRANDING.md](./REBRANDING.md) and [SVG_CONVERSION_GUIDE.md](./SVG_CONVERSION_GUIDE.md) for details.
 
 ## 🗺️ Roadmap
 
 - [ ] Mobile app (React Native)
-- [ ] Advanced analytics dashboard
+- [x] Advanced analytics dashboard
 - [ ] Multi-language support
 - [ ] SMS notifications via Africa's Talking
 - [ ] Automated testing suite (Jest + React Testing Library)
 - [ ] Performance monitoring (New Relic/Sentry)
-- [ ] CI/CD pipeline (GitHub Actions)
+- [x] CI/CD pipeline (GitHub Actions)
 - [ ] Enhanced technician verification (KYC)
 - [ ] Video consultations (Agora integration)
 

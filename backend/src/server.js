@@ -43,10 +43,9 @@ const corsOptions = {
   origin: function (origin, callback) {
     const whitelist = [
       process.env.CLIENT_WEB_URL,
-      process.env.CORS_ORIGIN, // For Render deployment
-      'https://ementech-frontend.onrender.com', // Frontend deployed URL
-      'https://dumuwaks.ementech.co.ke', // Dumuwaks frontend
-      'https://api.ementech.co.ke', // API subdomain
+      process.env.CORS_ORIGIN,
+      'https://dumuwaks.ementech.co.ke',
+      'https://api.ementech.co.ke',
       'http://localhost:3000',
       'http://localhost:3001',
       'http://localhost:5000', // Backend server (for Swagger UI)
@@ -136,7 +135,7 @@ app.get('/api/v1/health', healthCheckHandler);
 // API Info
 app.get('/', (req, res) => {
   res.json({
-    name: 'BaiTech API',
+    name: 'Dumu Waks API',
     version: process.env.API_VERSION || 'v1',
     description: 'AI-Powered Technician & Community Platform',
     documentation: '/api-docs',
@@ -150,7 +149,7 @@ app.use('/api-docs', swaggerUi.serve);
 app.get('/api-docs', swaggerUi.setup(swaggerSpec, {
   explorer: true,
   customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: 'BaiTech API Documentation'
+  customSiteTitle: 'Dumu Waks API Documentation'
 }));
 
 // Swagger JSON endpoint
@@ -249,7 +248,7 @@ const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, () => {
   console.log(`
 ╔═══════════════════════════════════════╗
-║     🚀 BaiTech Server Started        ║
+║     🚀 Dumu Waks Server Started      ║
 ╠═══════════════════════════════════════╣
 ║  Environment: ${process.env.NODE_ENV?.padEnd(23) || 'development'.padEnd(23)} ║
 ║  Port: ${PORT.toString().padEnd(30)} ║

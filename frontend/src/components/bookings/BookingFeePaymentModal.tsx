@@ -29,23 +29,6 @@ const BookingFeePaymentModal: React.FC<BookingFeePaymentModalProps> = ({
   const [cardExpiry, setCardExpiry] = useState('');
   const [cardCVC, setCardCVC] = useState('');
 
-  // Debug: Log the amount received
-  React.useEffect(() => {
-    if (isOpen) {
-      console.log('=== PAYMENT MODAL DEBUG ===');
-      console.log('Amount received:', amount);
-      console.log('Currency:', currency);
-      console.log('Booking ID:', bookingId);
-
-      if (amount === 0 || !amount) {
-        console.error('⚠️ PAYMENT MODAL: Amount is 0 or undefined!');
-      } else {
-        console.log('✅ PAYMENT MODAL: Amount is valid:', amount);
-      }
-      console.log('=========================');
-    }
-  }, [isOpen, amount, currency, bookingId]);
-
   if (!isOpen) return null;
 
   const handlePayment = async () => {
@@ -84,8 +67,6 @@ const BookingFeePaymentModal: React.FC<BookingFeePaymentModalProps> = ({
       onPaymentSuccess(transactionId);
       onClose();
     } catch (error: any) {
-      console.error('Payment error:', error);
-
       // Extract detailed error message from axios error
       let errorMessage = 'Payment failed. Please try again.';
 
@@ -94,9 +75,6 @@ const BookingFeePaymentModal: React.FC<BookingFeePaymentModalProps> = ({
       } else if (error.message) {
         errorMessage = error.message;
       }
-
-      console.error('Detailed error message:', errorMessage);
-      console.error('Full error response:', error.response?.data);
 
       toast.error(errorMessage);
     } finally {
@@ -107,14 +85,6 @@ const BookingFeePaymentModal: React.FC<BookingFeePaymentModalProps> = ({
   const handleMpesaPayment = async (): Promise<string> => {
     const axiosInstance = (await import('@/lib/axios')).default;
 
-    // Debug: Log payment details
-    console.log('=== M-PESA PAYMENT DEBUG ===');
-    console.log('Phone Number:', mpesaPhone);
-    console.log('Booking ID:', bookingId);
-    console.log('Amount:', amount);
-    console.log('Type:', 'booking_fee');
-    console.log('===========================');
-
     // Initiate STK Push
     const stkResponse = await axiosInstance.post('/payments/mpesa/stkpush', {
       phoneNumber: mpesaPhone,
@@ -122,8 +92,6 @@ const BookingFeePaymentModal: React.FC<BookingFeePaymentModalProps> = ({
       amount,
       type: 'booking_fee',
     });
-
-    console.log('STK Response:', stkResponse.data);
 
     if (!stkResponse.data.success) {
       throw new Error(stkResponse.data.message || 'STK Push failed');
@@ -197,24 +165,24 @@ const BookingFeePaymentModal: React.FC<BookingFeePaymentModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center p-4 z-50"
+      className="fixed inset-0 bg-overlay-medium flex items-center justify-center p-4 z-50"
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-gray-800 rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto"
+        className="glass-modal rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b dark:border-gray-700">
+        <div className="flex items-center justify-between p-6 border-b border-subtle">
           <div>
-            <h2 className="text-xl font-bold dark:text-gray-100">Pay Booking Fee</h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            <h2 className="text-xl font-bold text-bone">Pay Booking Fee</h2>
+            <p className="text-sm text-steel mt-1">
               Secure payment protected by escrow
             </p>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:text-gray-400 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
+            className="text-steel hover:text-bone transition-colors"
           >
             <X className="w-6 h-6" />
           </button>
@@ -223,19 +191,19 @@ const BookingFeePaymentModal: React.FC<BookingFeePaymentModalProps> = ({
         {/* Content */}
         <div className="p-6">
           {/* Amount */}
-          <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 mb-6 border border-green-200 dark:border-green-800">
-            <div className="text-sm text-green-700 dark:text-green-400 mb-1">Amount to Pay</div>
-            <div className="text-3xl font-bold text-green-900 dark:text-green-300">
+          <div className="bg-success-bg rounded-lg p-4 mb-6 border border-success/30">
+            <div className="text-sm text-success mb-1">Amount to Pay</div>
+            <div className="text-3xl font-bold text-bone">
               {amount.toLocaleString()} {currency}
             </div>
-            <div className="text-xs text-green-600 dark:text-green-400 mt-1">
+            <div className="text-xs text-success mt-1">
               20% refundable booking deposit
             </div>
           </div>
 
           {/* Payment Method Selection */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 dark:text-gray-200 mb-3">
+            <label className="block text-sm font-medium text-bone mb-3">
               Select Payment Method
             </label>
             <div className="grid grid-cols-3 gap-3">
@@ -247,18 +215,18 @@ const BookingFeePaymentModal: React.FC<BookingFeePaymentModalProps> = ({
                     onClick={() => setPaymentMethod(method.id)}
                     className={`p-4 rounded-lg border-2 transition-all ${
                       paymentMethod === method.id
-                        ? 'border-green-500 bg-green-50 dark:border-green-600 dark:bg-green-900/20'
-                        : 'border-gray-200 hover:border-gray-300 dark:border-gray-600 dark:hover:border-gray-500'
+                        ? 'border-circuit bg-circuit/20 led-glow'
+                        : 'border-subtle hover:border-default glass'
                     }`}
                   >
                     <Icon
                       className={`w-6 h-6 mx-auto mb-2 ${
-                        paymentMethod === method.id ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'
+                        paymentMethod === method.id ? 'text-circuit' : 'text-steel'
                       }`}
                     />
                     <div
                       className={`text-xs font-medium ${
-                        paymentMethod === method.id ? 'text-green-900 dark:text-green-300' : 'text-gray-600 dark:text-gray-400'
+                        paymentMethod === method.id ? 'text-circuit' : 'text-steel'
                       }`}
                     >
                       {method.name}
@@ -273,7 +241,7 @@ const BookingFeePaymentModal: React.FC<BookingFeePaymentModalProps> = ({
           <div className="mb-6">
             {paymentMethod === 'mpesa' && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 dark:text-gray-200 mb-2">
+                <label className="block text-sm font-medium text-bone mb-2">
                   M-Pesa Phone Number
                 </label>
                 <Input
@@ -283,7 +251,7 @@ const BookingFeePaymentModal: React.FC<BookingFeePaymentModalProps> = ({
                   onChange={(e) => setMpesaPhone(e.target.value)}
                   className="w-full"
                 />
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-xs text-steel mt-1">
                   You will receive an STK push notification on your phone
                 </p>
               </div>
@@ -292,7 +260,7 @@ const BookingFeePaymentModal: React.FC<BookingFeePaymentModalProps> = ({
             {paymentMethod === 'card' && (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 dark:text-gray-200 mb-2">
+                  <label className="block text-sm font-medium text-bone mb-2">
                     Card Number
                   </label>
                   <Input
@@ -305,7 +273,7 @@ const BookingFeePaymentModal: React.FC<BookingFeePaymentModalProps> = ({
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 dark:text-gray-200 mb-2">
+                    <label className="block text-sm font-medium text-bone mb-2">
                       Expiry Date
                     </label>
                     <Input
@@ -317,7 +285,7 @@ const BookingFeePaymentModal: React.FC<BookingFeePaymentModalProps> = ({
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 dark:text-gray-200 mb-2">
+                    <label className="block text-sm font-medium text-bone mb-2">
                       CVC
                     </label>
                     <Input
@@ -333,14 +301,14 @@ const BookingFeePaymentModal: React.FC<BookingFeePaymentModalProps> = ({
             )}
 
             {paymentMethod === 'wallet' && (
-              <div className="bg-gray-50 dark:bg-gray-900 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-700 dark:border-gray-600">
+              <div className="glass rounded-lg p-4 border border-subtle">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-300">Wallet Balance:</span>
-                  <span className="font-semibold dark:text-gray-100">5,000 {currency}</span>
+                  <span className="text-sm text-steel">Wallet Balance:</span>
+                  <span className="font-semibold text-bone">5,000 {currency}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600 dark:text-gray-400 dark:text-gray-300">After Payment:</span>
-                  <span className="font-semibold dark:text-gray-100">
+                  <span className="text-sm text-steel">After Payment:</span>
+                  <span className="font-semibold text-bone">
                     {(5000 - amount).toLocaleString()} {currency}
                   </span>
                 </div>
@@ -349,24 +317,24 @@ const BookingFeePaymentModal: React.FC<BookingFeePaymentModalProps> = ({
           </div>
 
           {/* Security Features */}
-          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mb-6 border border-blue-200 dark:border-blue-800">
+          <div className="bg-info-bg rounded-lg p-4 mb-6 border border-circuit/30">
             <div className="flex items-center gap-2 mb-2">
-              <Shield className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              <span className="font-semibold text-blue-900 dark:text-blue-300">
+              <Shield className="w-5 h-5 text-circuit" />
+              <span className="font-semibold text-circuit">
                 Payment Protection
               </span>
             </div>
-            <ul className="space-y-1 text-sm text-blue-700 dark:text-blue-300">
+            <ul className="space-y-1 text-sm text-steel">
               <li className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4" />
+                <CheckCircle className="w-4 h-4 text-success" />
                 Funds held securely in escrow
               </li>
               <li className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4" />
+                <CheckCircle className="w-4 h-4 text-success" />
                 100% refundable if you cancel
               </li>
               <li className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4" />
+                <CheckCircle className="w-4 h-4 text-success" />
                 Released after job completion
               </li>
             </ul>
@@ -385,7 +353,7 @@ const BookingFeePaymentModal: React.FC<BookingFeePaymentModalProps> = ({
             <Button
               onClick={handlePayment}
               disabled={isProcessing}
-              className="flex-1"
+              className="flex-1 glass-button"
             >
               {isProcessing ? (
                 <>

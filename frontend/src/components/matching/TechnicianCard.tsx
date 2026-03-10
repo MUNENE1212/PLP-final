@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   MapPin,
   Star,
@@ -12,16 +11,11 @@ import {
   Eye,
   Sparkles,
   DollarSign,
-  ChevronDown,
-  ChevronUp,
 } from 'lucide-react';
 import { Match } from '@/store/slices/matchingSlice';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui';
-import { Card } from '@/components/ui';
+import Button from '../ui/Button';
 import { formatRating } from '@/utils/rating';
-import { SwipeableCard } from '@/components/gestures';
-import { hapticSuccess } from '@/lib/haptics';
 
 interface TechnicianCardProps {
   match: Match;
@@ -44,30 +38,20 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
     navigate(`/profile/${match.technician._id}`);
   };
 
-  const handleSwipeLeft = () => {
-    onViewProfile(match.technician._id);
-    hapticSuccess();
-  };
-
-  const handleSwipeRight = () => {
-    onAccept(match._id);
-    hapticSuccess();
-  };
-
   const getMatchQualityBadge = (score: number) => {
     if (score >= 90) {
-      return { label: 'Excellent Match', color: 'bg-green-100 text-green-800 border-green-300' };
+      return { label: 'Excellent Match', color: 'bg-success-bg text-success border-success/30' };
     }
     if (score >= 75) {
-      return { label: 'Very Good', color: 'bg-blue-100 text-blue-800 border-blue-300' };
+      return { label: 'Very Good', color: 'bg-info-bg text-circuit border-circuit/30' };
     }
     if (score >= 60) {
-      return { label: 'Good Match', color: 'bg-purple-100 text-purple-800 border-purple-300' };
+      return { label: 'Good Match', color: 'bg-wrench/20 text-wrench border-wrench/30' };
     }
     if (score >= 40) {
-      return { label: 'Fair Match', color: 'bg-yellow-100 text-yellow-800 border-yellow-300' };
+      return { label: 'Fair Match', color: 'bg-warning-bg text-warning border-warning/30' };
     }
-    return { label: 'Poor Match', color: 'bg-gray-100 text-gray-800 border-gray-300' };
+    return { label: 'Poor Match', color: 'bg-hover text-steel border-subtle' };
   };
 
   const getProfilePicture = () => {
@@ -80,139 +64,119 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
   const matchQuality = getMatchQualityBadge(match.scores.overall);
 
   const scoreItems = [
-    { label: 'Skills', value: match.scores.skillMatch, icon: Award, color: 'text-purple-600' },
-    { label: 'Location', value: match.scores.locationProximity, icon: MapPin, color: 'text-blue-600' },
-    { label: 'Availability', value: match.scores.availability, icon: Clock, color: 'text-green-600' },
-    { label: 'Rating', value: match.scores.rating, icon: Star, color: 'text-yellow-600' },
-    { label: 'Experience', value: match.scores.experienceLevel, icon: TrendingUp, color: 'text-indigo-600' },
+    { label: 'Skill Match', value: match.scores.skillMatch, icon: Award, color: 'text-wrench' },
+    { label: 'Location', value: match.scores.locationProximity, icon: MapPin, color: 'text-circuit' },
+    { label: 'Availability', value: match.scores.availability, icon: Clock, color: 'text-success' },
+    { label: 'Rating', value: match.scores.rating, icon: Star, color: 'text-warning' },
+    { label: 'Experience', value: match.scores.experienceLevel, icon: TrendingUp, color: 'text-circuit' },
   ];
 
   return (
-    <SwipeableCard
-      onSwipeLeft={handleSwipeLeft}
-      onSwipeRight={handleSwipeRight}
-      leftAction={{
-        icon: <Eye className="h-5 w-5" />,
-        label: 'View Profile',
-        color: 'bg-blue-500'
-      }}
-      rightAction={{
-        icon: <CheckCircle className="h-5 w-5" />,
-        label: 'Book Now',
-        color: 'bg-green-500'
-      }}
-    >
-      <Card className="overflow-hidden hover:shadow-2xl transition-all duration-300">
-        {/* Cover with gradient background */}
-        <div className="relative h-32 bg-gradient-to-br from-primary-500 to-secondary-500">
-        <div className="absolute inset-0 bg-black/10" />
-        <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end">
-          {/* Profile picture */}
-          <div className="relative">
-            <motion.img
-              whileHover={{ scale: 1.05 }}
-              src={getProfilePicture()}
-              alt={match.technician.firstName}
-              className="h-20 w-20 rounded-2xl border-4 border-white shadow-lg cursor-pointer object-cover"
-              onClick={handleProfileClick}
-            />
-            {match.technician.availability?.status === 'available' && (
-              <div className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full border-2 border-white bg-green-500 flex items-center justify-center">
-                <CheckCircle className="h-3 w-3 text-white" />
-              </div>
-            )}
-          </div>
-
-          {/* Match Score Badge */}
-          <div className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-2xl text-right">
-            <div className="text-white/90 text-xs font-medium mb-1">Match Score</div>
-            <div className="text-white text-3xl font-bold">
-              {match.scores.overall}
-              <span className="text-base">/100</span>
+    <div className="glass-card rounded-lg transition-all hover:shadow-led">
+      {/* Header */}
+      <div className="p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div className="flex space-x-3 sm:space-x-4 flex-1">
+            {/* Profile Picture */}
+            <div className="relative cursor-pointer flex-shrink-0" onClick={handleProfileClick}>
+              <img
+                src={getProfilePicture()}
+                alt={match.technician.firstName}
+                className="h-16 w-16 sm:h-20 sm:w-20 rounded-full object-cover ring-4 ring-circuit/20 hover:ring-circuit/50 transition-all"
+                title={`View ${match.technician.firstName}'s profile`}
+              />
+              {match.technician.availability?.status === 'available' && (
+                <div className="absolute bottom-0 right-0 h-4 w-4 sm:h-5 sm:w-5 rounded-full border-2 border-charcoal bg-success" />
+              )}
             </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Content */}
-      <div className="p-4">
-        {/* Header */}
-        <div className="mb-3">
-          <div className="flex items-start justify-between gap-2">
+            {/* Info */}
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center space-x-2">
                 <h3
-                  className="text-lg font-bold text-neutral-900 dark:text-white cursor-pointer hover:text-primary-600 transition-colors truncate"
+                  className="text-lg sm:text-xl font-bold text-bone cursor-pointer hover:text-circuit transition-colors truncate"
                   onClick={handleProfileClick}
+                  title={`View ${match.technician.firstName}'s profile`}
                 >
                   {match.technician.firstName} {match.technician.lastName}
                 </h3>
                 {match.scores.overall >= 85 && (
-                  <Sparkles className="h-5 w-5 text-yellow-500 flex-shrink-0" />
+                  <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-warning flex-shrink-0" />
                 )}
               </div>
 
-              {/* Quick Stats */}
-              <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-neutral-600 dark:text-neutral-400">
-                <div className="flex items-center gap-1">
-                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  <span className="font-medium">{formatRating(match.technician.rating)}</span>
+              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-steel">
+                <div className="flex items-center space-x-1">
+                  <Star className="h-3 w-3 sm:h-4 sm:w-4 fill-warning text-warning" />
+                  <span className="font-medium text-bone">
+                    {formatRating(match.technician.rating)}
+                  </span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <MapPin className="h-4 w-4" />
-                  <span>{match.distance.toFixed(1)} km away</span>
+                <div className="flex items-center space-x-1">
+                  <MapPin className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span>{match.distance.toFixed(1)} km</span>
                 </div>
                 {match.technician.yearsOfExperience && (
-                  <div className="flex items-center gap-1">
-                    <Award className="h-4 w-4" />
-                    <span>{match.technician.yearsOfExperience} yrs exp.</span>
+                  <div className="flex items-center space-x-1">
+                    <Award className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span>{match.technician.yearsOfExperience} yrs</span>
+                  </div>
+                )}
+                {match.technician.hourlyRate && (
+                  <div className="flex items-center space-x-1">
+                    <DollarSign className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span className="whitespace-nowrap">KES {match.technician.hourlyRate}/hr</span>
                   </div>
                 )}
               </div>
-            </div>
 
-            {/* Match Quality Badge */}
+              {/* Skills */}
+              <div className="mt-2 flex flex-wrap gap-1.5 sm:gap-2">
+                {match.technician.skills.slice(0, 3).map((skill, index) => (
+                  <span
+                    key={index}
+                    className="inline-flex items-center rounded-full bg-info-bg px-2 sm:px-3 py-0.5 sm:py-1 text-xs font-medium text-circuit"
+                  >
+                    {skill.category.replace('_', ' ')} - {skill.proficiency}
+                  </span>
+                ))}
+                {match.technician.skills.length > 3 && (
+                  <span className="inline-flex items-center rounded-full bg-hover px-2 sm:px-3 py-0.5 sm:py-1 text-xs font-medium text-steel">
+                    +{match.technician.skills.length - 3} more
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Match Quality Badge */}
+          <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2">
             <div
               className={cn(
-                'px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap',
+                'rounded-full border px-3 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm font-semibold whitespace-nowrap',
                 matchQuality.color
               )}
             >
               {matchQuality.label}
             </div>
-          </div>
-        </div>
-
-        {/* Skills */}
-        <div className="mb-3">
-          <div className="flex flex-wrap gap-2">
-            {match.technician.skills.slice(0, 3).map((skill, index) => (
-              <span
-                key={index}
-                className="px-3 py-1 bg-primary-50 dark:bg-primary-950 text-primary-700 dark:text-primary-300 rounded-full text-xs font-medium"
-              >
-                {skill.category.replace('_', ' ')}
-              </span>
-            ))}
-            {match.technician.skills.length > 3 && (
-              <span className="px-3 py-1 bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 rounded-full text-xs font-medium">
-                +{match.technician.skills.length - 3} more
-              </span>
-            )}
+            <div className="text-2xl sm:text-3xl font-bold text-bone">
+              {match.scores.overall}
+              <span className="text-base sm:text-lg text-steel">/100</span>
+            </div>
           </div>
         </div>
 
         {/* Match Reasons */}
         {match.matchReasons.length > 0 && (
-          <div className="mb-3 p-3 rounded-xl bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-950 dark:to-secondary-950">
-            <h4 className="mb-2 flex items-center text-sm font-semibold text-primary-900 dark:text-primary-100">
+          <div className="mt-4 rounded-lg bg-info-bg p-4 border border-circuit/20">
+            <h4 className="mb-2 flex items-center text-sm font-semibold text-circuit">
               <Sparkles className="mr-2 h-4 w-4" />
               Why this match?
             </h4>
             <ul className="space-y-1">
-              {match.matchReasons.slice(0, 2).map((reason, index) => (
-                <li key={index} className="flex items-start text-sm text-primary-800 dark:text-primary-200">
-                  <CheckCircle className="mr-2 mt-0.5 h-4 w-4 flex-shrink-0 text-primary-600 dark:text-primary-400" />
+              {match.matchReasons.map((reason, index) => (
+                <li key={index} className="flex items-start text-sm text-steel">
+                  <CheckCircle className="mr-2 mt-0.5 h-4 w-4 flex-shrink-0 text-success" />
                   <span>{reason.reason}</span>
                 </li>
               ))}
@@ -221,100 +185,78 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
         )}
 
         {/* Score Breakdown Toggle */}
-        <motion.button
-          whileTap={{ scale: 0.98 }}
+        <button
           onClick={() => setShowScores(!showScores)}
-          className="w-full flex items-center justify-center gap-2 mb-3 text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
+          className="mt-4 text-sm font-medium text-circuit hover:text-circuit-600"
         >
-          {showScores ? (
-            <>
-              <ChevronUp className="h-4 w-4" />
-              Hide detailed scores
-            </>
-          ) : (
-            <>
-              <ChevronDown className="h-4 w-4" />
-              Show detailed scores
-            </>
-          )}
-        </motion.button>
+          {showScores ? 'Hide' : 'Show'} detailed scores
+        </button>
 
         {/* Detailed Scores */}
-        <AnimatePresence>
-          {showScores && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="overflow-hidden"
-            >
-              <div className="grid grid-cols-2 gap-3 pb-3">
-                {scoreItems.map((item, index) => {
-                  const Icon = item.icon;
-                  const percentage = item.value;
-                  return (
-                    <div key={index} className="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-800/50">
-                      <div className="flex items-center justify-between mb-1">
-                        <Icon className={cn('h-4 w-4', item.color)} />
-                        <span className="text-lg font-bold text-neutral-900 dark:text-white">{percentage}</span>
-                      </div>
-                      <div className="text-xs text-neutral-600 dark:text-neutral-400 mb-2">{item.label}</div>
-                      <div className="h-1.5 w-full rounded-full bg-neutral-200 dark:bg-neutral-700 overflow-hidden">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${percentage}%` }}
-                          transition={{ duration: 0.5, delay: index * 0.1 }}
-                          className={cn('h-1.5 rounded-full', {
-                            'bg-green-500': percentage >= 80,
-                            'bg-blue-500': percentage >= 60 && percentage < 80,
-                            'bg-yellow-500': percentage >= 40 && percentage < 60,
-                            'bg-neutral-400': percentage < 40,
-                          })}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {showScores && (
+          <div className="mt-4 grid grid-cols-2 gap-3 border-t border-subtle pt-4 sm:grid-cols-3">
+            {scoreItems.map((item, index) => {
+              const Icon = item.icon;
+              const percentage = item.value;
+              return (
+                <div key={index} className="glass rounded-lg p-3">
+                  <div className="flex items-center justify-between">
+                    <Icon className={cn('h-4 w-4', item.color)} />
+                    <span className="text-lg font-bold text-bone">{percentage}</span>
+                  </div>
+                  <div className="mt-1 text-xs text-steel">{item.label}</div>
+                  <div className="mt-2 h-1.5 w-full rounded-full bg-hover">
+                    <div
+                      className={cn('h-1.5 rounded-full', {
+                        'bg-success': percentage >= 80,
+                        'bg-circuit': percentage >= 60 && percentage < 80,
+                        'bg-warning': percentage >= 40 && percentage < 60,
+                        'bg-steel/40': percentage < 40,
+                      })}
+                      style={{ width: `${percentage}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-2 p-4 border-t border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 border-t border-subtle bg-mahogany/30 px-4 sm:px-6 py-3 sm:py-4 rounded-b-lg">
         <Button
           variant="outline"
           size="sm"
           onClick={() => onReject(match._id)}
-          className="flex-1"
+          className="flex items-center justify-center space-x-2 w-full sm:w-auto"
         >
-          <XCircle className="h-4 w-4 mr-2" />
-          Reject
+          <XCircle className="h-4 w-4" />
+          <span className="hidden sm:inline">Not Interested</span>
+          <span className="sm:hidden">Reject</span>
         </Button>
 
         <Button
           variant="outline"
           size="sm"
           onClick={() => onViewProfile(match.technician._id)}
-          className="flex-1"
+          className="flex items-center justify-center space-x-2 w-full sm:w-auto"
         >
-          <Eye className="h-4 w-4 mr-2" />
-          View Profile
+          <Eye className="h-4 w-4" />
+          <span>View Profile</span>
         </Button>
 
         <Button
+          variant="primary"
           size="sm"
           onClick={() => onAccept(match._id)}
-          className="flex-1 bg-gradient-to-r from-primary-500 to-secondary-500 hover:from-primary-600 hover:to-secondary-600"
+          className="flex items-center justify-center space-x-2 w-full sm:w-auto glass-button"
         >
-          <CheckCircle className="h-4 w-4 mr-2" />
-          Book Now
+          <CheckCircle className="h-4 w-4" />
+          <span>Book Now</span>
         </Button>
       </div>
-    </Card>
-    </SwipeableCard>
+    </div>
   );
 };
 

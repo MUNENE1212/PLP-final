@@ -22,7 +22,7 @@
 ### 1. Clone the repository
 ```bash
 git clone <repository-url>
-cd ementech
+cd dumuwaks
 ```
 
 ### 2. Configure environment
@@ -131,10 +131,10 @@ FRONTEND_PORT=3000
 # Development (local MongoDB)
 MONGO_ROOT_USERNAME=admin
 MONGO_ROOT_PASSWORD=secure-password
-MONGO_DB_NAME=ementech
+MONGO_DB_NAME=dumuwaks
 
 # Production (external MongoDB recommended)
-MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/ementech
+MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/dumuwaks
 ```
 
 #### Security
@@ -187,27 +187,27 @@ docker-compose restart backend
 ### Execute commands in containers
 ```bash
 # Backend shell
-docker exec -it ementech-backend sh
+docker exec -it dumuwaks-backend sh
 
 # MongoDB shell
-docker exec -it ementech-mongodb mongosh
+docker exec -it dumuwaks-mongodb mongosh
 
 # Redis CLI
-docker exec -it ementech-redis redis-cli
+docker exec -it dumuwaks-redis redis-cli
 ```
 
 ### Database operations
 ```bash
 # Backup MongoDB
-docker exec ementech-mongodb mongodump --out=/backup
-docker cp ementech-mongodb:/backup ./mongodb-backup
+docker exec dumuwaks-mongodb mongodump --out=/backup
+docker cp dumuwaks-mongodb:/backup ./mongodb-backup
 
 # Restore MongoDB
-docker cp ./mongodb-backup ementech-mongodb:/backup
-docker exec ementech-mongodb mongorestore /backup
+docker cp ./mongodb-backup dumuwaks-mongodb:/backup
+docker exec dumuwaks-mongodb mongorestore /backup
 
 # Seed pricing data
-docker exec ementech-backend node src/scripts/seedPricing.js
+docker exec dumuwaks-backend node src/scripts/seedPricing.js
 ```
 
 ### Resource management
@@ -342,15 +342,15 @@ docker-compose up -d --scale backend=3
 # Create backup script
 #!/bin/bash
 DATE=$(date +%Y%m%d_%H%M%S)
-docker exec ementech-mongodb mongodump --archive=/backup/db_$DATE.archive
-docker cp ementech-mongodb:/backup/db_$DATE.archive ./backups/
+docker exec dumuwaks-mongodb mongodump --archive=/backup/db_$DATE.archive
+docker cp dumuwaks-mongodb:/backup/db_$DATE.archive ./backups/
 ```
 
 ### Recovery
 ```bash
 # Restore from backup
-docker cp ./backups/db_20240101_120000.archive ementech-mongodb:/backup/
-docker exec ementech-mongodb mongorestore --archive=/backup/db_20240101_120000.archive
+docker cp ./backups/db_20240101_120000.archive dumuwaks-mongodb:/backup/
+docker exec dumuwaks-mongodb mongorestore --archive=/backup/db_20240101_120000.archive
 ```
 
 ## Production Checklist

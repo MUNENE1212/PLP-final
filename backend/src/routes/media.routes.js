@@ -106,7 +106,7 @@ router.post(
  * @access  Private
  * @params  publicId: String (URL encoded Cloudinary public ID)
  * @query   resourceType: String (optional, default: 'image', values: 'image' | 'video')
- * @example DELETE /api/v1/media/baitech%2Fimages%2Ffile123?resourceType=image
+ * @example DELETE /api/v1/media/dumuwaks%2Fimages%2Ffile123?resourceType=image
  */
 router.delete('/:publicId', protect, deleteFile);
 

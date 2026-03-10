@@ -2,6 +2,9 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
+// Memory storage for Cloudinary uploads (files stored in memory)
+const memoryStorage = multer.memoryStorage();
+
 // Create uploads directory if it doesn't exist
 const uploadDir = path.join(__dirname, '../../uploads');
 if (!fs.existsSync(uploadDir)) {
@@ -192,3 +195,24 @@ exports.cleanupFiles = (files) => {
     }
   });
 };
+
+// ===== MEMORY STORAGE FOR CLOUDINARY =====
+
+// Multer middleware for work gallery image upload (memory storage for Cloudinary)
+exports.uploadWorkGalleryImage = multer({
+  storage: memoryStorage,
+  fileFilter: imageFilter,
+  limits: {
+    fileSize: 2 * 1024 * 1024 // 2MB limit for work gallery images
+  }
+}).single('image');
+
+// Multer middleware for booking completion media upload (memory storage for Cloudinary)
+exports.uploadCompletionMedia = multer({
+  storage: memoryStorage,
+  fileFilter: mediaFilter, // Allows both images and videos
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50MB per file (larger for videos)
+    files: 5 // Maximum 5 files at once
+  }
+}).array('media', 5);

@@ -15,7 +15,7 @@ exports.uploadImage = async (req, res) => {
     }
 
     const options = {
-      folder: req.body.folder || 'baitech/images'
+      folder: req.body.folder || 'dumuwaks/images'
     };
 
     const result = await mediaService.uploadImage(req.file, options);
@@ -49,7 +49,7 @@ exports.uploadMultipleImages = async (req, res) => {
     }
 
     const options = {
-      folder: req.body.folder || 'baitech/images'
+      folder: req.body.folder || 'dumuwaks/images'
     };
 
     const results = await mediaService.uploadMultipleImages(req.files, options);
@@ -84,7 +84,7 @@ exports.uploadVideo = async (req, res) => {
     }
 
     const options = {
-      folder: req.body.folder || 'baitech/videos'
+      folder: req.body.folder || 'dumuwaks/videos'
     };
 
     const result = await mediaService.uploadVideo(req.file, options);
@@ -118,7 +118,7 @@ exports.uploadMedia = async (req, res) => {
     }
 
     const options = {
-      folder: req.body.folder || 'baitech/media'
+      folder: req.body.folder || 'dumuwaks/media'
     };
 
     const results = await mediaService.uploadMedia(req.files, options);
@@ -251,7 +251,7 @@ exports.generateUploadSignature = async (req, res) => {
     const { folder, resourceType } = req.body;
 
     const options = {
-      folder: folder || `baitech/users/${req.user.id}`,
+      folder: folder || `dumuwaks/users/${req.user.id}`,
       ...(resourceType && { resource_type: resourceType })
     };
 

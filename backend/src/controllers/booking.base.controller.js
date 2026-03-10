@@ -2,24 +2,51 @@ const Booking = require('../models/Booking');
 const User = require('../models/User');
 const pricingService = require('../services/pricing.service');
 
+// Service and PaymentPlan models (will be created if they exist)
+let Service, PaymentPlan, Escrow;
+try {
+  Service = require('../models/Service');
+} catch (e) {
+  Service = null;
+}
+try {
+  PaymentPlan = require('../models/PaymentPlan');
+} catch (e) {
+  PaymentPlan = null;
+}
+try {
+  Escrow = require('../models/Escrow');
+} catch (e) {
+  Escrow = null;
+}
+
 /**
- * @desc    Create a new booking
+ * @desc    Create a new booking with WORD BANK integration
  * @route   POST /api/v1/bookings
  * @access  Private (Customer/Corporate)
  */
 exports.createBooking = async (req, res) => {
   try {
     const {
+      // WORD BANK integration fields
+      service,           // Service ID from WORD BANK
+      paymentPlan,       // Selected payment plan ID
+      escrowDeposit,     // Escrow deposit amount
+
+      // Legacy/standard fields
       serviceCategory,
       serviceType,
       description,
       scheduledDate,
+      scheduledTime,
       serviceLocation,
+      location,          // New location format
       technician,
       preferredTechnician,
       urgency,
       timeSlot,
-      quantity
+      quantity,
+      attachments
     } = req.body;
 
     // Validate customer role
@@ -37,13 +64,67 @@ exports.createBooking = async (req, res) => {
     // Get customer data
     const customer = await User.findById(req.user.id);
 
-    // Calculate pricing estimate (without specific technician initially)
+    // Determine service location (support both old and new format)
+    const finalLocation = location || serviceLocation;
+
+    // Validate WORD BANK service if provided
+    let serviceData = null;
+    if (service && Service) {
+      serviceData = await Service.findById(service);
+      if (!serviceData) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid service selected from WORD BANK'
+        });
+      }
+      if (!serviceData.isActive) {
+        return res.status(400).json({
+          success: false,
+          message: 'Selected service is not currently available'
+        });
+      }
+    }
+
+    // Validate technician offers the service
+    if (technician && service) {
+      const tech = await User.findById(technician);
+      if (!tech || tech.role !== 'technician') {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid technician'
+        });
+      }
+
+      // Check if technician offers this service
+      // This would typically check a TechnicianService join table
+      // For now, we assume all technicians can offer any service
+    }
+
+    // Validate payment plan if provided
+    let paymentPlanData = null;
+    if (paymentPlan && PaymentPlan) {
+      paymentPlanData = await PaymentPlan.findById(paymentPlan);
+      if (!paymentPlanData) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid payment plan selected'
+        });
+      }
+      if (!paymentPlanData.isActive) {
+        return res.status(400).json({
+          success: false,
+          message: 'Selected payment plan is not currently available'
+        });
+      }
+    }
+
+    // Calculate pricing estimate
     const pricingResult = await pricingService.getEstimate({
-      serviceCategory,
-      serviceType,
+      serviceCategory: serviceCategory || serviceData?.category,
+      serviceType: serviceType || serviceData?.name,
       urgency: urgency || 'medium',
-      serviceLocation,
-      customerLocation: customer.location || serviceLocation,
+      serviceLocation: finalLocation,
+      customerLocation: customer.location || finalLocation,
       scheduledDateTime: scheduledDate,
       customerId: req.user.id,
       quantity: quantity || 1
@@ -56,8 +137,11 @@ exports.createBooking = async (req, res) => {
       });
     }
 
+    // Calculate deposit amount (use provided escrowDeposit or default 20%)
+    const depositAmount = escrowDeposit || pricingResult.breakdown.bookingFee;
+
     // Validate booking fee is calculated
-    if (!pricingResult.breakdown.bookingFee || pricingResult.breakdown.bookingFee <= 0) {
+    if (!depositAmount || depositAmount <= 0) {
       console.error('ERROR: Booking fee not calculated in pricing!');
       return res.status(500).json({
         success: false,
@@ -70,17 +154,17 @@ exports.createBooking = async (req, res) => {
     const bookingData = {
       bookingNumber,
       customer: req.user.id,
-      serviceCategory,
-      serviceType,
+      serviceCategory: serviceCategory || serviceData?.category || 'other',
+      serviceType: serviceType || serviceData?.name || 'General Service',
       description,
       serviceLocation: {
         type: 'Point',
-        coordinates: serviceLocation.coordinates,
-        address: serviceLocation.address
+        coordinates: finalLocation?.coordinates || [0, 0],
+        address: finalLocation?.address || ''
       },
       timeSlot: timeSlot || {
         date: scheduledDate,
-        startTime: new Date(scheduledDate).toTimeString().slice(0, 5),
+        startTime: scheduledTime || new Date(scheduledDate).toTimeString().slice(0, 5),
         endTime: new Date(new Date(scheduledDate).getTime() + 2 * 60 * 60 * 1000).toTimeString().slice(0, 5)
       },
       status: 'pending',
@@ -88,10 +172,16 @@ exports.createBooking = async (req, res) => {
       pricing: pricingResult.breakdown,
       bookingFee: {
         required: true,
-        percentage: 20,
-        amount: pricingResult.breakdown.bookingFee,
+        percentage: paymentPlanData?.depositPercentage || 20,
+        amount: depositAmount,
         status: 'pending'
-      }
+      },
+
+      // WORD BANK integration fields
+      service: service || null,
+      paymentPlan: paymentPlan || null,
+      depositAmount: depositAmount,
+      depositPaid: false
     };
 
     // If specific technician requested
@@ -106,10 +196,10 @@ exports.createBooking = async (req, res) => {
 
       // Recalculate with specific technician
       const techPricingResult = await pricingService.calculatePrice({
-        serviceCategory,
-        serviceType,
+        serviceCategory: bookingData.serviceCategory,
+        serviceType: bookingData.serviceType,
         urgency: urgency || 'medium',
-        serviceLocation,
+        serviceLocation: finalLocation,
         technicianLocation: tech.location,
         technicianId: technician,
         scheduledDateTime: scheduledDate,
@@ -119,9 +209,10 @@ exports.createBooking = async (req, res) => {
 
       if (techPricingResult.success) {
         bookingData.pricing = techPricingResult.breakdown;
-        bookingData.bookingFee.amount = techPricingResult.breakdown.bookingFee;
+        bookingData.bookingFee.amount = depositAmount;
       }
 
+      bookingData.technician = technician;
       bookingData.preferredTechnician = technician;
     } else if (preferredTechnician) {
       bookingData.preferredTechnician = preferredTechnician;
@@ -129,22 +220,52 @@ exports.createBooking = async (req, res) => {
 
     const booking = await Booking.create(bookingData);
 
+    // Create escrow record if Escrow model exists
+    if (Escrow && booking) {
+      try {
+        const escrowRecord = await Escrow.create({
+          bookingId: booking._id,
+          customerId: req.user.id,
+          technicianId: technician || null,
+          totalAmount: pricingResult.breakdown.totalAmount,
+          depositAmount: depositAmount,
+          status: 'pending',
+          releaseConditions: 'job_verified'
+        });
+
+        // Link escrow to booking
+        booking.escrow = escrowRecord._id;
+        await booking.save();
+      } catch (escrowError) {
+        console.error('Failed to create escrow record:', escrowError);
+        // Continue without escrow - not critical for booking creation
+      }
+    }
+
     // Populate data for response
     await booking.populate([
       { path: 'customer', select: 'firstName lastName phoneNumber profilePicture' },
-      { path: 'technician', select: 'firstName lastName phoneNumber profilePicture rating experience skills' }
+      { path: 'technician', select: 'firstName lastName phoneNumber profilePicture rating experience skills' },
+      { path: 'service', select: 'name description basePriceMin basePriceMax estimatedDuration' },
+      { path: 'paymentPlan', select: 'name description depositPercentage frequency' }
     ]);
 
     res.status(201).json({
       success: true,
-      message: 'Booking created successfully. Please pay the booking fee to proceed with matching.',
+      message: 'Booking created successfully. Please pay the escrow deposit to proceed.',
       booking,
       nextSteps: {
-        action: 'pay_booking_fee',
-        amount: booking.bookingFee?.amount || 0,
+        action: 'pay_escrow_deposit',
+        amount: depositAmount,
         currency: booking.pricing?.currency || 'KES',
-        description: '20% refundable booking deposit required before technician matching',
+        description: `${paymentPlanData?.depositPercentage || 20}% refundable escrow deposit required`,
         endpoint: `/api/v1/bookings/${booking._id}/booking-fee/confirm`
+      },
+      escrow: {
+        depositAmount,
+        depositPercentage: paymentPlanData?.depositPercentage || 20,
+        status: 'pending',
+        fundedAt: null
       }
     });
   } catch (error) {
@@ -266,9 +387,24 @@ exports.getBookings = async (req, res) => {
  */
 exports.getBooking = async (req, res) => {
   try {
+    const populateOptions = [
+      { path: 'customer', select: 'firstName lastName email phoneNumber profilePicture location' },
+      { path: 'technician', select: 'firstName lastName email phoneNumber profilePicture rating skills location' }
+    ];
+
+    // Add WORD BANK service and payment plan population if models exist
+    if (Service) {
+      populateOptions.push({ path: 'service', select: 'name description basePriceMin basePriceMax estimatedDuration categoryId' });
+    }
+    if (PaymentPlan) {
+      populateOptions.push({ path: 'paymentPlan', select: 'name description depositPercentage frequency installments milestones' });
+    }
+    if (Escrow) {
+      populateOptions.push({ path: 'escrow', select: 'status totalAmount depositAmount fundedAt releasedAt' });
+    }
+
     const booking = await Booking.findById(req.params.id)
-      .populate('customer', 'firstName lastName email phoneNumber profilePicture location')
-      .populate('technician', 'firstName lastName email phoneNumber profilePicture rating skills location');
+      .populate(populateOptions);
 
     if (!booking) {
       return res.status(404).json({
@@ -420,6 +556,7 @@ exports.getBookingStats = async (req, res) => {
     const Conversation = require('../models/Conversation');
     const conversations = await Conversation.find({
       'participants.user': req.user.id,
+      'participants.leftAt': { $exists: false },
       deletedFor: { $ne: req.user.id }
     });
 

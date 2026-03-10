@@ -24,7 +24,7 @@ exports.sendSMS = async (phoneNumber, message) => {
     const options = {
       to: [phoneNumber],
       message,
-      from: process.env.AT_SENDER_ID || 'BAITECH'
+      from: process.env.AT_SENDER_ID || 'DUMUWAKS'
     };
 
     const result = await sms.send(options);
@@ -41,7 +41,7 @@ exports.sendSMS = async (phoneNumber, message) => {
  * Send verification code
  */
 exports.sendVerificationCode = async (phoneNumber, code) => {
-  const message = `Your BaiTech verification code is: ${code}. Valid for 10 minutes. Do not share this code with anyone.`;
+  const message = `Your Dumu Waks verification code is: ${code}. Valid for 10 minutes. Do not share this code with anyone.`;
   return this.sendSMS(phoneNumber, message);
 };
 
@@ -49,7 +49,7 @@ exports.sendVerificationCode = async (phoneNumber, code) => {
  * Send booking reminder
  */
 exports.sendBookingReminder = async (phoneNumber, bookingNumber, date, time) => {
-  const message = `Reminder: Your BaiTech booking ${bookingNumber} is scheduled for ${date} at ${time}. Thank you!`;
+  const message = `Reminder: Your Dumu Waks booking ${bookingNumber} is scheduled for ${date} at ${time}. Thank you!`;
   return this.sendSMS(phoneNumber, message);
 };
 
@@ -57,7 +57,7 @@ exports.sendBookingReminder = async (phoneNumber, bookingNumber, date, time) => 
  * Send booking confirmation
  */
 exports.sendBookingConfirmation = async (phoneNumber, bookingNumber) => {
-  const message = `Your BaiTech booking ${bookingNumber} has been confirmed! The technician will contact you shortly.`;
+  const message = `Your Dumu Waks booking ${bookingNumber} has been confirmed! The technician will contact you shortly.`;
   return this.sendSMS(phoneNumber, message);
 };
 
@@ -73,7 +73,7 @@ exports.sendTechnicianArrivalNotification = async (phoneNumber, technicianName) 
  * Send payment confirmation
  */
 exports.sendPaymentConfirmation = async (phoneNumber, amount, transactionNumber) => {
-  const message = `Payment of KES ${amount} received successfully. Transaction: ${transactionNumber}. Thank you for using BaiTech!`;
+  const message = `Payment of KES ${amount} received successfully. Transaction: ${transactionNumber}. Thank you for using Dumu Waks!`;
   return this.sendSMS(phoneNumber, message);
 };
 
