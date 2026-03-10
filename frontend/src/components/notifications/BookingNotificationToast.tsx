@@ -34,7 +34,7 @@ import {
   type BookingStatus,
   type BookingNotificationType,
 } from '@/types/bookingNotification';
-import { formatDistanceToNow } from '@/lib/utils';
+import { formatDistanceToNow } from 'date-fns';
 
 interface BookingNotificationToastProps {
   notification: BookingNotification;
