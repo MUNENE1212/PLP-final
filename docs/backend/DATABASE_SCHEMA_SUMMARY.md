@@ -446,7 +446,7 @@ mongodb://localhost:27017/baitech
 
 ### Production (MongoDB Atlas)
 ```
-mongodb+srv://username:password@cluster.mongodb.net/baitech?retryWrites=true&w=majority
+mongodb+srv://<username>:<password>@<cluster>.mongodb.net/baitech?retryWrites=true&w=majority
 ```
 
 ### Testing

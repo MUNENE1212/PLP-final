@@ -134,7 +134,7 @@ MONGO_ROOT_PASSWORD=secure-password
 MONGO_DB_NAME=dumuwaks
 
 # Production (external MongoDB recommended)
-MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/dumuwaks
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/dumuwaks
 ```
 
 #### Security

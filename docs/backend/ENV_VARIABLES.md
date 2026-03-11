@@ -82,10 +82,10 @@ NODE_ENV=test
 MONGODB_URI=mongodb://localhost:27017/baitech
 
 # MongoDB Atlas (Cloud)
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/baitech?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/baitech?retryWrites=true&w=majority
 
 # With authentication
-MONGODB_URI=mongodb://admin:password@localhost:27017/baitech?authSource=admin
+MONGODB_URI=mongodb://<admin>:<password>@localhost:27017/baitech?authSource=admin
 ```
 
 **Notes:**
@@ -538,7 +538,7 @@ LOG_LEVEL=error
 ```bash
 NODE_ENV=production
 PORT=5000
-MONGODB_URI=mongodb+srv://prod@cluster.mongodb.net/baitech
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/baitech
 JWT_SECRET=super-strong-production-secret
 ENABLE_API_DOCS=false
 LOG_LEVEL=info

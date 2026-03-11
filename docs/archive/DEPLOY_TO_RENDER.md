@@ -23,7 +23,7 @@
 2. Network Access: Allow access from anywhere (0.0.0.0/0)
 3. Get connection string:
    ```
-   mongodb+srv://ementech_admin:PASSWORD@cluster.mongodb.net/ementech?retryWrites=true&w=majority
+   mongodb+srv://<username>:<password>@<cluster>.mongodb.net/ementech?retryWrites=true&w=majority
    ```
    Replace `PASSWORD` with your actual password
 
@@ -50,7 +50,7 @@ When prompted, set these variables:
 
 **Backend Service:**
 ```
-MONGODB_URI=mongodb+srv://ementech_admin:YOUR_PASSWORD@cluster.mongodb.net/ementech?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/ementech?retryWrites=true&w=majority
 MPESA_CONSUMER_KEY=your_mpesa_consumer_key
 MPESA_CONSUMER_SECRET=your_mpesa_consumer_secret
 MPESA_PASSKEY=your_mpesa_passkey
