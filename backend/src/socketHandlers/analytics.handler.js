@@ -86,8 +86,6 @@ async function handleAnalyticsSubscribe(socket) {
     const statusDistribution = await analyticsService.getStatusDistribution();
     socket.emit('analytics:status_distribution', statusDistribution);
 
-    console.log(`[Analytics] Admin ${socket.userId} subscribed to analytics`);
-
   } catch (error) {
     console.error('[Analytics] Error subscribing:', error.message);
     socket.emit('analytics:error', {
@@ -103,7 +101,6 @@ async function handleAnalyticsSubscribe(socket) {
  */
 function handleAnalyticsUnsubscribe(socket) {
   socket.leave(ADMIN_ANALYTICS_ROOM);
-  console.log(`[Analytics] Admin ${socket.userId} unsubscribed from analytics`);
 }
 
 /**
@@ -229,8 +226,6 @@ async function broadcastMetricsUpdate() {
     const distribution = await analyticsService.getStatusDistribution();
     io.to(ADMIN_ANALYTICS_ROOM).emit('analytics:status_distribution', distribution);
 
-    console.log('[Analytics] Broadcasted metrics update to admins');
-
   } catch (error) {
     console.error('[Analytics] Error broadcasting metrics:', error.message);
   }
@@ -247,8 +242,6 @@ function broadcastActivity(type, data) {
 
   const activity = analyticsService.trackActivity(type, data);
   io.to(ADMIN_ANALYTICS_ROOM).emit('analytics:activity', activity);
-
-  console.log(`[Analytics] Broadcasted activity: ${type}`);
 }
 
 /**
@@ -260,7 +253,6 @@ function startMetricsInterval() {
   }
 
   metricsInterval = setInterval(broadcastMetricsUpdate, METRICS_UPDATE_INTERVAL);
-  console.log(`[Analytics] Started metrics update interval (${METRICS_UPDATE_INTERVAL / 1000}s)`);
 }
 
 /**
@@ -270,7 +262,6 @@ function stopMetricsInterval() {
   if (metricsInterval) {
     clearInterval(metricsInterval);
     metricsInterval = null;
-    console.log('[Analytics] Stopped metrics update interval');
   }
 }
 
@@ -294,13 +285,7 @@ function registerAnalyticsHandlers(socketIo) {
     socket.on('analytics:get_status_distribution', () => handleGetStatusDistribution(socket));
     socket.on('analytics:get_activity_feed', (data) => handleGetActivityFeed(socket, data));
 
-    // Handle disconnect - automatically leaves rooms
-    socket.on('disconnect', () => {
-      console.log(`[Analytics] Admin ${socket.userId} disconnected`);
-    });
   });
-
-  console.log('[Analytics] Socket handlers registered');
 
   // Initialize analytics tracking
   analyticsService.initializeAnalyticsTracking();

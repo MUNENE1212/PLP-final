@@ -190,7 +190,6 @@ async function emitBookingStatusChanged(bookingId, oldStatus, newStatus, changed
       timestamp: new Date().toISOString()
     });
 
-    console.log(`[BookingNotifications] Status changed: ${bookingId} ${oldStatus} -> ${newStatus}`);
   } catch (error) {
     console.error('[BookingNotifications] Error emitting status change:', error.message);
   }
@@ -251,7 +250,6 @@ async function emitBookingAssigned(bookingId, technicianId) {
       timestamp: new Date().toISOString()
     });
 
-    console.log(`[BookingNotifications] Booking assigned: ${bookingId} to technician ${technicianId}`);
   } catch (error) {
     console.error('[BookingNotifications] Error emitting assignment:', error.message);
   }
@@ -315,7 +313,6 @@ async function emitCounterOffer(bookingId, offer, direction = 'technician_to_cus
       }
     }
 
-    console.log(`[BookingNotifications] Counter-offer emitted: ${bookingId}`);
   } catch (error) {
     console.error('[BookingNotifications] Error emitting counter-offer:', error.message);
   }
@@ -373,7 +370,6 @@ async function emitPaymentUpdate(bookingId, status, amount, method = null) {
       });
     }
 
-    console.log(`[BookingNotifications] Payment update emitted: ${bookingId} - ${status}`);
   } catch (error) {
     console.error('[BookingNotifications] Error emitting payment update:', error.message);
   }
@@ -395,7 +391,6 @@ function handleBookingSubscribe(socket, data) {
 
     // Join booking room
     socket.join(getBookingRoom(bookingId));
-    console.log(`[BookingNotifications] User ${userId} subscribed to booking ${bookingId}`);
   } catch (error) {
     console.error('[BookingNotifications] Subscribe error:', error.message);
     socket.emit('booking:error', { error: error.message });
@@ -410,7 +405,6 @@ function handleBookingUnsubscribe(socket, data) {
     const { bookingId } = data;
 
     socket.leave(getBookingRoom(bookingId));
-    console.log(`[BookingNotifications] User ${socket.userId} unsubscribed from booking ${bookingId}`);
   } catch (error) {
     console.error('[BookingNotifications] Unsubscribe error:', error.message);
   }
@@ -432,10 +426,7 @@ function registerBookingNotificationHandlers(socketIo) {
     socket.on('booking:subscribe', (data) => handleBookingSubscribe(socket, data));
     socket.on('booking:unsubscribe', (data) => handleBookingUnsubscribe(socket, data));
 
-    console.log(`[BookingNotifications] User ${socket.userId} connected and joined personal room`);
   });
-
-  console.log('[BookingNotifications] Socket handlers registered');
 }
 
 // Export public functions

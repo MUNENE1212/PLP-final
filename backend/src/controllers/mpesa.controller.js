@@ -11,16 +11,8 @@ const User = require('../models/User');
 exports.initiateSTKPush = async (req, res) => {
   try {
     const { phoneNumber, bookingId, amount, type } = req.body;
-
-    console.log('=== STK PUSH REQUEST DEBUG ===');
-    console.log('Phone Number:', phoneNumber);
-    console.log('Booking ID:', bookingId);
-    console.log('Amount:', amount, 'Type:', typeof amount);
-    console.log('Payment Type:', type);
-
     // Validate required fields
     if (!phoneNumber || !bookingId || !amount) {
-      console.log('Missing required fields');
       return res.status(400).json({
         success: false,
         message: 'Phone number, booking ID, and amount are required',
@@ -30,20 +22,13 @@ exports.initiateSTKPush = async (req, res) => {
     // Get booking
     const booking = await Booking.findById(bookingId);
     if (!booking) {
-      console.log('Booking not found:', bookingId);
       return res.status(404).json({
         success: false,
         message: 'Booking not found',
       });
     }
-
-    console.log('Booking found:', booking.bookingNumber);
-    console.log('Booking fee amount:', booking.bookingFee?.amount, 'Type:', typeof booking.bookingFee?.amount);
-    console.log('Booking fee status:', booking.bookingFee?.status);
-
     // Verify user owns this booking
     if (booking.customer.toString() !== req.user.id) {
-      console.log('Authorization failed - User does not own booking');
       return res.status(403).json({
         success: false,
         message: 'Not authorized to make payment for this booking',
@@ -56,15 +41,7 @@ exports.initiateSTKPush = async (req, res) => {
       const receivedAmount = parseFloat(amount);
       const tolerance = 0.01; // 1 cent tolerance for floating point errors
 
-      console.log('Booking Fee Amount validation:', {
-        expected: expectedAmount,
-        received: receivedAmount,
-        difference: Math.abs(expectedAmount - receivedAmount),
-        tolerance: tolerance
-      });
-
       if (!expectedAmount) {
-        console.log('Booking fee amount not set in booking');
         return res.status(400).json({
           success: false,
           message: 'Booking fee amount not configured',
@@ -72,7 +49,6 @@ exports.initiateSTKPush = async (req, res) => {
       }
 
       if (Math.abs(expectedAmount - receivedAmount) > tolerance) {
-        console.log('Amount mismatch!');
         return res.status(400).json({
           success: false,
           message: `Amount must be ${expectedAmount} KES for booking fee. Received ${receivedAmount} KES`,
@@ -94,17 +70,7 @@ exports.initiateSTKPush = async (req, res) => {
       const receivedAmount = parseFloat(amount);
       const tolerance = 0.01;
 
-      console.log('Completion Payment Amount validation:', {
-        totalAmount,
-        bookingFeeAmount,
-        expectedRemaining: expectedAmount,
-        received: receivedAmount,
-        difference: Math.abs(expectedAmount - receivedAmount),
-        tolerance: tolerance
-      });
-
       if (Math.abs(expectedAmount - receivedAmount) > tolerance) {
-        console.log('Completion payment amount mismatch!');
         return res.status(400).json({
           success: false,
           message: `Amount must be ${expectedAmount} KES for completion payment. Received ${receivedAmount} KES`,
@@ -210,8 +176,6 @@ exports.initiateSTKPush = async (req, res) => {
  */
 exports.mpesaCallback = async (req, res) => {
   try {
-    console.log('=== M-PESA CALLBACK RECEIVED ===');
-    console.log('Raw Callback:', JSON.stringify(req.body, null, 2));
 
     // Validate callback
     if (!mpesaService.validateCallback(req.body)) {
@@ -223,9 +187,7 @@ exports.mpesaCallback = async (req, res) => {
     }
 
     // Process callback
-    console.log('✅ Callback validated, processing...');
     const result = mpesaService.processCallback(req.body);
-    console.log('Processed result:', JSON.stringify(result, null, 2));
 
     // Find transaction by CheckoutRequestID
     const transaction = await Transaction.findOne({
@@ -250,10 +212,8 @@ exports.mpesaCallback = async (req, res) => {
       transaction.mpesaDetails.resultCode = '0';
       transaction.mpesaDetails.resultDescription = result.resultDesc;
 
-      console.log('💾 Saving completed transaction...');
       try {
         await transaction.save();
-        console.log('✅ Transaction saved successfully');
       } catch (saveError) {
         console.error('❌ Error saving transaction:', saveError.message);
         if (saveError.errors) {
@@ -270,10 +230,8 @@ exports.mpesaCallback = async (req, res) => {
 
       // Update booking based on transaction type
       if (transaction.type === 'booking_fee') {
-        console.log('📦 Processing booking fee payment...');
         const booking = await Booking.findById(transaction.booking);
         if (booking) {
-          console.log(`Found booking: ${booking.bookingNumber}`);
 
           booking.bookingFee.status = 'held';
           booking.bookingFee.paidAt = new Date();
@@ -289,22 +247,17 @@ exports.mpesaCallback = async (req, res) => {
               changedAt: new Date(),
               reason: 'Booking fee confirmed via M-Pesa',
             });
-            console.log('📊 Booking status updated to: matching');
           }
 
           await booking.save();
-          console.log(`✅ Booking fee confirmed for booking ${booking.bookingNumber}`);
         } else {
           console.warn('⚠️ Booking not found for transaction');
         }
       } else if (transaction.type === 'booking_payment') {
-        console.log('💰 Processing completion payment...');
         const booking = await Booking.findById(transaction.booking)
           .populate('technician', 'firstName lastName email phoneNumber');
 
         if (booking) {
-          console.log(`Found booking: ${booking.bookingNumber}`);
-          console.log(`Total Amount: ${booking.pricing.totalAmount} KES`);
 
           // Update booking payment status
           booking.payment.status = 'completed';
@@ -320,7 +273,6 @@ exports.mpesaCallback = async (req, res) => {
             changedAt: new Date(),
             reason: 'Completion payment confirmed via M-Pesa',
           });
-          console.log('💳 Booking payment status updated to: paid');
 
           // Calculate technician payout (85% of total amount)
           const totalAmount = booking.pricing.totalAmount;
@@ -329,12 +281,6 @@ exports.mpesaCallback = async (req, res) => {
 
           const technicianPayout = Math.round(totalAmount * technicianPayoutPercentage * 100) / 100;
           const platformCommission = Math.round(totalAmount * platformCommissionPercentage * 100) / 100;
-
-          console.log('💵 Payment Breakdown:');
-          console.log(`  Total Amount: ${totalAmount} KES`);
-          console.log(`  Technician Payout (85%): ${technicianPayout} KES`);
-          console.log(`  Platform Commission (15%): ${platformCommission} KES`);
-
           // Create payout transaction for technician
           const Transaction = require('../models/Transaction');
           const payoutTransaction = await Transaction.create({
@@ -357,9 +303,6 @@ exports.mpesaCallback = async (req, res) => {
               originalTransaction: transaction._id,
             },
           });
-
-          console.log(`📝 Created payout transaction: ${payoutTransaction._id}`);
-
           // Release booking fee from escrow
           booking.bookingFee.status = 'released';
           booking.bookingFee.releasedAt = new Date();
@@ -376,17 +319,13 @@ exports.mpesaCallback = async (req, res) => {
           });
 
           await booking.save();
-          console.log(`✅ Completion payment processed for booking ${booking.bookingNumber}`);
-          console.log(`✅ Payout of ${technicianPayout} KES pending for technician`);
         } else {
           console.warn('⚠️ Booking not found for completion payment transaction');
         }
       }
 
-      console.log(`✅ Payment successful: ${result.mpesaReceiptNumber}`);
     } else {
       // Payment failed
-      console.log('❌ Payment failed');
       transaction.status = 'failed';
       transaction.failedAt = new Date();
       transaction.failureReason = result.errorMessage || result.resultDesc;
@@ -396,7 +335,6 @@ exports.mpesaCallback = async (req, res) => {
 
       await transaction.save();
 
-      console.log(`❌ Payment failed: ${result.resultDesc} (Code: ${result.resultCode})`);
     }
 
     // Store webhook data
@@ -549,8 +487,6 @@ exports.getPaymentHistory = async (req, res) => {
  */
 exports.b2cCallback = async (req, res) => {
   try {
-    console.log('=== M-PESA B2C CALLBACK RECEIVED ===');
-    console.log('Raw Callback:', JSON.stringify(req.body, null, 2));
 
     // Validate callback
     if (!mpesaService.validateB2CCallback(req.body)) {
@@ -562,9 +498,7 @@ exports.b2cCallback = async (req, res) => {
     }
 
     // Process callback
-    console.log('✅ B2C Callback validated, processing...');
     const result = mpesaService.processB2CCallback(req.body);
-    console.log('Processed B2C result:', JSON.stringify(result, null, 2));
 
     // Find transaction by ConversationID
     const transaction = await Transaction.findOne({
@@ -578,13 +512,9 @@ exports.b2cCallback = async (req, res) => {
         ResultDesc: 'Transaction not found',
       });
     }
-
-    console.log('Found payout transaction:', transaction._id);
-
     // Update transaction based on result
     if (result.success) {
       // Payout successful
-      console.log('💰 B2C Payment successful');
       transaction.status = 'completed';
       transaction.completedAt = new Date();
       transaction.mpesaDetails.transactionReceipt = result.transactionReceipt;
@@ -599,7 +529,6 @@ exports.b2cCallback = async (req, res) => {
       transaction.metadata.transactionCompletedDateTime = result.transactionCompletedDateTime;
 
       await transaction.save();
-      console.log(`✅ Payout completed: ${result.transactionReceipt}`);
 
       // Notify technician of successful payout
       try {
@@ -620,7 +549,6 @@ exports.b2cCallback = async (req, res) => {
       }
     } else {
       // Payout failed
-      console.log('❌ B2C Payment failed');
       transaction.status = 'failed';
       transaction.failedAt = new Date();
       transaction.failureReason = result.errorMessage || result.resultDesc;
@@ -629,7 +557,6 @@ exports.b2cCallback = async (req, res) => {
       transaction.mpesaDetails.resultDescription = result.resultDesc;
 
       await transaction.save();
-      console.log(`❌ Payout failed: ${result.resultDesc} (Code: ${result.resultCode})`);
     }
 
     // Store webhook data
@@ -664,8 +591,6 @@ exports.b2cCallback = async (req, res) => {
  */
 exports.b2cTimeout = async (req, res) => {
   try {
-    console.log('=== M-PESA B2C TIMEOUT RECEIVED ===');
-    console.log('Raw Timeout:', JSON.stringify(req.body, null, 2));
 
     // Find transaction and mark as timed out
     const { Result } = req.body;
@@ -680,7 +605,6 @@ exports.b2cTimeout = async (req, res) => {
         transaction.failureReason = 'Request timeout';
         transaction.failureCode = 'TIMEOUT';
         await transaction.save();
-        console.log('Transaction marked as timed out:', transaction._id);
       }
     }
 

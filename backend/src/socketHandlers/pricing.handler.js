@@ -41,7 +41,6 @@ function registerPricingHandlers(io) {
         const surgeAlerts = await getSurgeAlerts();
         socket.emit('pricing:surge_alert', surgeAlerts);
 
-        console.log(`User ${socket.userId} subscribed to pricing updates`);
       } catch (error) {
         console.error('Error subscribing to pricing:', error);
         socket.emit('pricing:error', {
@@ -55,7 +54,6 @@ function registerPricingHandlers(io) {
      */
     socket.on('pricing:unsubscribe', () => {
       pricingSubscribers.delete(socket.id);
-      console.log(`User ${socket.userId} unsubscribed from pricing updates`);
     });
 
     /**
@@ -190,7 +188,6 @@ function registerPricingHandlers(io) {
           });
         }
 
-        console.log(`User ${socket.userId} subscribed to counter-offers for booking ${bookingId}`);
       } catch (error) {
         console.error('Error subscribing to counter-offers:', error);
         socket.emit('counter_offer:error', {
@@ -205,7 +202,6 @@ function registerPricingHandlers(io) {
     socket.on('counter_offer:unsubscribe', (data) => {
       const { bookingId } = data;
       socket.leave(`counter_offer:${bookingId}`);
-      console.log(`User ${socket.userId} unsubscribed from counter-offers for booking ${bookingId}`);
     });
 
     /**
@@ -218,8 +214,6 @@ function registerPricingHandlers(io) {
 
   // Start periodic surge alert broadcast
   startSurgeBroadcast(io);
-
-  console.log('Pricing socket handlers registered');
 }
 
 /**
@@ -291,7 +285,6 @@ function notifyNewCounterOffer(io, booking, counterOffer) {
   // Also emit to customer's personal room for notification
   io.to(customerId).emit('counter_offer:new', eventData);
 
-  console.log(`New counter-offer notification sent for booking ${bookingId}`);
 }
 
 /**
@@ -319,7 +312,6 @@ function notifyCounterOfferAccepted(io, booking, response) {
     io.to(technicianId).emit('counter_offer:accepted', eventData);
   }
 
-  console.log(`Counter-offer accepted notification sent for booking ${bookingId}`);
 }
 
 /**
@@ -347,7 +339,6 @@ function notifyCounterOfferRejected(io, booking, response) {
     io.to(technicianId).emit('counter_offer:rejected', eventData);
   }
 
-  console.log(`Counter-offer rejected notification sent for booking ${bookingId}`);
 }
 
 /**

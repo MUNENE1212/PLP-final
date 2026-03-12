@@ -29,7 +29,6 @@ exports.sendSMS = async (phoneNumber, message) => {
 
     const result = await sms.send(options);
 
-    console.log(`📱 SMS sent to ${phoneNumber}`);
     return { success: true, result };
   } catch (error) {
     console.error('SMS sending error:', error);

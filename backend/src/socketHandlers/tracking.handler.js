@@ -160,8 +160,6 @@ async function handleTrackingStart(socket, data) {
       message: 'Your technician is on the way! You can now track their location.'
     });
 
-    console.log(`[Tracking] Session started for booking ${bookingId} by technician ${technicianId}`);
-
   } catch (error) {
     console.error('[Tracking] Error starting session:', error.message);
     socket.emit('tracking:error', {
@@ -260,8 +258,6 @@ async function handleTrackingPause(socket, data) {
       });
     }
 
-    console.log(`[Tracking] Paused for booking ${bookingId}`);
-
   } catch (error) {
     console.error('[Tracking] Error pausing tracking:', error.message);
     socket.emit('tracking:error', {
@@ -306,8 +302,6 @@ async function handleTrackingResume(socket, data) {
       });
     }
 
-    console.log(`[Tracking] Resumed for booking ${bookingId}`);
-
   } catch (error) {
     console.error('[Tracking] Error resuming tracking:', error.message);
     socket.emit('tracking:error', {
@@ -351,8 +345,6 @@ async function handleTrackingEnd(socket, data) {
       duration: summary.duration,
       message: 'Your technician has arrived!'
     });
-
-    console.log(`[Tracking] Session ended for booking ${bookingId}`);
 
   } catch (error) {
     console.error('[Tracking] Error ending session:', error.message);
@@ -406,8 +398,6 @@ async function handleTrackingSubscribe(socket, data) {
       // No active session, that's okay
     }
 
-    console.log(`[Tracking] Customer ${customerId} subscribed to booking ${bookingId}`);
-
   } catch (error) {
     console.error('[Tracking] Error subscribing:', error.message);
     socket.emit('tracking:error', {
@@ -429,9 +419,6 @@ function handleTrackingUnsubscribe(socket, data) {
     const { bookingId } = data;
 
     socket.leave(getTrackingRoom(bookingId));
-
-    console.log(`[Tracking] User ${socket.userId} unsubscribed from booking ${bookingId}`);
-
   } catch (error) {
     console.error('[Tracking] Error unsubscribing:', error.message);
   }
@@ -461,14 +448,9 @@ function registerTrackingHandlers(socketIo) {
     socket.on('tracking:unsubscribe', (data) => handleTrackingUnsubscribe(socket, data));
   });
 
-  console.log('[Tracking] Socket handlers registered');
-
   // Set up periodic cleanup of expired sessions (every 30 minutes)
   setInterval(() => {
     const cleaned = trackingService.cleanupExpiredSessions();
-    if (cleaned > 0) {
-      console.log(`[Tracking] Cleaned up ${cleaned} expired sessions`);
-    }
   }, 30 * 60 * 1000);
 }
 

@@ -32,7 +32,6 @@ const initializeFirebase = () => {
     }
 
     firebaseInitialized = true;
-    console.log('✅ Firebase Admin initialized');
     return true;
   } catch (error) {
     console.error('❌ Firebase initialization error:', error.message);
@@ -50,7 +49,6 @@ exports.createNotification = async (recipientId, data) => {
       ...data
     });
 
-    console.log(`🔔 Notification created for user ${recipientId}`);
     return notification;
   } catch (error) {
     console.error('Create notification error:', error);
@@ -89,7 +87,6 @@ exports.sendPushNotification = async (fcmTokens, title, body, data = {}) => {
 
     const response = await admin.messaging().sendMulticast(message);
 
-    console.log(`📲 Push notification sent: ${response.successCount}/${tokens.length} succeeded`);
     return { success: true, response };
   } catch (error) {
     console.error('Push notification error:', error);

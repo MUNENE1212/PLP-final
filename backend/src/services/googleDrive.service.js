@@ -34,7 +34,6 @@ class GoogleDriveService {
 
       // Check if credentials are provided as JSON env variable (for Render/Cloud deployment)
       if (process.env.GOOGLE_CREDENTIALS_JSON) {
-        console.log('Loading Google Drive credentials from environment variable...');
         try {
           credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
         } catch (parseError) {
@@ -58,7 +57,6 @@ class GoogleDriveService {
           return;
         }
 
-        console.log('Loading Google Drive credentials from file:', keyPath);
         credentials = require(keyPath);
       }
 
@@ -71,8 +69,6 @@ class GoogleDriveService {
       // Create Drive API client
       this.drive = google.drive({ version: 'v3', auth });
       this.initialized = true;
-
-      console.log('✅ Google Drive API initialized successfully');
     } catch (error) {
       console.error('Failed to initialize Google Drive API:', error.message);
       throw error;
@@ -102,15 +98,10 @@ class GoogleDriveService {
 
       // Create subfolder if needed
       let targetFolderId = this.folderId;
-      console.log('🔍 [DEBUG] this.folderId =', this.folderId);
-      console.log('🔍 [DEBUG] Requested subfolder =', folder);
 
       if (folder && folder !== 'uploads') {
         targetFolderId = await this.createOrGetFolder(folder, this.folderId);
-        console.log('🔍 [DEBUG] Created/Got subfolder ID =', targetFolderId);
       }
-
-      console.log('🔍 [DEBUG] Final targetFolderId =', targetFolderId);
 
       // Generate unique filename
       const timestamp = Date.now();
@@ -229,7 +220,6 @@ class GoogleDriveService {
       await this.drive.files.delete({
         fileId: fileId,
       });
-      console.log(`File ${fileId} deleted successfully`);
     } catch (error) {
       console.error('Error deleting file from Google Drive:', error);
       throw error;

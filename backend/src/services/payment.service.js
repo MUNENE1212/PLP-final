@@ -76,8 +76,6 @@ exports.initiateMpesaPayment = async (phoneNumber, amount, accountReference, tra
       }
     );
 
-    console.log('📱 M-Pesa STK Push initiated:', stkPushResponse.data);
-
     return {
       success: true,
       checkoutRequestID: stkPushResponse.data.CheckoutRequestID,
@@ -159,8 +157,6 @@ exports.createStripePaymentIntent = async (amount, currency = 'kes', metadata = 
       }
     });
 
-    console.log('💳 Stripe Payment Intent created:', paymentIntent.id);
-
     return {
       success: true,
       clientSecret: paymentIntent.client_secret,
@@ -205,8 +201,6 @@ exports.processRefund = async (paymentIntentId, amount = null) => {
     }
 
     const refund = await stripe.refunds.create(refundData);
-
-    console.log('💸 Refund processed:', refund.id);
 
     return {
       success: true,
@@ -265,7 +259,6 @@ exports.handleMpesaCallback = async (callbackData) => {
       result.metadata = metadata;
     }
 
-    console.log('📲 M-Pesa callback processed:', result);
     return result;
   } catch (error) {
     console.error('M-Pesa callback error:', error);

@@ -60,12 +60,6 @@ exports.createBooking = async (req, res) => {
     }
 
     // Debug: Log pricing result
-    console.log('=== PRICING RESULT DEBUG ===');
-    console.log('Pricing Success:', pricingResult.success);
-    console.log('Total Amount:', pricingResult.breakdown.totalAmount);
-    console.log('Booking Fee from Pricing:', pricingResult.breakdown.bookingFee);
-    console.log('Currency:', pricingResult.breakdown.currency);
-    console.log('===========================');
 
     // Validate booking fee is calculated
     if (!pricingResult.breakdown.bookingFee || pricingResult.breakdown.bookingFee <= 0) {
@@ -104,13 +98,6 @@ exports.createBooking = async (req, res) => {
         status: 'pending'
       }
     };
-
-    console.log('=== BOOKING DATA DEBUG ===');
-    console.log('Booking Fee being set:', bookingData.bookingFee);
-    console.log('Amount value:', bookingData.bookingFee.amount);
-    console.log('Amount type:', typeof bookingData.bookingFee.amount);
-    console.log('=========================');
-
     // If specific technician requested
     if (technician) {
       const tech = await User.findById(technician);
@@ -156,13 +143,6 @@ exports.createBooking = async (req, res) => {
     ]);
 
     // Debug: Log booking fee details
-    console.log('=== BOOKING CREATED DEBUG ===');
-    console.log('Booking Number:', booking.bookingNumber);
-    console.log('Booking Fee Object:', booking.bookingFee);
-    console.log('Booking Fee Amount:', booking.bookingFee?.amount);
-    console.log('Booking Fee Status:', booking.bookingFee?.status);
-    console.log('Pricing Total:', booking.pricing?.totalAmount);
-    console.log('============================');
 
     // TODO: Send notification to technician if assigned
     // TODO: Trigger AI matching if no technician assigned
@@ -299,14 +279,10 @@ exports.getBookings = async (req, res) => {
  */
 exports.getBooking = async (req, res) => {
   try {
-    console.log('Fetching booking with ID:', req.params.id);
 
     const booking = await Booking.findById(req.params.id)
       .populate('customer', 'firstName lastName email phoneNumber profilePicture location')
       .populate('technician', 'firstName lastName email phoneNumber profilePicture rating skills location');
-
-    console.log('Booking found:', booking ? 'Yes' : 'No');
-
     if (!booking) {
       return res.status(404).json({
         success: false,
@@ -372,7 +348,6 @@ exports.getBooking = async (req, res) => {
       safeBooking.contactsHiddenReason = 'Payment verification required. Complete payment to view contact information.';
     }
 
-    console.log('Returning booking successfully');
     res.status(200).json({
       success: true,
       booking: safeBooking
@@ -816,10 +791,6 @@ exports.resolveDispute = async (req, res) => {
  */
 exports.getBookingStats = async (req, res) => {
   try {
-    console.log('=== BOOKING STATS DEBUG ===');
-    console.log('User ID:', req.user.id);
-    console.log('User Role:', req.user.role);
-    console.log('User ID type:', typeof req.user.id);
     
     const mongoose = require('mongoose');
     
@@ -828,14 +799,9 @@ exports.getBookingStats = async (req, res) => {
     // Filter by user role - Convert string ID to ObjectId for aggregation
     if (req.user.role === 'customer' || req.user.role === 'corporate') {
       query.customer = new mongoose.Types.ObjectId(req.user.id);
-      console.log('Query for customer:', query);
     } else if (req.user.role === 'technician') {
       query.technician = new mongoose.Types.ObjectId(req.user.id);
-      console.log('Query for technician:', query);
     }
-
-    console.log('Final query:', JSON.stringify(query, null, 2));
-
     const stats = await Booking.aggregate([
       { $match: query },
       {
@@ -856,11 +822,6 @@ exports.getBookingStats = async (req, res) => {
     }
 
     const total = await Booking.countDocuments(countQuery);
-
-    console.log('Stats result:', stats);
-    console.log('Total count:', total);
-    console.log('=========================');
-
     res.status(200).json({
       success: true,
       total,

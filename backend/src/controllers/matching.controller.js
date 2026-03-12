@@ -50,14 +50,8 @@ exports.findTechnicians = async (req, res) => {
       'skills.category': serviceCategory,
       'location.coordinates': { $exists: true, $ne: null } // Ensure location exists
     };
-
-    console.log('Finding technicians with query:', JSON.stringify(techniciansQuery, null, 2));
-    console.log('Service category:', serviceCategory);
-    console.log('Location:', location);
-
     // First, let's count total technicians
     const totalTechsCount = await User.countDocuments({ role: 'technician' });
-    console.log(`Total technicians in database: ${totalTechsCount}`);
 
     // Apply preference filters
     // Only apply minRating filter if it's greater than 0
@@ -68,50 +62,33 @@ exports.findTechnicians = async (req, res) => {
         { 'rating.count': 0 }, // New technicians with no ratings
         { 'rating.average': { $gte: preferences.technicianPreferences.minRating } } // Rated technicians meeting minimum
       ];
-      console.log('Added minRating filter:', preferences.technicianPreferences.minRating, '(allowing unrated technicians)');
     }
 
     if (preferences.technicianPreferences.requireCertifications) {
       techniciansQuery['certifications.0'] = { $exists: true };
-      console.log('Added certifications filter');
     }
 
     if (preferences.technicianPreferences.requireBackgroundCheck) {
       techniciansQuery['verification.backgroundCheck'] = true;
-      console.log('Added background check filter');
     }
 
     if (preferences.technicianPreferences.requireInsurance) {
       techniciansQuery['verification.insurance'] = true;
-      console.log('Added insurance filter');
     }
-
-    console.log('Final query:', JSON.stringify(techniciansQuery, null, 2));
-
     // Find technicians
     let technicians = await User.find(techniciansQuery)
       .select('firstName lastName profilePicture rating skills location availability hourlyRate yearsOfExperience completedJobs avgResponseTime completionRate')
       .lean();
-
-    console.log(`Found ${technicians.length} technicians matching query`);
-
     if (technicians.length > 0) {
-      console.log('Technicians found:');
       technicians.forEach(t => {
-        console.log(`  - ${t.firstName} ${t.lastName}: skills=${JSON.stringify(t.skills)}, location=${JSON.stringify(t.location)}`);
       });
     }
 
     // Calculate distances and filter by max distance
     const maxDistance = preferences.general.maxDistance || 50;
-    console.log(`Max distance setting: ${maxDistance} km`);
-    console.log(`Customer location coordinates:`, location?.coordinates);
 
     technicians = technicians.filter(tech => {
       if (!tech.location?.coordinates || !location?.coordinates) {
-        console.log(`Technician ${tech._id} skipped - missing location coordinates`);
-        console.log(`  Tech location:`, tech.location);
-        console.log(`  Customer location:`, location);
         return false;
       }
 
@@ -125,20 +102,13 @@ exports.findTechnicians = async (req, res) => {
       tech.distance = etaResult.distance;
       tech.eta = etaResult;
       const withinRange = etaResult.distance <= maxDistance;
-      console.log(`Technician ${tech._id}: ${tech.firstName} ${tech.lastName} - ${etaResult.distance}km away (${etaResult.etaText}) - ${withinRange ? 'INCLUDED' : 'EXCLUDED'}`);
       return withinRange;
     });
-
-    console.log(`After distance filter: ${technicians.length} technicians`);
-
     // Check for blocked technicians
     const blockedIds = preferences.learnedPreferences.blockedTechnicians.map(
       b => b.technician.toString()
     );
     technicians = technicians.filter(tech => !blockedIds.includes(tech._id.toString()));
-
-    console.log(`After blocked filter: ${technicians.length} technicians`);
-
     // Calculate match scores for each technician
     const matches = [];
     for (const technician of technicians) {
@@ -204,17 +174,11 @@ exports.findTechnicians = async (req, res) => {
       await matching.save();
       matches.push(matching);
     }
-
-    console.log(`Created ${matches.length} match records`);
-
     // Sort by overall score (now includes pro boost)
     matches.sort((a, b) => b.scores.overall - a.scores.overall);
 
     // Take top matches
     const topMatches = matches.slice(0, 10);
-
-    console.log(`Returning top ${topMatches.length} matches`);
-
     // Populate technician details
     await Matching.populate(topMatches, {
       path: 'technician',
@@ -260,7 +224,6 @@ exports.findTechnicians = async (req, res) => {
       }
     };
 
-    console.log('Sending response with', topMatches.length, 'matches');
     res.status(200).json(response);
   } catch (error) {
     console.error('Error in findTechnicians:', error);
@@ -404,32 +367,7 @@ exports.acceptMatch = async (req, res) => {
       customerId: matching.customer,
       quantity: quantity || 1
     };
-
-    console.log('=== MATCH ACCEPTANCE PRICING PARAMS ===');
-    console.log('Service Category:', pricingParams.serviceCategory);
-    console.log('Service Type:', pricingParams.serviceType);
-    console.log('Urgency:', pricingParams.urgency);
-    console.log('Quantity:', pricingParams.quantity);
-    console.log('Scheduled DateTime:', pricingParams.scheduledDateTime);
-    console.log('Customer ID:', pricingParams.customerId);
-    console.log('Technician ID:', pricingParams.technicianId);
-    console.log('========================================');
-
     const pricingResult = await pricingService.calculatePrice(pricingParams);
-
-    console.log('=== MATCH ACCEPTANCE PRICING RESULT ===');
-    console.log('Pricing Success:', pricingResult.success);
-    console.log('Base Price:', pricingResult.breakdown?.basePrice);
-    console.log('Distance Fee:', pricingResult.breakdown?.distanceFee);
-    console.log('Urgency Multiplier:', pricingResult.breakdown?.urgencyMultiplier);
-    console.log('Time Multiplier:', pricingResult.breakdown?.timeMultiplier);
-    console.log('Technician Multiplier:', pricingResult.breakdown?.technicianMultiplier);
-    console.log('Subtotal:', pricingResult.breakdown?.subtotal);
-    console.log('Discount:', pricingResult.breakdown?.discount);
-    console.log('Total Amount:', pricingResult.breakdown?.totalAmount);
-    console.log('Booking Fee:', pricingResult.breakdown?.bookingFee);
-    console.log('========================================');
-
     if (!pricingResult.success || !pricingResult.breakdown.bookingFee || pricingResult.breakdown.bookingFee <= 0) {
       console.error('ERROR: Failed to calculate pricing for match acceptance');
       return res.status(500).json({
@@ -464,12 +402,6 @@ exports.acceptMatch = async (req, res) => {
       source: 'ai_matching',
       status: 'assigned'
     });
-
-    console.log('=== MATCH BOOKING DATA DEBUG ===');
-    console.log('Booking Fee Amount:', booking.bookingFee.amount);
-    console.log('Pricing Total:', booking.pricing.totalAmount);
-    console.log('================================');
-
     await booking.save();
 
     // Update matching record

@@ -40,7 +40,6 @@ class CloudinaryService {
       });
 
       this.initialized = true;
-      console.log('✅ Cloudinary configured successfully');
     } catch (error) {
       console.error('Failed to configure Cloudinary:', error.message);
     }
@@ -135,7 +134,6 @@ class CloudinaryService {
         throw new Error(`Failed to delete file: ${result.result}`);
       }
 
-      console.log(`File ${publicId} deleted successfully`);
       return result;
     } catch (error) {
       console.error('Error deleting file from Cloudinary:', error);

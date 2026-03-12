@@ -8,8 +8,6 @@ const User = require('../models/User');
  */
 async function autoEscalateCompletionRequests() {
   try {
-    console.log('Running auto-escalation job for completion requests...');
-
     // Find bookings with pending completion requests that have passed the deadline
     const bookingsToEscalate = await Booking.find({
       'completionRequest.status': 'pending',
@@ -18,8 +16,6 @@ async function autoEscalateCompletionRequests() {
     })
       .populate('customer', 'firstName lastName email phoneNumber')
       .populate('technician', 'firstName lastName');
-
-    console.log(`Found ${bookingsToEscalate.length} bookings to escalate`);
 
     for (const booking of bookingsToEscalate) {
       // Mark as auto-escalated
@@ -47,13 +43,9 @@ async function autoEscalateCompletionRequests() {
 
       await booking.save();
 
-      console.log(`Escalated booking ${booking.bookingNumber}, created ticket ${ticket.ticketNumber}`);
-
       // TODO: Send notification to support team
       // TODO: Send reminder to customer
     }
-
-    console.log('Auto-escalation job completed successfully');
 
     return {
       success: true,
@@ -74,8 +66,6 @@ async function autoEscalateCompletionRequests() {
  */
 async function sendCompletionReminders() {
   try {
-    console.log('Running completion reminder job...');
-
     // Find bookings with pending completion requests that will escalate in the next 24 hours
     const now = new Date();
     const next24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000);
@@ -91,16 +81,10 @@ async function sendCompletionReminders() {
       .populate('customer', 'firstName lastName email phoneNumber')
       .populate('technician', 'firstName lastName');
 
-    console.log(`Found ${bookings.length} bookings to send reminders`);
-
     for (const booking of bookings) {
       // TODO: Send notification to customer
       // TODO: Send email/SMS reminder to customer
-
-      console.log(`Sent reminder for booking ${booking.bookingNumber} to ${booking.customer.email}`);
     }
-
-    console.log('Completion reminder job completed successfully');
 
     return {
       success: true,
@@ -121,8 +105,6 @@ async function sendCompletionReminders() {
  */
 async function autoCompleteUnreachable() {
   try {
-    console.log('Running auto-complete for unreachable customers...');
-
     // Find bookings with escalated status and multiple failed contact attempts
     const bookings = await Booking.find({
       'completionRequest.status': 'escalated',
@@ -151,13 +133,9 @@ async function autoCompleteUnreachable() {
         await booking.save();
         autoCompletedCount++;
 
-        console.log(`Auto-completed booking ${booking.bookingNumber} (unreachable customer)`);
-
         // TODO: Send final notification to customer and technician
       }
     }
-
-    console.log('Auto-complete job completed successfully');
 
     return {
       success: true,

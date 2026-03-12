@@ -698,7 +698,6 @@ exports.expireStaleCounterOffers = async () => {
       }
     );
 
-    console.log(`Expired ${result.modifiedCount} stale counter offers`);
     return result;
   } catch (error) {
     console.error('Error expiring stale counter offers:', error);

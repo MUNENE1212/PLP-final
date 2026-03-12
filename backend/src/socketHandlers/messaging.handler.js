@@ -348,8 +348,6 @@ function registerMessagingHandlers(io) {
       });
     });
   });
-
-  console.log('Messaging socket handlers registered');
 }
 
 module.exports = { registerMessagingHandlers };

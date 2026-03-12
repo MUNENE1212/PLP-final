@@ -138,13 +138,6 @@ exports.processPayout = async (req, res) => {
         message: 'Technician does not have a phone number on file',
       });
     }
-
-    console.log('=== PROCESSING PAYOUT ===');
-    console.log('Payout ID:', payout._id);
-    console.log('Amount:', payout.amount.gross, 'KES');
-    console.log('Technician:', payout.payee.firstName, payout.payee.lastName);
-    console.log('Phone:', payout.payee.phoneNumber);
-
     // Update status to processing
     payout.status = 'processing';
     payout.processingStartedAt = new Date();

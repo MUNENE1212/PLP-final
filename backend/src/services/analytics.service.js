@@ -423,7 +423,6 @@ function initializeAnalyticsTracking() {
   // Track booking creation via Mongoose hooks is handled in the Booking model
   // This function can be extended for additional tracking
 
-  console.log('[Analytics] Analytics tracking initialized');
 }
 
 module.exports = {

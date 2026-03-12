@@ -79,11 +79,6 @@ router.post('/balance-callback', mpesaCallbackVerify, balanceCallback);
  * @access  Public (M-Pesa servers only)
  */
 router.post('/timeout', mpesaTimeoutVerify, (req, res) => {
-  console.log('=== M-PESA TIMEOUT CALLBACK ===', {
-    body: req.body,
-    timestamp: new Date().toISOString(),
-  });
-
   res.status(200).json({
     ResultCode: 0,
     ResultDesc: 'Timeout received',

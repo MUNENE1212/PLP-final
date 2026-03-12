@@ -55,8 +55,6 @@ function registerAvailabilityHandlers(io) {
 
         // Confirm update to technician
         socket.emit('availability:updated', result);
-
-        console.log(`Technician ${technicianId} status updated to ${status}`);
       } catch (error) {
         console.error('Availability update error:', error);
         socket.emit('availability:error', {
@@ -115,8 +113,6 @@ function registerAvailabilityHandlers(io) {
         const queueInfo = await calculateQueuePosition(bookingId);
 
         socket.emit('queue:position_update', queueInfo);
-
-        console.log(`User ${socket.userId} subscribed to queue for booking ${bookingId}`);
       } catch (error) {
         console.error('Queue subscribe error:', error);
         socket.emit('queue:error', {
@@ -131,7 +127,6 @@ function registerAvailabilityHandlers(io) {
     socket.on('queue:unsubscribe', (data) => {
       const { bookingId } = data;
       socket.leave(`queue:${bookingId}`);
-      console.log(`User ${socket.userId} unsubscribed from queue for booking ${bookingId}`);
     });
 
     /**
@@ -160,7 +155,6 @@ function registerAvailabilityHandlers(io) {
             bookingId
           );
 
-          console.log(`Availability updated for technician ${technicianId} due to booking ${status}`);
         }
       } catch (error) {
         console.error('Booking status change availability error:', error);
@@ -181,8 +175,6 @@ function registerAvailabilityHandlers(io) {
 
           // Clean up activity tracking
           technicianActivity.delete(socket.userId);
-
-          console.log(`Technician ${socket.userId} disconnected and set to offline`);
         }
       } catch (error) {
         console.error('Error setting technician offline on disconnect:', error);
@@ -210,16 +202,11 @@ function registerAvailabilityHandlers(io) {
 
           // Remove from activity tracking
           technicianActivity.delete(technicianId);
-
-          console.log(`Technician ${technicianId} set to away due to inactivity`);
         }
       }
 
       // Also run the database-wide check
-      const count = await setInactiveTechniciansAway(5);
-      if (count > 0) {
-        console.log(`${count} technicians set to away due to inactivity`);
-      }
+      await setInactiveTechniciansAway(5);
     } catch (error) {
       console.error('Error in auto-away check:', error);
     }

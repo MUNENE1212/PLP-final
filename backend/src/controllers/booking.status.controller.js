@@ -388,12 +388,6 @@ exports.confirmCompletion = async (req, res) => {
       const totalAmount = booking.pricing.totalAmount;
       const bookingFeeAmount = booking.bookingFee.amount || 0;
       const remainingAmount = totalAmount - bookingFeeAmount;
-
-      console.log('=== COMPLETION PAYMENT PROCESSING ===');
-      console.log('Total Amount:', totalAmount);
-      console.log('Booking Fee (already paid):', bookingFeeAmount);
-      console.log('Remaining Amount:', remainingAmount);
-
       // Check if there's remaining amount to be paid
       if (remainingAmount > 0 && booking.payment.status !== 'completed') {
         // Need to collect remaining payment - set status to payment_pending

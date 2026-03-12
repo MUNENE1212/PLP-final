@@ -255,11 +255,6 @@ class MpesaService {
         TransactionDesc: transactionDesc || 'Payment',
       };
 
-      console.log('M-Pesa STK Push Request:', {
-        ...payload,
-        Password: '[HIDDEN]',
-      });
-
       // Make request to M-Pesa
       const response = await axios.post(
         `${this.baseURL}/mpesa/stkpush/v1/processrequest`,
@@ -271,8 +266,6 @@ class MpesaService {
           },
         }
       );
-
-      console.log('M-Pesa STK Push Response:', response.data);
 
       return {
         success: true,
@@ -321,8 +314,6 @@ class MpesaService {
           },
         }
       );
-
-      console.log('M-Pesa Query Response:', response.data);
 
       return {
         success: true,
@@ -391,7 +382,6 @@ class MpesaService {
 
             // Create ISO date string
             result.transactionDate = new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}+03:00`);
-            console.log('Parsed transaction date:', result.transactionDate);
           } else {
             console.warn('Invalid transaction date format:', dateStr);
             result.transactionDate = new Date(); // Fallback to current date
@@ -477,11 +467,6 @@ class MpesaService {
         Occasion: occasion || 'Payment',
       };
 
-      console.log('M-Pesa B2C Request:', {
-        ...payload,
-        SecurityCredential: '[HIDDEN]',
-      });
-
       // Make request to M-Pesa
       const response = await axios.post(
         `${this.baseURL}/mpesa/b2c/v1/paymentrequest`,
@@ -493,8 +478,6 @@ class MpesaService {
           },
         }
       );
-
-      console.log('M-Pesa B2C Response:', response.data);
 
       return {
         success: true,
@@ -609,11 +592,6 @@ class MpesaService {
         ResultURL: this.b2cCallbackURL || this.callbackURL,
       };
 
-      console.log('M-Pesa Account Balance Query:', {
-        ...payload,
-        SecurityCredential: '[HIDDEN]',
-      });
-
       const response = await axios.post(
         `${this.baseURL}/mpesa/accountbalance/v1/query`,
         payload,
@@ -624,8 +602,6 @@ class MpesaService {
           },
         }
       );
-
-      console.log('M-Pesa Account Balance Response:', response.data);
 
       return {
         success: true,

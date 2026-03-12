@@ -220,7 +220,6 @@ exports.updateUser = async (req, res) => {
     }
 
     // Log the incoming data for debugging
-    console.log('Update user request body:', JSON.stringify(req.body, null, 2));
 
     // Find the user first
     const user = await User.findById(req.params.id);
@@ -254,7 +253,6 @@ exports.updateUser = async (req, res) => {
 
     // Handle location update (nested object)
     if (req.body.location) {
-      console.log('Updating location:', req.body.location);
       user.location = {
         type: 'Point',
         coordinates: req.body.location.coordinates || user.location?.coordinates || [0, 0],
@@ -264,15 +262,12 @@ exports.updateUser = async (req, res) => {
         country: req.body.location.country || user.location?.country || 'Kenya'
       };
       user.markModified('location');
-      console.log('Location after update:', user.location);
     }
 
     // Handle skills update (array of objects)
     if (req.body.skills !== undefined) {
-      console.log('Updating skills:', req.body.skills);
       user.skills = req.body.skills;
       user.markModified('skills');
-      console.log('Skills after update:', user.skills);
     }
 
     // Handle availability update (nested object)

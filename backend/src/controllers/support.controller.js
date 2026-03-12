@@ -161,9 +161,6 @@ exports.getTickets = async (req, res) => {
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     // Debug logging
-    console.log('🎫 Fetching tickets with query:', JSON.stringify(query));
-    console.log('👤 User role:', req.user.role);
-    console.log('🆔 User ID:', userId);
 
     const tickets = await SupportTicket.find(query)
       .populate('customer', 'firstName lastName email phoneNumber profilePicture')
@@ -173,9 +170,6 @@ exports.getTickets = async (req, res) => {
       .limit(parseInt(limit));
 
     const total = await SupportTicket.countDocuments(query);
-
-    console.log('📊 Found tickets:', tickets.length, '/', total);
-
     res.status(200).json({
       success: true,
       count: tickets.length,
