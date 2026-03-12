@@ -105,6 +105,9 @@ export const ReviewRequestModal: React.FC<ReviewRequestModalProps> = ({
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
           transition={{ duration: 0.2 }}
           className="bg-white dark:bg-neutral-800 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="review-request-title"
         >
           {/* Header */}
           <div className="bg-gradient-to-r from-primary-500 to-secondary-500 p-6 text-white">
@@ -114,7 +117,7 @@ export const ReviewRequestModal: React.FC<ReviewRequestModalProps> = ({
                   <Sparkles className="w-6 h-6" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold">How was your experience?</h2>
+                  <h2 id="review-request-title" className="text-xl font-bold">How was your experience?</h2>
                   <p className="text-sm text-white/90 mt-1">
                     {step === 'rating' && 'Rate your recent service'}
                     {step === 'written' && 'Share your thoughts (optional)'}

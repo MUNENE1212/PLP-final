@@ -154,12 +154,15 @@ export const PortfolioUploadModal: React.FC<PortfolioUploadModalProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
           className="bg-white dark:bg-neutral-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="portfolio-upload-title"
         >
           {/* Header */}
           <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-6 text-white">
             <div className="flex items-start justify-between">
               <div>
-                <h2 className="text-2xl font-bold mb-1">Add to Portfolio</h2>
+                <h2 id="portfolio-upload-title" className="text-2xl font-bold mb-1">Add to Portfolio</h2>
                 <p className="text-sm text-white/90">
                   Showcase your verified work to attract more customers
                 </p>
@@ -168,6 +171,7 @@ export const PortfolioUploadModal: React.FC<PortfolioUploadModalProps> = ({
                 onClick={onClose}
                 disabled={uploading}
                 className="text-white/80 hover:text-white transition-colors disabled:opacity-50"
+                aria-label="Close"
               >
                 <X className="w-6 h-6" />
               </button>
@@ -352,6 +356,7 @@ export const PortfolioUploadModal: React.FC<PortfolioUploadModalProps> = ({
                             type="button"
                             onClick={() => removeImage(index)}
                             className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                            aria-label={`Remove image ${index + 1}`}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>

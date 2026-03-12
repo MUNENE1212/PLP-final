@@ -64,16 +64,20 @@ const CounterOfferModal: React.FC<CounterOfferModalProps> = ({ booking, isOpen, 
       <div
         className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="counter-offer-title"
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+          <h2 id="counter-offer-title" className="text-xl font-semibold text-gray-900 dark:text-gray-100">
             Submit Counter Offer
           </h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
             disabled={isSubmitting}
+            aria-label="Close"
           >
             <X className="h-5 w-5" />
           </button>

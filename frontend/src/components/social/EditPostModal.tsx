@@ -114,13 +114,14 @@ const EditPostModal: React.FC<EditPostModalProps> = ({ post, isOpen, onClose }) 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="edit-post-title">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Edit Post</h2>
+          <h2 id="edit-post-title" className="text-xl font-semibold text-gray-900 dark:text-gray-100">Edit Post</h2>
           <button
             onClick={onClose}
             className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            aria-label="Close"
           >
             <X className="h-5 w-5 text-gray-600 dark:text-gray-400" />
           </button>
@@ -187,6 +188,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({ post, isOpen, onClose }) 
                     type="button"
                     onClick={() => handleRemoveMedia(index)}
                     className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    aria-label={`Remove media ${index + 1}`}
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>

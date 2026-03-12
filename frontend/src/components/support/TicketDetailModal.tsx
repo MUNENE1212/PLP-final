@@ -111,7 +111,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({ ticketId, isOpen,
       <div className="absolute inset-0 bg-black/50" onClick={onClose}></div>
 
       {/* Modal */}
-      <div className="absolute inset-4 md:inset-8 bg-white dark:bg-gray-900 rounded-lg shadow-xl flex flex-col">
+      <div className="absolute inset-4 md:inset-8 bg-white dark:bg-gray-900 rounded-lg shadow-xl flex flex-col" role="dialog" aria-modal="true" aria-labelledby="ticket-detail-title">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex-1">
@@ -119,7 +119,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({ ticketId, isOpen,
               <div className="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
             ) : (
               <>
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                <h2 id="ticket-detail-title" className="text-xl font-semibold text-gray-900 dark:text-gray-100">
                   {ticket?.subject}
                 </h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -131,6 +131,7 @@ const TicketDetailModal: React.FC<TicketDetailModalProps> = ({ ticketId, isOpen,
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            aria-label="Close"
           >
             <X className="h-5 w-5" />
           </button>

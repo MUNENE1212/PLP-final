@@ -182,6 +182,9 @@ const MPesaPaymentModal: React.FC<MPesaPaymentModalProps> = ({
       <div
         className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl"
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="mpesa-payment-title"
       >
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b dark:border-gray-700">
@@ -190,13 +193,14 @@ const MPesaPaymentModal: React.FC<MPesaPaymentModalProps> = ({
               <Smartphone className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-bold dark:text-gray-100">M-Pesa {getPaymentTypeLabel()}</h2>
+              <h2 id="mpesa-payment-title" className="text-lg font-bold dark:text-gray-100">M-Pesa {getPaymentTypeLabel()}</h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">Secure payment via M-Pesa</p>
             </div>
           </div>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            aria-label="Close"
           >
             <X className="w-6 h-6" />
           </button>

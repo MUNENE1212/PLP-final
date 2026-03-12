@@ -171,11 +171,14 @@ const BookingFeePaymentModal: React.FC<BookingFeePaymentModalProps> = ({
       <div
         className="glass-modal rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="booking-fee-payment-title"
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-subtle">
           <div>
-            <h2 className="text-xl font-bold text-bone">Pay Booking Fee</h2>
+            <h2 id="booking-fee-payment-title" className="text-xl font-bold text-bone">Pay Booking Fee</h2>
             <p className="text-sm text-steel mt-1">
               Secure payment protected by escrow
             </p>
@@ -183,6 +186,7 @@ const BookingFeePaymentModal: React.FC<BookingFeePaymentModalProps> = ({
           <button
             onClick={onClose}
             className="text-steel hover:text-bone transition-colors"
+            aria-label="Close"
           >
             <X className="w-6 h-6" />
           </button>
