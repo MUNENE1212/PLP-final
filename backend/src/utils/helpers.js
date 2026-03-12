@@ -28,7 +28,8 @@ exports.formatPhoneNumber = (phoneNumber) => {
  * Generate random code
  */
 exports.generateCode = (length = 6) => {
-  return Math.floor(Math.random() * Math.pow(10, length))
+  const crypto = require('crypto');
+  return crypto.randomInt(0, Math.pow(10, length))
     .toString()
     .padStart(length, '0');
 };
@@ -72,8 +73,9 @@ exports.formatCurrency = (amount, currency = 'KES') => {
  * Generate unique reference number
  */
 exports.generateReferenceNumber = (prefix = 'REF') => {
+  const crypto = require('crypto');
   const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).substring(2, 7);
+  const random = crypto.randomBytes(4).toString('hex').substring(0, 5);
   return `${prefix}-${timestamp}${random}`.toUpperCase();
 };
 

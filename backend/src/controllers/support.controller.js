@@ -1126,7 +1126,8 @@ exports.createCustomerAccount = async (req, res) => {
     }
 
     // Generate a secure random password if not provided
-    const userPassword = password || Math.random().toString(36).slice(-10) + 'A1!';
+    const crypto = require('crypto');
+    const userPassword = password || crypto.randomBytes(12).toString('base64url') + 'A1!';
 
     // Hash password
     const salt = await bcrypt.genSalt(10);

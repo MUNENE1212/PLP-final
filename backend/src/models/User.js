@@ -666,7 +666,8 @@ UserSchema.methods.generateEmailVerificationToken = function() {
 
 // Generate phone verification code
 UserSchema.methods.generatePhoneVerificationCode = function() {
-  const code = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit code
+  const crypto = require('crypto');
+  const code = crypto.randomInt(100000, 1000000).toString(); // cryptographically secure 6-digit code
   this.phoneVerificationCode = code;
   this.phoneVerificationExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
   return code;
