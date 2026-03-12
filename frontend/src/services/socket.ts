@@ -1,4 +1,5 @@
 import { io, Socket } from 'socket.io-client';
+import toast from 'react-hot-toast';
 import { STORAGE_KEYS } from '@/config/constants';
 import { Message, BOOKING_NOTIFICATION_EVENTS } from '@/types';
 import type {
@@ -12,6 +13,8 @@ class SocketService {
   private socket: Socket | null = null;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
+  private wasConnected = false;
+  private disconnectToastId: string | null = null;
 
   connect(userId: string): void {
     if (this.socket?.connected) {
@@ -43,22 +46,35 @@ class SocketService {
 
     // Connection events
     this.socket.on('connect', () => {
+      // Dismiss disconnect toast and show reconnect notice if this was a reconnection
+      if (this.wasConnected && this.disconnectToastId) {
+        toast.dismiss(this.disconnectToastId);
+        this.disconnectToastId = null;
+        toast.success('Connection restored', { duration: 2000 });
+      }
       this.reconnectAttempts = 0;
+      this.wasConnected = true;
 
       // Join user's personal room
       this.socket?.emit('user:join', userId);
     });
 
-    this.socket.on('disconnect', () => {
-      // Socket disconnected - reconnection will be handled automatically
+    this.socket.on('disconnect', (reason) => {
+      // Only notify for unexpected disconnects (not intentional logout)
+      if (reason !== 'io client disconnect' && this.wasConnected) {
+        this.disconnectToastId = toast.loading('Connection lost. Reconnecting...', {
+          duration: Infinity,
+        });
+      }
     });
 
     this.socket.on('connect_error', () => {
       this.reconnectAttempts++;
-    });
-
-    this.socket.on('reconnect', () => {
-      this.reconnectAttempts = 0;
+      if (this.reconnectAttempts >= this.maxReconnectAttempts && this.disconnectToastId) {
+        toast.dismiss(this.disconnectToastId);
+        this.disconnectToastId = null;
+        toast.error('Unable to connect to server. Please refresh the page.', { duration: 8000 });
+      }
     });
   }
 
@@ -67,6 +83,11 @@ class SocketService {
       this.socket.disconnect();
       this.socket = null;
       this.reconnectAttempts = 0;
+      this.wasConnected = false;
+      if (this.disconnectToastId) {
+        toast.dismiss(this.disconnectToastId);
+        this.disconnectToastId = null;
+      }
     }
   }
 
