@@ -111,8 +111,8 @@ jobs:
     env:
       NODE_ENV: test
       MONGODB_URI: mongodb://localhost:27017/dumuwaks_test
-      JWT_SECRET: ${{ secrets.JWT_SECRET || 'test-jwt-secret-for-ci' }}
-      JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET || 'test-refresh-secret-for-ci' }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET || 'ci-only-not-for-prod-a9f8c7b6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0' }}
+      JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET || 'ci-only-not-for-prod-b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9' }}
       JWT_EXPIRE: 1h
       REDIS_HOST: localhost
       REDIS_PORT: 6379
