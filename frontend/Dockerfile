@@ -29,6 +29,9 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 # Expose port
 EXPOSE 80
 
+# Run as non-root user
+USER nginx
+
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost/ || exit 1

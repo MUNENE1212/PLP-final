@@ -51,8 +51,7 @@ services:
     image: redis:7-alpine
     container_name: ementech-redis-prod
     restart: always
-    ports:
-      - "6379:6379"
+    # No ports exposed — Redis only accessible within Docker network
     volumes:
       - redis_data:/data
     networks:
