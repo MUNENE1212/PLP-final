@@ -1,6 +1,8 @@
 const socketIO = require('socket.io');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const Conversation = require('../models/Conversation');
+const Booking = require('../models/Booking');
 const { registerTrackingHandlers } = require('../socketHandlers/tracking.handler');
 const { registerBookingNotificationHandlers } = require('../socketHandlers/bookingNotification.handler');
 const { registerMessagingHandlers } = require('../socketHandlers/messaging.handler');
@@ -71,16 +73,28 @@ exports.initializeSocket = (server) => {
     // Update user online status
     updateUserOnlineStatus(socket.userId, true);
 
-    // Handle user joining conversation
-    socket.on('join_conversation', (conversationId) => {
-      socket.join(`conversation:${conversationId}`);
-      console.log(`User ${socket.userId} joined conversation ${conversationId}`);
+    // Handle user joining conversation (with participant validation)
+    socket.on('join_conversation', async (conversationId) => {
+      try {
+        const conversation = await Conversation.findById(conversationId);
+        if (!conversation) {
+          return socket.emit('error', { message: 'Conversation not found' });
+        }
+        const isParticipant = conversation.participants.some(
+          p => p.user.toString() === socket.userId
+        );
+        if (!isParticipant) {
+          return socket.emit('error', { message: 'Not a participant in this conversation' });
+        }
+        socket.join(`conversation:${conversationId}`);
+      } catch (error) {
+        socket.emit('error', { message: 'Failed to join conversation' });
+      }
     });
 
     // Handle user leaving conversation
     socket.on('leave_conversation', (conversationId) => {
       socket.leave(`conversation:${conversationId}`);
-      console.log(`User ${socket.userId} left conversation ${conversationId}`);
     });
 
     // Handle typing indicator
@@ -99,15 +113,30 @@ exports.initializeSocket = (server) => {
       });
     });
 
-    // Handle booking updates
-    socket.on('subscribe_booking', (bookingId) => {
-      socket.join(`booking:${bookingId}`);
-      console.log(`User ${socket.userId} subscribed to booking ${bookingId}`);
+    // Handle booking updates (with participant validation)
+    socket.on('subscribe_booking', async (bookingId) => {
+      try {
+        const booking = await Booking.findById(bookingId);
+        if (!booking) {
+          return socket.emit('error', { message: 'Booking not found' });
+        }
+        const userId = socket.userId;
+        const isParticipant =
+          booking.customer?.toString() === userId ||
+          booking.technician?.toString() === userId ||
+          socket.user?.role === 'admin' ||
+          socket.user?.role === 'support';
+        if (!isParticipant) {
+          return socket.emit('error', { message: 'Not authorized for this booking' });
+        }
+        socket.join(`booking:${bookingId}`);
+      } catch (error) {
+        socket.emit('error', { message: 'Failed to subscribe to booking' });
+      }
     });
 
     socket.on('unsubscribe_booking', (bookingId) => {
       socket.leave(`booking:${bookingId}`);
-      console.log(`User ${socket.userId} unsubscribed from booking ${bookingId}`);
     });
 
     // Handle location updates (for technician tracking)

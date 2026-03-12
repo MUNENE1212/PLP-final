@@ -27,6 +27,12 @@ function registerMessagingHandlers(io) {
           return socket.emit('error', { message: 'Message not found' });
         }
 
+        // Verify user is a participant in this conversation
+        const conversation = await Conversation.findById(message.conversation);
+        if (!conversation || !conversation.participants.some(p => p.user.toString() === socket.userId)) {
+          return socket.emit('error', { message: 'Not authorized' });
+        }
+
         // Update message status to delivered
         if (message.status === 'sent') {
           message.status = 'delivered';
@@ -40,7 +46,6 @@ function registerMessagingHandlers(io) {
           });
         }
       } catch (error) {
-        console.error('Error handling message:delivered:', error);
         socket.emit('error', { message: 'Failed to update delivery status' });
       }
     });
@@ -54,6 +59,12 @@ function registerMessagingHandlers(io) {
         const message = await Message.findById(messageId);
         if (!message) {
           return socket.emit('error', { message: 'Message not found' });
+        }
+
+        // Verify user is a participant in this conversation
+        const conversation = await Conversation.findById(message.conversation);
+        if (!conversation || !conversation.participants.some(p => p.user.toString() === socket.userId)) {
+          return socket.emit('error', { message: 'Not authorized' });
         }
 
         // Check if user already read this message
@@ -212,6 +223,12 @@ function registerMessagingHandlers(io) {
         const message = await Message.findById(messageId);
         if (!message) {
           return socket.emit('error', { message: 'Message not found' });
+        }
+
+        // Verify user is a participant in this conversation
+        const conversation = await Conversation.findById(message.conversation);
+        if (!conversation || !conversation.participants.some(p => p.user.toString() === socket.userId)) {
+          return socket.emit('error', { message: 'Not authorized' });
         }
 
         // Check if user already reacted with this emoji
