@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const speakeasy = require('speakeasy');
 const QRCode = require('qrcode');
+const { sendVerificationEmail } = require('../services/email.service');
 
 /**
  * Generate JWT Token
@@ -60,18 +61,16 @@ exports.register = async (req, res) => {
       } : undefined
     });
 
-    // Generate verification token
-    const verificationToken = crypto.randomBytes(32).toString('hex');
-    user.emailVerificationToken = crypto
-      .createHash('sha256')
-      .update(verificationToken)
-      .digest('hex');
-    user.emailVerificationExpire = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
-
+    // Generate verification token using model helper
+    const verificationToken = user.generateEmailVerificationToken();
     await user.save();
 
-    // TODO: Send verification email
-    // await sendVerificationEmail(user.email, verificationToken);
+    // Send verification email (non-blocking — don't fail registration if email fails)
+    try {
+      await sendVerificationEmail(user, verificationToken);
+    } catch (emailError) {
+      console.error('Failed to send verification email:', emailError.message);
+    }
 
     // Generate token
     const token = generateToken(user._id);
@@ -166,6 +165,15 @@ exports.login = async (req, res) => {
       return res.status(403).json({
         success: false,
         message: `Account is ${user.status}. Please contact support.`
+      });
+    }
+
+    // Check email verification (gated by feature flag)
+    if (process.env.ENABLE_EMAIL_VERIFICATION === 'true' && !user.isEmailVerified) {
+      return res.status(403).json({
+        success: false,
+        message: 'Please verify your email address before logging in.',
+        emailNotVerified: true
       });
     }
 
@@ -472,7 +480,7 @@ exports.verifyEmail = async (req, res) => {
 
     const user = await User.findOne({
       emailVerificationToken,
-      emailVerificationExpire: { $gt: Date.now() }
+      emailVerificationExpires: { $gt: Date.now() }
     });
 
     if (!user) {
@@ -484,7 +492,7 @@ exports.verifyEmail = async (req, res) => {
 
     user.isEmailVerified = true;
     user.emailVerificationToken = undefined;
-    user.emailVerificationExpire = undefined;
+    user.emailVerificationExpires = undefined;
 
     await user.save();
 
@@ -497,6 +505,58 @@ exports.verifyEmail = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error verifying email'
+    });
+  }
+};
+
+/**
+ * @desc    Resend verification email
+ * @route   POST /api/v1/auth/resend-verification-email
+ * @access  Public
+ */
+exports.resendVerificationEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide an email address'
+      });
+    }
+
+    const user = await User.findOne({ email });
+
+    // Don't reveal if user exists
+    if (!user) {
+      return res.status(200).json({
+        success: true,
+        message: 'If the email is registered, a verification link has been sent'
+      });
+    }
+
+    if (user.isEmailVerified) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is already verified'
+      });
+    }
+
+    // Generate new verification token
+    const verificationToken = user.generateEmailVerificationToken();
+    await user.save();
+
+    await sendVerificationEmail(user, verificationToken);
+
+    res.status(200).json({
+      success: true,
+      message: 'If the email is registered, a verification link has been sent'
+    });
+  } catch (error) {
+    console.error('Resend verification error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error sending verification email'
     });
   }
 };

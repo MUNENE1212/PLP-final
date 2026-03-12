@@ -54,6 +54,7 @@ export interface User {
   profilePicture?: string;
   bio?: string;
   status: 'active' | 'inactive' | 'suspended' | 'deleted';
+  isEmailVerified?: boolean;
   rating?: {
     average: number;
     count: number;

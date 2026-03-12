@@ -117,6 +117,34 @@ export const updateProfile = createAsyncThunk(
   }
 );
 
+export const verifyEmail = createAsyncThunk(
+  'auth/verifyEmail',
+  async (token: string, { rejectWithValue }) => {
+    try {
+      const response = await axios.get<{ success: boolean; message: string }>(`/auth/verify-email/${token}`);
+      toast.success('Email verified successfully!');
+      return response.data;
+    } catch (error: any) {
+      const message = error.response?.data?.message || 'Email verification failed.';
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const resendVerificationEmail = createAsyncThunk(
+  'auth/resendVerificationEmail',
+  async (email: string, { rejectWithValue }) => {
+    try {
+      const response = await axios.post<{ success: boolean; message: string }>('/auth/resend-verification-email', { email });
+      toast.success('Verification email sent! Check your inbox.');
+      return response.data;
+    } catch (error: any) {
+      const message = error.response?.data?.message || 'Failed to resend verification email.';
+      return rejectWithValue(message);
+    }
+  }
+);
+
 export const updateAvailability = createAsyncThunk(
   'auth/updateAvailability',
   async (

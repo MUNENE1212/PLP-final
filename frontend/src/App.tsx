@@ -33,6 +33,7 @@ import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
 import InstallPWA from './pages/InstallPWA';
 import InstallApp from './pages/InstallApp';
+import VerifyEmail from './pages/VerifyEmail';
 import NotFound from './pages/NotFound';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminDashboardNew from './pages/admin/Dashboard';
@@ -103,6 +104,9 @@ const App: React.FC = () => {
             <Route index element={isAuthenticated ? <Navigate to="/dashboard" /> : <Home />} />
             <Route path="login" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Login />} />
             <Route path="register" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Register />} />
+
+            {/* Email Verification */}
+            <Route path="verify-email/:token" element={<VerifyEmail />} />
 
             {/* Public Pages (no login required) */}
             <Route path="about" element={<About />} />

@@ -11,6 +11,7 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import Feed from '@/components/social/Feed';
 import Loading from '@/components/ui/Loading';
+import EmailVerificationBanner from '@/components/common/EmailVerificationBanner';
 import AdminDashboard from './AdminDashboard';
 import SupportDashboard from './SupportDashboard';
 
@@ -123,6 +124,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="pb-20 md:pb-0">
+      <EmailVerificationBanner />
       {/* Welcome Header */}
       <motion.div
         {...fadeUp}

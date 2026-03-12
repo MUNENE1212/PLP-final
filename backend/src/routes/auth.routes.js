@@ -8,6 +8,7 @@ const {
   forgotPassword,
   resetPassword,
   verifyEmail,
+  resendVerificationEmail,
   setup2FA,
   enable2FA,
   disable2FA
@@ -131,6 +132,22 @@ router.post(
  * @access  Public
  */
 router.get('/verify-email/:token', verifyEmail);
+
+/**
+ * @route   POST /api/v1/auth/resend-verification-email
+ * @desc    Resend email verification link
+ * @access  Public
+ * @rateLimit 3 requests per hour per IP (reuses passwordResetLimiter)
+ */
+router.post(
+  '/resend-verification-email',
+  passwordResetLimiter,
+  [
+    body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+    validate
+  ],
+  resendVerificationEmail
+);
 
 // Protected routes
 
