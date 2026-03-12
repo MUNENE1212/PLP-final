@@ -36,7 +36,7 @@ class MockAudio {
 }
 
 // Mock HTMLCanvasElement.getContext (jsdom doesn't support canvas)
-HTMLCanvasElement.prototype.getContext = function() {
+HTMLCanvasElement.prototype.getContext = function(this: HTMLCanvasElement) {
   return {
     fillStyle: '',
     fillRect: () => {},

@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const redis = require('../config/redis');
 
 /**
  * Protect routes - verify JWT token
@@ -24,6 +25,19 @@ exports.protect = async (req, res, next) => {
     try {
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+      // Check if token has been revoked (blacklisted on logout)
+      try {
+        const isRevoked = await redis.get(`bl:${token}`);
+        if (isRevoked) {
+          return res.status(401).json({
+            success: false,
+            message: 'Token has been revoked. Please login again.'
+          });
+        }
+      } catch (_) {
+        // Redis unavailable — skip blacklist check (fail-open in dev)
+      }
 
       // Get user from token
       req.user = await User.findById(decoded.id).select('-password');

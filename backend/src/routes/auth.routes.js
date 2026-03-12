@@ -3,6 +3,7 @@ const { body } = require('express-validator');
 const {
   register,
   login,
+  logout,
   verify2FA,
   getMe,
   forgotPassword,
@@ -157,6 +158,13 @@ router.post(
  * @access  Private
  */
 router.get('/me', protect, getMe);
+
+/**
+ * @route   POST /api/v1/auth/logout
+ * @desc    Logout and revoke current JWT
+ * @access  Private
+ */
+router.post('/logout', protect, logout);
 
 /**
  * @route   POST /api/v1/auth/setup-2fa

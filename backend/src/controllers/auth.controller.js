@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const speakeasy = require('speakeasy');
 const QRCode = require('qrcode');
 const { sendVerificationEmail } = require('../services/email.service');
+const redis = require('../config/redis');
 
 /**
  * Generate JWT Token
@@ -350,6 +351,43 @@ exports.getMe = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching user data'
+    });
+  }
+};
+
+/**
+ * @desc    Logout user — blacklist current JWT
+ * @route   POST /api/v1/auth/logout
+ * @access  Private
+ */
+exports.logout = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+
+    if (token) {
+      // Decode to get expiry so blacklist entry auto-expires with the token
+      const decoded = jwt.decode(token);
+      const ttl = decoded?.exp ? decoded.exp - Math.floor(Date.now() / 1000) : 0;
+
+      if (ttl > 0) {
+        try {
+          await redis.set(`bl:${token}`, '1');
+          await redis.expire(`bl:${token}`, ttl);
+        } catch (_) {
+          // Redis unavailable — token won't be blacklisted but logout still succeeds
+        }
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Logged out successfully'
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error logging out'
     });
   }
 };

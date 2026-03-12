@@ -88,6 +88,13 @@ export const fetchCurrentUser = createAsyncThunk(
 );
 
 export const logout = createAsyncThunk('auth/logout', async () => {
+  // Revoke token on server (best-effort — don't block logout on failure)
+  try {
+    await axios.post('/auth/logout');
+  } catch {
+    // Server unreachable — still clear local state
+  }
+
   // Clear localStorage
   localStorage.removeItem(STORAGE_KEYS.TOKEN);
   localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
