@@ -220,25 +220,25 @@ describe('Auth Controller', () => {
         expect(decoded.id).toBe(testUser._id.toString());
       });
 
-      it('should update lastLogin timestamp on successful login', async () => {
+      it('should update lastSeen timestamp on successful login', async () => {
         const User = require('../src/models/User');
         const beforeLogin = await User.findById(testUser._id);
-        const previousLastLogin = beforeLogin.lastLogin;
+        const previousLastSeen = beforeLogin.lastSeen;
 
         // Simulate login update
         await User.findByIdAndUpdate(testUser._id, {
-          lastLogin: new Date(),
+          lastSeen: new Date(),
           $push: {
             loginHistory: {
               timestamp: new Date(),
               ipAddress: '127.0.0.1',
-              userAgent: 'Test Agent'
+              device: 'Test Agent'
             }
           }
         });
 
         const afterLogin = await User.findById(testUser._id);
-        expect(afterLogin.lastLogin).not.toEqual(previousLastLogin);
+        expect(afterLogin.lastSeen).not.toEqual(previousLastSeen);
       });
     });
 
@@ -288,14 +288,11 @@ describe('Auth Controller', () => {
     describe('2FA Login Flow', () => {
       it('should require 2FA when user has 2FA enabled', async () => {
         const userWith2FA = await dbHandler.createTestUser({
-          email: '2fauser@example.com',
-          twoFactorAuth: {
-            enabled: true,
-            secret: 'JBSWY3DPEHPK3PXP'
-          }
+          twoFactorEnabled: true,
+          twoFactorSecret: 'JBSWY3DPEHPK3PXP'
         });
 
-        expect(userWith2FA.twoFactorAuth.enabled).toBe(true);
+        expect(userWith2FA.twoFactorEnabled).toBe(true);
       });
     });
   });
@@ -315,15 +312,15 @@ describe('Auth Controller', () => {
       const User = require('../src/models/User');
 
       const user = await User.findById(testUser._id);
-      user.resetPasswordToken = crypto
+      user.passwordResetToken = crypto
         .createHash('sha256')
         .update(resetToken)
         .digest('hex');
-      user.resetPasswordExpire = Date.now() + 30 * 60 * 1000; // 30 minutes
+      user.passwordResetExpires = Date.now() + 30 * 60 * 1000; // 30 minutes
       await user.save();
 
-      expect(user.resetPasswordToken).toBeDefined();
-      expect(user.resetPasswordExpire).toBeDefined();
+      expect(user.passwordResetToken).toBeDefined();
+      expect(user.passwordResetExpires).toBeDefined();
     });
 
     it('should not reveal if email does not exist', async () => {
@@ -348,11 +345,11 @@ describe('Auth Controller', () => {
       resetToken = crypto.randomBytes(32).toString('hex');
       const User = require('../src/models/User');
       const user = await User.findById(testUser._id);
-      user.resetPasswordToken = crypto
+      user.passwordResetToken = crypto
         .createHash('sha256')
         .update(resetToken)
         .digest('hex');
-      user.resetPasswordExpire = Date.now() + 30 * 60 * 1000;
+      user.passwordResetExpires = Date.now() + 30 * 60 * 1000;
       await user.save();
     });
 
@@ -364,8 +361,8 @@ describe('Auth Controller', () => {
         .digest('hex');
 
       const user = await User.findOne({
-        resetPasswordToken: hashedToken,
-        resetPasswordExpire: { $gt: Date.now() }
+        passwordResetToken: hashedToken,
+        passwordResetExpires: { $gt: Date.now() }
       });
 
       expect(user).not.toBeNull();
@@ -379,8 +376,8 @@ describe('Auth Controller', () => {
         .digest('hex');
 
       const user = await User.findOne({
-        resetPasswordToken: invalidToken,
-        resetPasswordExpire: { $gt: Date.now() }
+        passwordResetToken: invalidToken,
+        passwordResetExpires: { $gt: Date.now() }
       });
 
       expect(user).toBeNull();
@@ -395,12 +392,12 @@ describe('Auth Controller', () => {
 
       // Set token as expired
       await User.findByIdAndUpdate(testUser._id, {
-        resetPasswordExpire: Date.now() - 1000 // Expired 1 second ago
+        passwordResetExpires: Date.now() - 1000 // Expired 1 second ago
       });
 
       const user = await User.findOne({
-        resetPasswordToken: hashedToken,
-        resetPasswordExpire: { $gt: Date.now() }
+        passwordResetToken: hashedToken,
+        passwordResetExpires: { $gt: Date.now() }
       });
 
       expect(user).toBeNull();
@@ -411,13 +408,13 @@ describe('Auth Controller', () => {
       const user = await User.findById(testUser._id);
 
       user.password = newPassword;
-      user.resetPasswordToken = undefined;
-      user.resetPasswordExpire = undefined;
+      user.passwordResetToken = undefined;
+      user.passwordResetExpires = undefined;
       await user.save();
 
       const updatedUser = await User.findById(testUser._id);
-      expect(updatedUser.resetPasswordToken).toBeUndefined();
-      expect(updatedUser.resetPasswordExpire).toBeUndefined();
+      expect(updatedUser.passwordResetToken).toBeUndefined();
+      expect(updatedUser.passwordResetExpires).toBeUndefined();
     });
   });
 
@@ -438,7 +435,7 @@ describe('Auth Controller', () => {
         .createHash('sha256')
         .update(verificationToken)
         .digest('hex');
-      user.emailVerificationExpire = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+      user.emailVerificationExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
       await user.save();
     });
 
@@ -451,7 +448,7 @@ describe('Auth Controller', () => {
 
       const user = await User.findOne({
         emailVerificationToken: hashedToken,
-        emailVerificationExpire: { $gt: Date.now() }
+        emailVerificationExpires: { $gt: Date.now() }
       });
 
       expect(user).not.toBeNull();
@@ -466,7 +463,7 @@ describe('Auth Controller', () => {
 
       const user = await User.findOne({
         emailVerificationToken: invalidToken,
-        emailVerificationExpire: { $gt: Date.now() }
+        emailVerificationExpires: { $gt: Date.now() }
       });
 
       expect(user).toBeNull();

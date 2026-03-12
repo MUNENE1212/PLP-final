@@ -23,6 +23,8 @@ describe('Booking Controller', () => {
 
   beforeAll(async () => {
     await dbHandler.connect();
+    // Ensure 2dsphere index exists for geo queries
+    await Booking.collection.createIndex({ 'serviceLocation.coordinates': '2dsphere' }).catch(() => {});
   });
 
   afterAll(async () => {
@@ -32,15 +34,12 @@ describe('Booking Controller', () => {
   beforeEach(async () => {
     await dbHandler.clearDatabase();
 
-    // Create test users
+    // Create test users (use random emails to avoid collisions with parallel test suites)
     customer = await dbHandler.createTestUser({
-      email: 'customer@example.com',
       role: 'customer'
     });
 
-    technician = await dbHandler.createTestTechnician({
-      email: 'technician@example.com'
-    });
+    technician = await dbHandler.createTestTechnician();
 
     // Create a test booking
     testBooking = await dbHandler.createTestBooking(customer._id, technician._id);
@@ -247,9 +246,10 @@ describe('Booking Controller', () => {
       it('should record status change in history', async () => {
         await testBooking.transitionTo('matching', customer._id, 'Starting matching');
 
-        expect(testBooking.statusHistory).toHaveLength(1);
-        expect(testBooking.statusHistory[0].status).toBe('matching');
-        expect(testBooking.statusHistory[0].changedBy.toString()).toBe(customer._id.toString());
+        // statusHistory includes initial 'pending' entry from creation + the transition
+        expect(testBooking.statusHistory).toHaveLength(2);
+        expect(testBooking.statusHistory[1].status).toBe('matching');
+        expect(testBooking.statusHistory[1].changedBy.toString()).toBe(customer._id.toString());
       });
 
       it('should record multiple status changes', async () => {
@@ -257,7 +257,8 @@ describe('Booking Controller', () => {
         await testBooking.transitionTo('assigned', customer._id);
         await testBooking.transitionTo('accepted', technician._id);
 
-        expect(testBooking.statusHistory).toHaveLength(3);
+        // statusHistory includes initial 'pending' entry from creation + 3 transitions
+        expect(testBooking.statusHistory).toHaveLength(4);
       });
     });
 

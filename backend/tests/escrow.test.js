@@ -45,19 +45,14 @@ describe('Escrow System', () => {
   beforeEach(async () => {
     await dbHandler.clearDatabase();
 
-    // Create test users
+    // Create test users (use random emails to avoid collisions with parallel test suites)
     customer = await dbHandler.createTestUser({
-      email: 'customer@example.com',
       role: 'customer'
     });
 
-    technician = await dbHandler.createTestTechnician({
-      email: 'technician@example.com'
-    });
+    technician = await dbHandler.createTestTechnician();
 
-    admin = await dbHandler.createTestAdmin({
-      email: 'admin@example.com'
-    });
+    admin = await dbHandler.createTestAdmin();
 
     // Create a test booking
     testBooking = await dbHandler.createTestBooking(customer._id, technician._id);
