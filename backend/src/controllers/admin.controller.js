@@ -592,11 +592,23 @@ exports.getUserById = async (req, res) => {
 exports.updateUser = async (req, res) => {
   try {
     const { userId } = req.params;
-    const updates = req.body;
 
-    // Prevent updating sensitive fields
-    const disallowedFields = ['password', 'refreshTokens', 'emailVerificationToken', 'passwordResetToken'];
-    disallowedFields.forEach((field) => delete updates[field]);
+    // Whitelist: only allow admin-editable fields (not auth tokens, passwords, financial stats)
+    const allowedFields = [
+      'firstName', 'lastName', 'email', 'phoneNumber', 'profilePicture',
+      'bio', 'status', 'statusReason', 'role',
+      'isEmailVerified', 'isPhoneVerified',
+      'businessName', 'companyName',
+      'skills', 'hourlyRate', 'serviceRadius',
+      'availability', 'location', 'address'
+    ];
+
+    const updates = {};
+    for (const field of allowedFields) {
+      if (req.body[field] !== undefined) {
+        updates[field] = req.body[field];
+      }
+    }
 
     const user = await User.findByIdAndUpdate(
       userId,
