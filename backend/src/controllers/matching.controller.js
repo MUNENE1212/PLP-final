@@ -50,8 +50,6 @@ exports.findTechnicians = async (req, res) => {
       'skills.category': serviceCategory,
       'location.coordinates': { $exists: true, $ne: null } // Ensure location exists
     };
-    // First, let's count total technicians
-    const totalTechsCount = await User.countDocuments({ role: 'technician' });
 
     // Apply preference filters
     // Only apply minRating filter if it's greater than 0
@@ -77,12 +75,8 @@ exports.findTechnicians = async (req, res) => {
     }
     // Find technicians
     let technicians = await User.find(techniciansQuery)
-      .select('firstName lastName profilePicture rating skills location availability hourlyRate yearsOfExperience completedJobs avgResponseTime completionRate')
+      .select('firstName lastName profilePicture rating skills location availability hourlyRate yearsOfExperience completedJobs avgResponseTime completionRate subscription')
       .lean();
-    if (technicians.length > 0) {
-      technicians.forEach(t => {
-      });
-    }
 
     // Calculate distances and filter by max distance
     const maxDistance = preferences.general.maxDistance || 50;
@@ -127,19 +121,24 @@ exports.findTechnicians = async (req, res) => {
         context
       );
 
-      // Get technician subscription boost
-      const techUser = await User.findById(technician._id);
-      const boostMultiplier = techUser.getBoostMultiplier();
-      const isPro = techUser.isPro();
+      // Calculate subscription boost inline (avoids N+1 re-query)
+      const sub = technician.subscription;
+      const isProOrPremium = sub
+        && ['pro', 'premium'].includes(sub.plan)
+        && sub.status === 'active'
+        && (!sub.endDate || new Date(sub.endDate) > new Date());
+      const boostMultiplier = isProOrPremium
+        ? (sub.plan === 'premium' ? 1.5 : 1.25)
+        : 1.0;
 
       // Apply pro boost to overall score
       const boostedScore = scoring.scores.overall * boostMultiplier;
 
       // Add pro reason if applicable
       const matchReasons = generateMatchReasons(scoring.scores, technician);
-      if (isPro) {
+      if (isProOrPremium) {
         matchReasons.unshift({
-          reason: techUser.subscription.plan === 'premium' ? 'Premium Verified Technician' : 'Pro Verified Technician',
+          reason: sub.plan === 'premium' ? 'Premium Verified Technician' : 'Pro Verified Technician',
           weight: boostMultiplier - 1.0,
           score: 100,
           isPro: true
