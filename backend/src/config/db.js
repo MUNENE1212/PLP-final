@@ -36,12 +36,7 @@ const connectDB = async () => {
       console.log('⚠️  Mongoose disconnected from MongoDB');
     });
 
-    // Graceful shutdown
-    process.on('SIGINT', async () => {
-      await mongoose.connection.close();
-      console.log('MongoDB connection closed due to app termination');
-      process.exit(0);
-    });
+    // Note: graceful shutdown (SIGINT/SIGTERM) is handled centrally in server.js
 
     return conn;
   } catch (error) {

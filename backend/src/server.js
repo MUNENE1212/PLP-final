@@ -260,15 +260,40 @@ const server = app.listen(PORT, () => {
 // Initialize Socket.IO
 initializeSocket(server);
 
+// Graceful shutdown handler — drains in-flight requests before closing
+const gracefulShutdown = (signal) => {
+  console.log(`\n${signal} received — starting graceful shutdown...`);
+  server.close(async () => {
+    console.log('HTTP server closed — no longer accepting connections');
+    try {
+      const mongoose = require('mongoose');
+      if (mongoose.connection.readyState === 1) {
+        await mongoose.connection.close();
+        console.log('MongoDB connection closed');
+      }
+    } catch (_) {}
+    process.exit(0);
+  });
+
+  // Force shutdown if draining takes too long (PM2 kill_timeout is 5s)
+  setTimeout(() => {
+    console.error('Graceful shutdown timed out — forcing exit');
+    process.exit(1);
+  }, 4000);
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {
-  console.error('❌ Unhandled Rejection:', err);
+  console.error('Unhandled Rejection:', err);
   server.close(() => process.exit(1));
 });
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (err) => {
-  console.error('❌ Uncaught Exception:', err);
+  console.error('Uncaught Exception:', err);
   process.exit(1);
 });
 

@@ -92,7 +92,8 @@ module.exports = {
       listen_timeout: 3000,
 
       // Kill timeout - time to wait before force killing
-      kill_timeout: 5000,
+      // Must be > graceful shutdown timeout in server.js (4s)
+      kill_timeout: 8000,
 
       // Wait for app to be ready before killing previous instance
       // This enables zero-downtime reloads
