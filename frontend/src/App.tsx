@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import ErrorBoundary from './components/ErrorBoundary';
+import ErrorBoundary, { FeatureErrorBoundary } from './components/ErrorBoundary';
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import { PWAInstallPrompt } from './components/pwa/PWAInstallPrompt';
@@ -127,14 +127,14 @@ const App: React.FC = () => {
               <Route path="technicians/:id" element={<TechnicianProfile />} />
               <Route path="profile/:id" element={<UserProfile />} />
               {/* Unified booking flow - primary route */}
-              <Route path="booking-flow" element={<CreateBookingFlow />} />
+              <Route path="booking-flow" element={<FeatureErrorBoundary name="Booking"><CreateBookingFlow /></FeatureErrorBoundary>} />
               {/* Legacy route - redirects to new flow while preserving state */}
               <Route path="booking/create" element={<CreateBooking />} />
               {/* Book route alias - redirects to unified flow */}
               <Route path="book" element={<Navigate to="/booking-flow" replace />} />
-              <Route path="bookings/:id" element={<BookingDetail />} />
+              <Route path="bookings/:id" element={<FeatureErrorBoundary name="Booking Details"><BookingDetail /></FeatureErrorBoundary>} />
               <Route path="bookings" element={<MyBookings />} />
-              <Route path="messages" element={<Messages />} />
+              <Route path="messages" element={<FeatureErrorBoundary name="Messages"><Messages /></FeatureErrorBoundary>} />
               <Route path="posts/:postId" element={<PostDetail />} />
               <Route path="saved-posts" element={<SavedPosts />} />
               <Route path="support" element={<Support />} />
@@ -142,7 +142,7 @@ const App: React.FC = () => {
               <Route path="settings" element={<ProfileSettings />} />
 
               {/* Admin Routes */}
-              <Route path="admin/*" element={<AdminDashboardNew />} />
+              <Route path="admin/*" element={<FeatureErrorBoundary name="Admin"><AdminDashboardNew /></FeatureErrorBoundary>} />
               <Route path="admin" element={<AdminDashboard />} />
               <Route path="admin/users" element={<UserManagement />} />
               <Route path="admin/settings" element={<SystemSettings />} />

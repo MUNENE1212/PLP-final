@@ -127,4 +127,53 @@ class ErrorBoundary extends Component<Props, State> {
   }
 }
 
+/**
+ * Lightweight error boundary for feature sections.
+ * Shows an inline recovery card instead of replacing the full page.
+ */
+interface FeatureProps {
+  children: ReactNode;
+  name?: string;
+}
+
+interface FeatureState {
+  hasError: boolean;
+}
+
+class FeatureErrorBoundary extends Component<FeatureProps, FeatureState> {
+  constructor(props: FeatureProps) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(): FeatureState {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error(`[${this.props.name || 'Feature'}] Error:`, error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-6 text-center">
+          <AlertCircle className="mx-auto h-8 w-8 text-red-400 mb-2" />
+          <p className="text-sm text-gray-300 mb-3">
+            {this.props.name ? `${this.props.name} failed to load.` : 'Something went wrong.'}
+          </p>
+          <button
+            onClick={() => this.setState({ hasError: false })}
+            className="text-sm text-primary hover:underline"
+          >
+            Try again
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default ErrorBoundary;
+export { FeatureErrorBoundary };
