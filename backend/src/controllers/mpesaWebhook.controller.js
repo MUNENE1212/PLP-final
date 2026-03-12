@@ -65,6 +65,15 @@ exports.stkPushCallback = async (req, res) => {
       });
     }
 
+    // Idempotency guard: skip if already processed
+    if (transaction.status === 'completed' || transaction.status === 'failed') {
+      logger.warn('Duplicate STK callback — transaction already processed', {
+        transactionId: transaction._id,
+        status: transaction.status,
+      });
+      return res.status(200).json({ ResultCode: 0, ResultDesc: 'Accepted' });
+    }
+
     // Update transaction based on result
     if (result.success) {
       // Payment successful - update transaction
@@ -186,6 +195,15 @@ exports.b2cCallback = async (req, res) => {
         ResultCode: 0,
         ResultDesc: 'Accepted',
       });
+    }
+
+    // Idempotency guard: skip if already processed
+    if (transaction.status === 'completed' || transaction.status === 'failed') {
+      logger.warn('Duplicate B2C callback — transaction already processed', {
+        transactionId: transaction._id,
+        status: transaction.status,
+      });
+      return res.status(200).json({ ResultCode: 0, ResultDesc: 'Accepted' });
     }
 
     // Update transaction based on result
@@ -394,6 +412,14 @@ exports.confirmationUrl = async (req, res) => {
     }
 
     if (transaction) {
+      // Idempotency guard: skip if already processed
+      if (transaction.status === 'completed') {
+        logger.warn('Duplicate C2B confirmation — transaction already completed', {
+          transactionId: transaction._id,
+        });
+        return res.status(200).json({ ResultCode: 0, ResultDesc: 'Success', ThirdPartyTransID: TransID });
+      }
+
       // Update existing transaction
       transaction.status = 'completed';
       transaction.completedAt = transactionDate || new Date();

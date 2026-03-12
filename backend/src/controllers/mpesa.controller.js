@@ -202,6 +202,11 @@ exports.mpesaCallback = async (req, res) => {
       });
     }
 
+    // Idempotency guard: skip if already processed
+    if (transaction.status === 'completed' || transaction.status === 'failed') {
+      return res.status(200).json({ ResultCode: 0, ResultDesc: 'Accepted' });
+    }
+
     // Update transaction based on result
     if (result.success) {
       // Payment successful
@@ -512,6 +517,11 @@ exports.b2cCallback = async (req, res) => {
         ResultDesc: 'Transaction not found',
       });
     }
+    // Idempotency guard: skip if already processed
+    if (transaction.status === 'completed' || transaction.status === 'failed') {
+      return res.status(200).json({ ResultCode: 0, ResultDesc: 'Accepted' });
+    }
+
     // Update transaction based on result
     if (result.success) {
       // Payout successful
@@ -599,7 +609,7 @@ exports.b2cTimeout = async (req, res) => {
         'mpesaDetails.conversationId': Result.ConversationID,
       });
 
-      if (transaction) {
+      if (transaction && transaction.status !== 'completed') {
         transaction.status = 'failed';
         transaction.failedAt = new Date();
         transaction.failureReason = 'Request timeout';
