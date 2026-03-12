@@ -85,7 +85,6 @@ exports.acceptBooking = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error accepting booking',
-      error: error.message
     });
   }
 };
@@ -162,7 +161,6 @@ exports.rejectBooking = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error rejecting booking',
-      error: error.message
     });
   }
 };
@@ -319,7 +317,6 @@ exports.submitCounterOffer = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error submitting counter offer',
-      error: error.message
     });
   }
 };
@@ -559,7 +556,6 @@ exports.respondToCounterOffer = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error responding to counter offer',
-      error: error.message
     });
   }
 };
@@ -610,7 +606,6 @@ exports.getNegotiationHistory = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error getting negotiation history',
-      error: error.message
     });
   }
 };
@@ -675,7 +670,6 @@ exports.withdrawCounterOffer = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error withdrawing counter offer',
-      error: error.message
     });
   }
 };

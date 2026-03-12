@@ -33,7 +33,6 @@ exports.getFeeConfig = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch fee configuration',
-      error: error.message,
     });
   }
 };
@@ -201,7 +200,6 @@ exports.updateFeeConfig = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update fee configuration',
-      error: error.message,
     });
   }
 };
@@ -256,7 +254,6 @@ exports.previewFee = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to calculate fee preview',
-      error: error.message,
     });
   }
 };
@@ -292,7 +289,6 @@ exports.validateTiers = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to validate tiers',
-      error: error.message,
     });
   }
 };

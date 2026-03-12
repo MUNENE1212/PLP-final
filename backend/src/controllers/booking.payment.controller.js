@@ -111,7 +111,6 @@ exports.confirmBookingFee = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error confirming booking fee',
-      error: error.message
     });
   }
 };
@@ -199,7 +198,6 @@ exports.releaseBookingFee = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error releasing booking fee',
-      error: error.message
     });
   }
 };
@@ -291,7 +289,6 @@ exports.refundBookingFee = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error refunding booking fee',
-      error: error.message
     });
   }
 };
@@ -341,7 +338,6 @@ exports.getBookingFeeStatus = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching booking fee status',
-      error: error.message
     });
   }
 };

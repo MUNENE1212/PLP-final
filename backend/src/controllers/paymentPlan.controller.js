@@ -43,7 +43,6 @@ exports.createPaymentPlan = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error creating payment plan',
-      error: error.message
     });
   }
 };
@@ -72,7 +71,6 @@ exports.getMyPaymentPlans = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching payment plans',
-      error: error.message
     });
   }
 };
@@ -111,7 +109,6 @@ exports.getServicePaymentPlans = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching payment plans',
-      error: error.message
     });
   }
 };
@@ -142,7 +139,6 @@ exports.getPaymentPlan = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching payment plan',
-      error: error.message
     });
   }
 };
@@ -188,7 +184,6 @@ exports.updatePaymentPlan = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error updating payment plan',
-      error: error.message
     });
   }
 };
@@ -222,7 +217,6 @@ exports.deletePaymentPlan = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error deleting payment plan',
-      error: error.message
     });
   }
 };
@@ -256,7 +250,6 @@ exports.deactivatePaymentPlan = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error deactivating payment plan',
-      error: error.message
     });
   }
 };
@@ -292,7 +285,6 @@ exports.calculateTotal = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error calculating total',
-      error: error.message
     });
   }
 };
@@ -325,7 +317,6 @@ exports.getTechnicianServicePlan = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching payment plan',
-      error: error.message
     });
   }
 };
@@ -356,7 +347,6 @@ exports.getPaymentPlanAnalytics = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching analytics',
-      error: error.message
     });
   }
 };
@@ -381,7 +371,6 @@ exports.validatePaymentPlan = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error validating payment plan',
-      error: error.message
     });
   }
 };
@@ -441,7 +430,6 @@ exports.getPaymentPlanTypes = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching plan types',
-      error: error.message
     });
   }
 };

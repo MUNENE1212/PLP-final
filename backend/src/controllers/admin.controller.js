@@ -180,7 +180,6 @@ exports.getDashboardStats = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch dashboard statistics',
-      error: error.message,
     });
   }
 };
@@ -284,7 +283,6 @@ exports.getRecentActivity = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch recent activity',
-      error: error.message,
     });
   }
 };
@@ -359,7 +357,6 @@ exports.getTopTechnicians = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch top technicians',
-      error: error.message,
     });
   }
 };
@@ -424,7 +421,6 @@ exports.getUsers = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch users',
-      error: error.message,
     });
   }
 };
@@ -472,7 +468,6 @@ exports.updateUserStatus = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update user status',
-      error: error.message,
     });
   }
 };
@@ -547,7 +542,6 @@ exports.getAnalytics = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch analytics',
-      error: error.message,
     });
   }
 };
@@ -579,7 +573,6 @@ exports.getUserById = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch user details',
-      error: error.message,
     });
   }
 };
@@ -633,7 +626,6 @@ exports.updateUser = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update user',
-      error: error.message,
     });
   }
 };
@@ -675,7 +667,6 @@ exports.deleteUser = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to delete user',
-      error: error.message,
     });
   }
 };
@@ -715,7 +706,6 @@ exports.restoreUser = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to restore user',
-      error: error.message,
     });
   }
 };
@@ -747,7 +737,6 @@ exports.getPricingConfig = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch pricing configuration',
-      error: error.message,
     });
   }
 };
@@ -772,7 +761,6 @@ exports.getPricingHistory = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch pricing history',
-      error: error.message,
     });
   }
 };
@@ -818,7 +806,6 @@ exports.updatePricingConfig = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update pricing configuration',
-      error: error.message,
     });
   }
 };
@@ -869,7 +856,6 @@ exports.updatePlatformFee = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update platform fee',
-      error: error.message,
     });
   }
 };
@@ -909,7 +895,6 @@ exports.updateTax = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update tax configuration',
-      error: error.message,
     });
   }
 };
@@ -953,7 +938,6 @@ exports.updateDiscounts = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update discount configuration',
-      error: error.message,
     });
   }
 };
@@ -1011,7 +995,6 @@ exports.updateServiceRates = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update service rates',
-      error: error.message,
     });
   }
 };
@@ -1121,7 +1104,6 @@ exports.getReports = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to generate reports',
-      error: error.message,
     });
   }
 };

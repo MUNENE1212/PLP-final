@@ -147,7 +147,6 @@ exports.getDashboardOverview = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch dashboard overview',
-      error: error.message,
     });
   }
 };
@@ -242,7 +241,6 @@ exports.getEscrowStats = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch escrow statistics',
-      error: error.message,
     });
   }
 };
@@ -332,7 +330,6 @@ exports.getRevenueStats = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch revenue statistics',
-      error: error.message,
     });
   }
 };
@@ -426,7 +423,6 @@ exports.getServiceStats = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch service statistics',
-      error: error.message,
     });
   }
 };
@@ -615,7 +611,6 @@ exports.getPlatformStatistics = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch platform statistics',
-      error: error.message,
     });
   }
 };

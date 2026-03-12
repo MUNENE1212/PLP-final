@@ -72,7 +72,6 @@ exports.updateToEnRoute = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error updating status',
-      error: error.message
     });
   }
 };
@@ -148,7 +147,6 @@ exports.updateToArrived = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error updating status',
-      error: error.message
     });
   }
 };
@@ -224,7 +222,6 @@ exports.updateToInProgress = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error updating status',
-      error: error.message
     });
   }
 };
@@ -321,7 +318,6 @@ exports.requestCompletion = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error requesting completion',
-      error: error.message
     });
   }
 };
@@ -474,7 +470,6 @@ exports.confirmCompletion = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error confirming completion',
-      error: error.message
     });
   }
 };
@@ -538,7 +533,6 @@ exports.pauseJob = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error pausing job',
-      error: error.message
     });
   }
 };
@@ -632,7 +626,6 @@ exports.cancelBooking = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error cancelling booking',
-      error: error.message
     });
   }
 };

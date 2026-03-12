@@ -51,7 +51,6 @@ exports.createNotification = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error creating notification',
-      error: error.message
     });
   }
 };

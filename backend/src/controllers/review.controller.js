@@ -105,7 +105,6 @@ exports.createReview = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error creating review',
-      error: error.message
     });
   }
 };

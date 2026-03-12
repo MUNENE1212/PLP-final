@@ -86,7 +86,6 @@ exports.getUsers = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching users',
-      error: error.message
     });
   }
 };
@@ -298,7 +297,6 @@ exports.updateUser = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error updating user profile',
-      error: error.message
     });
   }
 };
@@ -656,7 +654,6 @@ exports.updateAvailability = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error updating availability',
-      error: error.message
     });
   }
 };

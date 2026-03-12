@@ -236,7 +236,6 @@ exports.login = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error logging in',
-      error: error.message
     });
   }
 };
@@ -328,7 +327,6 @@ exports.verify2FA = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error verifying 2FA code',
-      error: error.message
     });
   }
 };

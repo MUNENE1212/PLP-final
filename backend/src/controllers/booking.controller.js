@@ -164,7 +164,6 @@ exports.createBooking = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error creating booking',
-      error: error.message
     });
   }
 };
@@ -359,7 +358,6 @@ exports.getBooking = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching booking',
-      error: error.message
     });
   }
 };
@@ -482,7 +480,6 @@ exports.updateBookingStatus = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error updating booking status',
-      error: error.message
     });
   }
 };
@@ -1314,7 +1311,6 @@ exports.confirmBookingFee = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error confirming booking fee',
-      error: error.message
     });
   }
 };
@@ -1401,7 +1397,6 @@ exports.releaseBookingFee = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error releasing booking fee',
-      error: error.message
     });
   }
 };
@@ -1493,7 +1488,6 @@ exports.refundBookingFee = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error refunding booking fee',
-      error: error.message
     });
   }
 };
@@ -1543,7 +1537,6 @@ exports.getBookingFeeStatus = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching booking fee status',
-      error: error.message
     });
   }
 };
@@ -1604,7 +1597,6 @@ exports.acceptBooking = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error accepting booking',
-      error: error.message
     });
   }
 };
@@ -1673,7 +1665,6 @@ exports.rejectBooking = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error rejecting booking',
-      error: error.message
     });
   }
 };
@@ -1771,7 +1762,6 @@ exports.submitCounterOffer = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error submitting counter offer',
-      error: error.message
     });
   }
 };
@@ -1876,7 +1866,6 @@ exports.respondToCounterOffer = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error responding to counter offer',
-      error: error.message
     });
   }
 };

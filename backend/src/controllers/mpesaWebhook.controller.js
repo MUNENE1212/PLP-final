@@ -136,7 +136,6 @@ exports.stkPushCallback = async (req, res) => {
     });
   } catch (error) {
     logger.error('STK Push callback processing error', {
-      error: error.message,
       stack: error.stack,
       body: req.body,
     });
@@ -273,7 +272,6 @@ exports.b2cCallback = async (req, res) => {
     });
   } catch (error) {
     logger.error('B2C callback processing error', {
-      error: error.message,
       stack: error.stack,
       body: req.body,
     });
@@ -591,7 +589,6 @@ async function handleEscrowFunding(transaction, result) {
     // await sendPaymentNotification(booking, transaction, result);
   } catch (error) {
     logger.error('Error handling escrow funding', {
-      error: error.message,
       transactionId: transaction._id,
     });
   }
@@ -641,7 +638,6 @@ async function handleEscrowRelease(transaction, result) {
     // await sendPayoutNotification(booking, transaction, result);
   } catch (error) {
     logger.error('Error handling escrow release', {
-      error: error.message,
       transactionId: transaction._id,
     });
   }

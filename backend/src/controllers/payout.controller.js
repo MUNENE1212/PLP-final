@@ -54,7 +54,6 @@ exports.getPendingPayouts = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching pending payouts',
-      error: error.message,
     });
   }
 };
@@ -98,7 +97,6 @@ exports.getPayoutDetails = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching payout details',
-      error: error.message,
     });
   }
 };
@@ -187,7 +185,6 @@ exports.processPayout = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error processing payout',
-      error: error.message,
     });
   }
 };
@@ -297,7 +294,6 @@ exports.batchProcessPayouts = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error processing batch payouts',
-      error: error.message,
     });
   }
 };
@@ -354,7 +350,6 @@ exports.getMyPayouts = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching payout history',
-      error: error.message,
     });
   }
 };

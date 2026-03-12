@@ -273,7 +273,6 @@ exports.createBooking = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error creating booking',
-      error: error.message
     });
   }
 };
@@ -475,7 +474,6 @@ exports.getBooking = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching booking',
-      error: error.message
     });
   }
 };

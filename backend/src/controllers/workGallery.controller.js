@@ -113,7 +113,6 @@ exports.addWorkGalleryImage = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error adding work gallery image',
-      error: error.message
     });
   }
 };
@@ -191,7 +190,6 @@ exports.updateWorkGalleryImage = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error updating work gallery image',
-      error: error.message
     });
   }
 };
@@ -258,7 +256,6 @@ exports.deleteWorkGalleryImage = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error deleting work gallery image',
-      error: error.message
     });
   }
 };
@@ -339,7 +336,6 @@ exports.reorderGalleryImages = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error reordering gallery images',
-      error: error.message
     });
   }
 };
@@ -392,7 +388,6 @@ exports.getTechnicianGallery = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching technician gallery',
-      error: error.message
     });
   }
 };
@@ -476,7 +471,6 @@ exports.setBeforeAfterPair = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error setting before/after pair',
-      error: error.message
     });
   }
 };
@@ -514,7 +508,6 @@ exports.getMyGallery = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching gallery',
-      error: error.message
     });
   }
 };

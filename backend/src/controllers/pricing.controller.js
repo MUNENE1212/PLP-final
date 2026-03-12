@@ -66,7 +66,6 @@ exports.calculatePrice = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error calculating price',
-      error: error.message
     });
   }
 };
@@ -128,7 +127,6 @@ exports.getEstimate = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error getting price estimate',
-      error: error.message
     });
   }
 };
@@ -186,7 +184,6 @@ exports.comparePrices = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error comparing prices',
-      error: error.message
     });
   }
 };
@@ -227,7 +224,6 @@ exports.getServiceCatalog = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching service catalog',
-      error: error.message
     });
   }
 };
@@ -258,7 +254,6 @@ exports.getPricingConfig = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching pricing configuration',
-      error: error.message
     });
   }
 };
@@ -310,7 +305,6 @@ exports.createPricingConfig = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error creating pricing configuration',
-      error: error.message
     });
   }
 };
@@ -348,7 +342,6 @@ exports.updatePricingConfig = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error updating pricing configuration',
-      error: error.message
     });
   }
 };
@@ -407,7 +400,6 @@ exports.addServicePrice = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error adding service price',
-      error: error.message
     });
   }
 };
@@ -458,7 +450,6 @@ exports.updateServicePrice = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error updating service price',
-      error: error.message
     });
   }
 };
@@ -518,7 +509,6 @@ exports.getServiceTypes = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching service types',
-      error: error.message
     });
   }
 };
@@ -604,7 +594,6 @@ exports.validateServiceType = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error validating service type',
-      error: error.message
     });
   }
 };
@@ -696,7 +685,6 @@ exports.getConfigHistory = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching configuration history',
-      error: error.message
     });
   }
 };

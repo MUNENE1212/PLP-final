@@ -76,7 +76,6 @@ exports.initiateFollowUp = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error initiating follow-up',
-      error: error.message
     });
   }
 };
@@ -134,7 +133,6 @@ exports.logContactAttempt = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error logging contact attempt',
-      error: error.message
     });
   }
 };
@@ -213,7 +211,6 @@ exports.completeBySupport = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error completing job',
-      error: error.message
     });
   }
 };
@@ -260,7 +257,6 @@ exports.getPendingCompletions = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching pending completions',
-      error: error.message
     });
   }
 };
@@ -414,7 +410,6 @@ exports.uploadCompletionMedia = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error uploading completion media',
-      error: error.message
     });
   }
 };
@@ -487,7 +482,6 @@ exports.getCompletionMedia = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching completion media',
-      error: error.message
     });
   }
 };
@@ -579,7 +573,6 @@ exports.deleteCompletionMedia = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error deleting completion media',
-      error: error.message
     });
   }
 };
@@ -669,7 +662,6 @@ exports.updateCompletionMediaCaption = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error updating caption',
-      error: error.message
     });
   }
 };

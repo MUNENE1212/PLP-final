@@ -74,7 +74,6 @@ class DumuBot {
       return {
         success: false,
         response: "I'm having trouble right now. Please try again or contact support@dumuwaks.com",
-        error: error.message
       };
     }
   }

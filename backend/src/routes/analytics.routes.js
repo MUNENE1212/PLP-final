@@ -54,7 +54,6 @@ router.get(
       res.status(500).json({
         success: false,
         message: 'Failed to retrieve real-time metrics',
-        error: error.message
       });
     }
   }
@@ -99,7 +98,6 @@ router.get(
       res.status(500).json({
         success: false,
         message: 'Failed to retrieve trend data',
-        error: error.message
       });
     }
   }
@@ -129,7 +127,6 @@ router.get(
       res.status(500).json({
         success: false,
         message: 'Failed to retrieve status distribution',
-        error: error.message
       });
     }
   }
@@ -173,7 +170,6 @@ router.get(
       res.status(500).json({
         success: false,
         message: 'Failed to retrieve activity feed',
-        error: error.message
       });
     }
   }
@@ -199,7 +195,6 @@ router.get(
       res.status(500).json({
         success: false,
         message: 'Failed to retrieve cache stats',
-        error: error.message
       });
     }
   }
@@ -225,7 +220,6 @@ router.post(
       res.status(500).json({
         success: false,
         message: 'Failed to clear cache',
-        error: error.message
       });
     }
   }

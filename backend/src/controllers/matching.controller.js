@@ -230,7 +230,6 @@ exports.findTechnicians = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error finding technicians',
-      error: error.message
     });
   }
 };
@@ -276,7 +275,6 @@ exports.getMatching = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching matching details',
-      error: error.message
     });
   }
 };
@@ -306,7 +304,6 @@ exports.getMyMatches = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching matches',
-      error: error.message
     });
   }
 };
@@ -426,7 +423,6 @@ exports.acceptMatch = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error accepting match',
-      error: error.message
     });
   }
 };
@@ -468,7 +464,6 @@ exports.rejectMatch = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error rejecting match',
-      error: error.message
     });
   }
 };
@@ -516,7 +511,6 @@ exports.addMatchFeedback = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error adding feedback',
-      error: error.message
     });
   }
 };
@@ -539,7 +533,6 @@ exports.getPreferences = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching preferences',
-      error: error.message
     });
   }
 };
@@ -582,7 +575,6 @@ exports.updatePreferences = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error updating preferences',
-      error: error.message
     });
   }
 };
@@ -609,7 +601,6 @@ exports.blockTechnician = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error blocking technician',
-      error: error.message
     });
   }
 };
@@ -635,7 +626,6 @@ exports.unblockTechnician = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error unblocking technician',
-      error: error.message
     });
   }
 };

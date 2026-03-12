@@ -96,7 +96,6 @@ exports.createTicket = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error creating support ticket',
-      error: error.message,
       details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
@@ -781,7 +780,6 @@ exports.getDashboardStats = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch dashboard statistics',
-      error: error.message,
     });
   }
 };
@@ -1081,7 +1079,6 @@ exports.createSupportConversation = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error creating support conversation',
-      error: error.message
     });
   }
 };
@@ -1182,7 +1179,6 @@ exports.createCustomerAccount = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error creating customer account',
-      error: error.message
     });
   }
 };
@@ -1292,7 +1288,6 @@ exports.createBookingForCustomer = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error creating booking',
-      error: error.message
     });
   }
 };
@@ -1365,7 +1360,6 @@ exports.searchTechnicians = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error searching technicians',
-      error: error.message
     });
   }
 };

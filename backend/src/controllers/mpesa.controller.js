@@ -164,7 +164,6 @@ exports.initiateSTKPush = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error initiating M-Pesa payment',
-      error: error.message,
     });
   }
 };
@@ -435,7 +434,6 @@ exports.queryTransactionStatus = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error querying transaction status',
-      error: error.message,
     });
   }
 };
@@ -480,7 +478,6 @@ exports.getPaymentHistory = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching payment history',
-      error: error.message,
     });
   }
 };
