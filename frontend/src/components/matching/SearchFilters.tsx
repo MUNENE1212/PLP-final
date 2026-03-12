@@ -313,7 +313,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ onSearch, isSearching = f
           size="lg"
           className="w-full"
           disabled={isSearching}
-          loading={isSearching}
+          isLoading={isSearching}
         >
           <Search className="mr-2 h-5 w-5" />
           {isSearching ? 'Finding Technicians...' : 'Find Technicians'}

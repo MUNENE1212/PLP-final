@@ -188,7 +188,7 @@ const ServiceTypeSelector: React.FC<ServiceTypeSelectorProps> = ({
               type="text"
               placeholder="Search service types..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
               className="pl-10"
             />
           </div>
@@ -263,8 +263,8 @@ const ServiceTypeSelector: React.FC<ServiceTypeSelectorProps> = ({
                       type="text"
                       placeholder="e.g., 'underground pipe laying'"
                       value={customInput}
-                      onChange={(e) => setCustomInput(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && validateCustomInput()}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCustomInput(e.target.value)}
+                      onKeyPress={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && validateCustomInput()}
                       className="flex-1"
                     />
                     <Button onClick={validateCustomInput} disabled={loading}>

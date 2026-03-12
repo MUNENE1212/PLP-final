@@ -238,7 +238,7 @@ const EditPostModal: React.FC<EditPostModalProps> = ({ post, isOpen, onClose }) 
             <Button
               type="submit"
               variant="primary"
-              loading={isCreating}
+              isLoading={isCreating}
               disabled={isCreating || (!caption.trim() && selectedMedia.length === 0)}
             >
               Save Changes

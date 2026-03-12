@@ -167,7 +167,7 @@ const Register: React.FC = () => {
               variant="primary"
               size="lg"
               className="w-full"
-              loading={isLoading}
+              isLoading={isLoading}
             >
               Create Account
             </Button>

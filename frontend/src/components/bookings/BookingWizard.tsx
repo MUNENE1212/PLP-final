@@ -384,7 +384,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({
                 <Input
                   type="date"
                   value={formData.scheduledDate}
-                  onChange={(e) => setFormData(prev => ({ ...prev, scheduledDate: e.target.value }))}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, scheduledDate: e.target.value }))}
                   min={new Date().toISOString().split('T')[0]}
                   className="w-full"
                 />
@@ -397,7 +397,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({
                 <Input
                   type="time"
                   value={formData.scheduledTime}
-                  onChange={(e) => setFormData(prev => ({ ...prev, scheduledTime: e.target.value }))}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, scheduledTime: e.target.value }))}
                   className="w-full"
                 />
               </div>
@@ -409,7 +409,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({
                 <Input
                   type="number"
                   value={formData.estimatedDuration ? (formData.estimatedDuration / 60).toString() : ''}
-                  onChange={(e) => {
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     const hours = parseFloat(e.target.value) || 0;
                     setFormData(prev => ({ ...prev, estimatedDuration: Math.round(hours * 60) }));
                   }}
@@ -428,7 +428,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({
               <Input
                 type="number"
                 value={formData.quantity || 1}
-                onChange={(e) => setFormData(prev => ({ ...prev, quantity: parseInt(e.target.value) || 1 }))}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, quantity: parseInt(e.target.value) || 1 }))}
                 min={1}
                 max={100}
                 placeholder="1"
@@ -456,7 +456,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({
                 <Input
                   type="text"
                   value={formData.serviceLocation.address}
-                  onChange={(e) => setFormData(prev => ({
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({
                     ...prev,
                     serviceLocation: { ...prev.serviceLocation, address: e.target.value }
                   }))}
@@ -472,7 +472,7 @@ export const BookingWizard: React.FC<BookingWizardProps> = ({
                 <Input
                   type="text"
                   value={formData.serviceLocation.landmarks}
-                  onChange={(e) => setFormData(prev => ({
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({
                     ...prev,
                     serviceLocation: { ...prev.serviceLocation, landmarks: e.target.value }
                   }))}

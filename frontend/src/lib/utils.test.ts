@@ -281,7 +281,7 @@ describe('Utility Functions', () => {
     });
 
     it('should accept different currency', () => {
-      const result = formatCurrency(1000, 'USD');
+      const result = formatCurrency(1000, { currency: 'USD' });
       expect(result).toContain('1,000');
     });
 

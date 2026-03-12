@@ -292,7 +292,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, userRole }) => {
         <Button
           variant="outline"
           size="sm"
-          onClick={(e) => {
+          onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
             e.stopPropagation();
             navigate(`/bookings/${booking._id}`);
           }}
@@ -306,7 +306,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, userRole }) => {
           <Button
             variant="primary"
             size="sm"
-            onClick={(e) => {
+            onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
               e.stopPropagation();
               navigate(`/bookings/${booking._id}?action=pay`);
             }}
@@ -354,7 +354,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, userRole }) => {
           <Button
             variant="primary"
             size="sm"
-            onClick={(e) => {
+            onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
               e.stopPropagation();
               // Handle payment
             }}

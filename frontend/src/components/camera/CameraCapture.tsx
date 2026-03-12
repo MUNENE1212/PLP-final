@@ -1,5 +1,5 @@
 import { Camera, X, Check } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import Button from '@/components/ui/Button';
 import { useCameraCapture } from '@/hooks/useCameraCapture';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';

@@ -248,7 +248,7 @@ const BookingFeePaymentModal: React.FC<BookingFeePaymentModalProps> = ({
                   type="tel"
                   placeholder="254712345678"
                   value={mpesaPhone}
-                  onChange={(e) => setMpesaPhone(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMpesaPhone(e.target.value)}
                   className="w-full"
                 />
                 <p className="text-xs text-steel mt-1">
@@ -267,7 +267,7 @@ const BookingFeePaymentModal: React.FC<BookingFeePaymentModalProps> = ({
                     type="text"
                     placeholder="1234 5678 9012 3456"
                     value={cardNumber}
-                    onChange={(e) => setCardNumber(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCardNumber(e.target.value)}
                     maxLength={19}
                   />
                 </div>
@@ -280,7 +280,7 @@ const BookingFeePaymentModal: React.FC<BookingFeePaymentModalProps> = ({
                       type="text"
                       placeholder="MM/YY"
                       value={cardExpiry}
-                      onChange={(e) => setCardExpiry(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCardExpiry(e.target.value)}
                       maxLength={5}
                     />
                   </div>
@@ -292,7 +292,7 @@ const BookingFeePaymentModal: React.FC<BookingFeePaymentModalProps> = ({
                       type="text"
                       placeholder="123"
                       value={cardCVC}
-                      onChange={(e) => setCardCVC(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCardCVC(e.target.value)}
                       maxLength={3}
                     />
                   </div>

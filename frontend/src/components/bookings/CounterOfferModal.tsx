@@ -99,7 +99,7 @@ const CounterOfferModal: React.FC<CounterOfferModalProps> = ({ booking, isOpen, 
               <Input
                 type="number"
                 value={proposedAmount}
-                onChange={(e) => setProposedAmount(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProposedAmount(e.target.value)}
                 className="pl-10"
                 placeholder="Enter proposed amount"
                 required

@@ -248,7 +248,7 @@ const CreatePost: React.FC = () => {
             variant="primary"
             size="sm"
             disabled={(!caption.trim() && selectedMedia.length === 0) || isCreating || isUploadingMedia}
-            loading={isCreating}
+            isLoading={isCreating}
             className="flex items-center space-x-2"
           >
             <Send className="h-4 w-4" />
