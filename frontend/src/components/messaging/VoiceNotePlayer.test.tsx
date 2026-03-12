@@ -1,27 +1,66 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import VoiceNotePlayer from './VoiceNotePlayer';
 
-// Mock HTMLAudioElement
+// Mock HTMLAudioElement with plain functions (not vi.fn — survives mockReset)
 class MockAudio {
   src = '';
   currentTime = 0;
   duration = 30;
   paused = true;
+  private listeners: Record<string, Array<() => void>> = {};
 
-  addEventListener = vi.fn((event: string, callback: () => void) => {
+  addEventListener(event: string, callback: () => void) {
+    if (!this.listeners[event]) this.listeners[event] = [];
+    this.listeners[event].push(callback);
+    // Fire loadedmetadata synchronously so audio initializes before interaction
     if (event === 'loadedmetadata') {
-      // Simulate async loading
-      setTimeout(callback, 0);
+      queueMicrotask(callback);
     }
-  });
+  }
 
-  removeEventListener = vi.fn();
+  removeEventListener(event: string, callback: () => void) {
+    if (this.listeners[event]) {
+      this.listeners[event] = this.listeners[event].filter(cb => cb !== callback);
+    }
+  }
 
-  play = vi.fn().mockResolvedValue(undefined);
+  play() {
+    this.paused = false;
+    return Promise.resolve();
+  }
 
-  pause = vi.fn();
+  pause() {
+    this.paused = true;
+  }
 }
+
+// Mock HTMLCanvasElement.getContext (jsdom doesn't support canvas)
+HTMLCanvasElement.prototype.getContext = function() {
+  return {
+    fillStyle: '',
+    fillRect: () => {},
+    clearRect: () => {},
+    beginPath: () => {},
+    arc: () => {},
+    fill: () => {},
+    scale: () => {},
+    canvas: this,
+  };
+} as any;
+
+// Mock getBoundingClientRect on canvas elements
+HTMLCanvasElement.prototype.getBoundingClientRect = () => ({
+  width: 200,
+  height: 50,
+  top: 0,
+  left: 0,
+  bottom: 50,
+  right: 200,
+  x: 0,
+  y: 0,
+  toJSON: () => {},
+});
 
 // @ts-expect-error - Mocking global
 global.Audio = MockAudio;
@@ -63,8 +102,13 @@ describe('VoiceNotePlayer', () => {
   it('should toggle between play and pause', async () => {
     render(<VoiceNotePlayer {...defaultProps} />);
 
+    // Wait for audio initialization (loadedmetadata fires via queueMicrotask)
     await waitFor(() => {
-      const playButton = screen.getByTitle('Play');
+      expect(screen.getByTitle('Play')).toBeInTheDocument();
+    });
+
+    const playButton = screen.getByTitle('Play');
+    await act(async () => {
       fireEvent.click(playButton);
     });
 
@@ -74,7 +118,7 @@ describe('VoiceNotePlayer', () => {
   });
 
   it('should apply different styles for own messages', async () => {
-    const { container } = render(<VoiceNotePlayer {...defaultProps} isOwn={true} />);
+    render(<VoiceNotePlayer {...defaultProps} isOwn={true} />);
 
     await waitFor(() => {
       const button = screen.getByTitle('Play');
@@ -83,7 +127,7 @@ describe('VoiceNotePlayer', () => {
   });
 
   it('should apply different styles for other messages', async () => {
-    const { container } = render(<VoiceNotePlayer {...defaultProps} isOwn={false} />);
+    render(<VoiceNotePlayer {...defaultProps} isOwn={false} />);
 
     await waitFor(() => {
       const button = screen.getByTitle('Play');

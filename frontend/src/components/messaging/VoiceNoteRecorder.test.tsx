@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import VoiceNoteRecorder from './VoiceNoteRecorder';
 
-// Mock MediaRecorder
+// Mock MediaRecorder (plain class — not affected by mockReset)
 class MockMediaRecorder {
-  static isTypeSupported = vi.fn().mockReturnValue(true);
+  static isTypeSupported = (_mimeType: string) => true;
   ondataavailable: ((event: { data: Blob }) => void) | null = null;
   onstop: (() => void) | null = null;
   state = 'inactive';
@@ -30,27 +30,16 @@ class MockMediaRecorder {
   }
 }
 
-// Mock navigator.mediaDevices
-Object.defineProperty(navigator, 'mediaDevices', {
-  value: {
-    getUserMedia: vi.fn().mockResolvedValue({
-      getTracks: () => [{ stop: vi.fn() }],
-    }),
-  },
-});
-
-// Mock AudioContext
+// Mock AudioContext (plain class)
 class MockAudioContext {
   state = 'running';
-  createMediaStreamSource = vi.fn().mockReturnValue({
-    connect: vi.fn(),
-  });
-  createAnalyser = vi.fn().mockReturnValue({
+  createMediaStreamSource = () => ({ connect: () => {} });
+  createAnalyser = () => ({
     fftSize: 256,
     frequencyBinCount: 128,
-    getByteFrequencyData: vi.fn(),
+    getByteFrequencyData: () => {},
   });
-  close = vi.fn();
+  close = () => {};
 }
 
 // @ts-expect-error - Mocking global
@@ -58,12 +47,33 @@ global.MediaRecorder = MockMediaRecorder;
 // @ts-expect-error - Mocking global
 global.AudioContext = MockAudioContext;
 
+// Mock URL.createObjectURL
+global.URL.createObjectURL = () => 'blob:mock-url';
+global.URL.revokeObjectURL = () => {};
+
+// Mock requestAnimationFrame
+global.requestAnimationFrame = (cb: FrameRequestCallback) => {
+  return setTimeout(() => cb(0), 0) as unknown as number;
+};
+global.cancelAnimationFrame = (id: number) => clearTimeout(id);
+
 describe('VoiceNoteRecorder', () => {
   const mockOnSend = vi.fn();
   const mockOnCancel = vi.fn();
 
+  const mockStream = {
+    getTracks: () => [{ stop: () => {} }],
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
+    // Re-establish getUserMedia mock (survives mockReset)
+    Object.defineProperty(navigator, 'mediaDevices', {
+      writable: true,
+      value: {
+        getUserMedia: () => Promise.resolve(mockStream),
+      },
+    });
   });
 
   afterEach(() => {
@@ -78,24 +88,25 @@ describe('VoiceNoteRecorder', () => {
   });
 
   it('should start recording when record button is clicked', async () => {
-    vi.useFakeTimers();
     render(<VoiceNoteRecorder onSend={mockOnSend} onCancel={mockOnCancel} />);
 
     const recordButton = screen.getByTitle('Record voice message');
-    fireEvent.click(recordButton);
+    await act(async () => {
+      fireEvent.click(recordButton);
+    });
 
     await waitFor(() => {
       expect(screen.getByTitle('Stop recording')).toBeInTheDocument();
     });
-
-    vi.useRealTimers();
   });
 
   it('should show cancel button during recording', async () => {
     render(<VoiceNoteRecorder onSend={mockOnSend} onCancel={mockOnCancel} />);
 
     const recordButton = screen.getByTitle('Record voice message');
-    fireEvent.click(recordButton);
+    await act(async () => {
+      fireEvent.click(recordButton);
+    });
 
     await waitFor(() => {
       expect(screen.getByTitle('Cancel')).toBeInTheDocument();
@@ -107,7 +118,9 @@ describe('VoiceNoteRecorder', () => {
 
     // Start recording
     const recordButton = screen.getByTitle('Record voice message');
-    fireEvent.click(recordButton);
+    await act(async () => {
+      fireEvent.click(recordButton);
+    });
 
     await waitFor(() => {
       expect(screen.getByTitle('Cancel')).toBeInTheDocument();
