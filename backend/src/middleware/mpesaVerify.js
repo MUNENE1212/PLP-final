@@ -164,6 +164,11 @@ const validateCallbackStructure = (body) => {
     return { valid: true };
   }
 
+  // C2B validation/confirmation callbacks
+  if (body.TransactionType && body.TransID && body.MSISDN) {
+    return { valid: true };
+  }
+
   return { valid: false, error: 'Unrecognized callback structure' };
 };
 

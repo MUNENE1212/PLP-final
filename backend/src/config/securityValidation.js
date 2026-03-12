@@ -20,6 +20,7 @@ const REQUIRED_VARS = {
     'JWT_REFRESH_SECRET',
     'MONGODB_URI',
     'MPESA_CALLBACK_SECRET',
+    'ENCRYPTION_KEY',
   ],
   development: [], // No required vars in development
   test: [], // No required vars in test
@@ -59,6 +60,12 @@ const NO_DEFAULT_VALUES = {
     'default',
     'example',
     'callback',
+  ],
+  ENCRYPTION_KEY: [
+    'test',
+    'default',
+    'example',
+    'your-32-byte',
   ],
 };
 

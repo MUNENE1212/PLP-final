@@ -279,36 +279,73 @@ exports.validationUrl = async (req, res) => {
       timestamp: new Date().toISOString(),
     });
 
-    const { TransactionType, TransID, TransTime, TransAmount, BusinessShortCode, BillRefNumber, InvoiceNumber, OrgAccountBalance, ThirdPartyTransID, MSISDN, FirstName, MiddleName, LastName } = req.body;
+    const { TransID, TransAmount, BillRefNumber, MSISDN } = req.body;
 
-    // Validate the transaction
-    // You can add custom validation logic here
-    // For example, verify the BillRefNumber corresponds to a valid booking
+    // Validate: BillRefNumber must match an existing booking
+    const booking = await Booking.findOne({ bookingNumber: BillRefNumber });
 
-    // Accept all valid transactions (return ResultCode 0)
-    // Reject invalid transactions (return ResultCode 1)
-    const isValid = true; // Add your validation logic
-
-    if (isValid) {
-      logger.info('Validation accepted', { transId: TransID, billRef: BillRefNumber });
-      return res.status(200).json({
-        ResultCode: 0,
-        ResultDesc: 'Accepted',
-        ThirdPartyTransID: TransID,
+    if (!booking) {
+      logger.warn('Validation rejected: no matching booking', {
+        transId: TransID,
+        billRef: BillRefNumber,
       });
-    } else {
-      logger.warn('Validation rejected', { transId: TransID, billRef: BillRefNumber });
       return res.status(200).json({
         ResultCode: 1,
-        ResultDesc: 'Rejected - Invalid reference',
+        ResultDesc: 'Rejected - Invalid booking reference',
         ThirdPartyTransID: TransID,
       });
     }
-  } catch (error) {
-    logger.error('Validation URL error', { error: error.message });
+
+    // Validate: booking must be in a payable state
+    const payableStatuses = ['pending', 'matching', 'assigned', 'accepted', 'payment_pending'];
+    if (!payableStatuses.includes(booking.status)) {
+      logger.warn('Validation rejected: booking not in payable state', {
+        transId: TransID,
+        billRef: BillRefNumber,
+        bookingStatus: booking.status,
+      });
+      return res.status(200).json({
+        ResultCode: 1,
+        ResultDesc: 'Rejected - Booking not in payable state',
+        ThirdPartyTransID: TransID,
+      });
+    }
+
+    // Validate: amount must match booking fee (1 KES tolerance for rounding)
+    const expectedAmount = booking.bookingFee?.amount;
+    if (expectedAmount != null) {
+      const paidAmount = parseFloat(TransAmount);
+      if (Math.abs(paidAmount - expectedAmount) > 1) {
+        logger.warn('Validation rejected: amount mismatch', {
+          transId: TransID,
+          billRef: BillRefNumber,
+          expected: expectedAmount,
+          received: paidAmount,
+        });
+        return res.status(200).json({
+          ResultCode: 1,
+          ResultDesc: 'Rejected - Amount mismatch',
+          ThirdPartyTransID: TransID,
+        });
+      }
+    }
+
+    logger.info('Validation accepted', {
+      transId: TransID,
+      billRef: BillRefNumber,
+      amount: TransAmount,
+    });
     return res.status(200).json({
       ResultCode: 0,
       ResultDesc: 'Accepted',
+      ThirdPartyTransID: TransID,
+    });
+  } catch (error) {
+    logger.error('Validation URL error', { error: error.message });
+    // Reject on error — do not accept payments we cannot validate
+    return res.status(200).json({
+      ResultCode: 1,
+      ResultDesc: 'Rejected - Validation error',
     });
   }
 };

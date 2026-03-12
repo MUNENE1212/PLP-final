@@ -56,7 +56,7 @@ router.post('/b2c-callback', mpesaCallbackVerify, b2cCallback);
  * @access  Public (M-Pesa servers only)
  * @note    Used to validate incoming C2B payments before they are processed
  */
-router.post('/validation', validationUrl);
+router.post('/validation', mpesaCallbackVerify, validationUrl);
 
 /**
  * @route   POST /api/v1/mpesa/webhooks/confirmation
@@ -64,7 +64,7 @@ router.post('/validation', validationUrl);
  * @access  Public (M-Pesa servers only)
  * @note    Used to confirm successful C2B payments
  */
-router.post('/confirmation', confirmationUrl);
+router.post('/confirmation', mpesaCallbackVerify, confirmationUrl);
 
 /**
  * @route   POST /api/v1/mpesa/webhooks/balance-callback

@@ -2,6 +2,10 @@ const cloudinaryService = require('../services/cloudinary.service');
 const multer = require('multer');
 const User = require('../models/User');
 const Post = require('../models/Post');
+const Booking = require('../models/Booking');
+const Portfolio = require('../models/Portfolio');
+const TechnicianService = require('../models/TechnicianService');
+const Message = require('../models/Message');
 
 // Configure multer for memory storage
 const storage = multer.memoryStorage();
@@ -185,18 +189,67 @@ exports.uploadBookingPhotos = async (req, res) => {
 };
 
 /**
- * Delete file from Cloudinary
+ * Delete file from Cloudinary with ownership verification
  */
 exports.deleteFile = async (req, res) => {
   try {
     const { publicId } = req.params;
     const { resourceType = 'image' } = req.query;
+    const userId = req.user.id;
+    const userRole = req.user.role;
 
     if (!publicId) {
       return res.status(400).json({
         success: false,
         message: 'Public ID is required',
       });
+    }
+
+    // Admin and support roles bypass ownership check
+    if (userRole !== 'admin' && userRole !== 'support') {
+      // Search all models that store publicIds to verify ownership
+      const [post, booking, userDoc, portfolio, techService, message] = await Promise.all([
+        Post.findOne({ 'media.publicId': publicId }),
+        Booking.findOne({
+          $or: [
+            { 'images.publicId': publicId },
+            { 'completionMedia.publicId': publicId },
+          ],
+        }),
+        User.findOne({ 'workGalleryImages.publicId': publicId }),
+        Portfolio.findOne({ 'images.publicId': publicId }),
+        TechnicianService.findOne({ 'portfolioImages.publicId': publicId }),
+        Message.findOne({ 'attachments.publicId': publicId }),
+      ]);
+
+      let isOwner = false;
+
+      if (post) {
+        isOwner = post.author.toString() === userId;
+      } else if (booking) {
+        isOwner = booking.customer.toString() === userId ||
+                  (booking.technician && booking.technician.toString() === userId);
+      } else if (userDoc) {
+        isOwner = userDoc._id.toString() === userId;
+      } else if (portfolio) {
+        isOwner = portfolio.technician.toString() === userId;
+      } else if (techService) {
+        isOwner = techService.technician.toString() === userId;
+      } else if (message) {
+        isOwner = message.sender.toString() === userId;
+      } else {
+        return res.status(404).json({
+          success: false,
+          message: 'File not found',
+        });
+      }
+
+      if (!isOwner) {
+        return res.status(403).json({
+          success: false,
+          message: 'You do not have permission to delete this file',
+        });
+      }
     }
 
     await cloudinaryService.deleteFile(publicId, resourceType);

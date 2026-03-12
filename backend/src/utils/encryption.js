@@ -1,26 +1,36 @@
 const crypto = require('crypto');
 
-// Get encryption key from environment or generate a default one for development
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || crypto.randomBytes(32); // Must be 32 bytes for AES-256
 const IV_LENGTH = 16; // For AES, this is always 16
+const isProduction = process.env.NODE_ENV === 'production';
 
-// Convert to buffer if it's a hex string and ensure consistent usage
+// Resolve encryption key with fail-fast in production
 let encryptionKeyBuffer;
-if (typeof ENCRYPTION_KEY === 'string') {
-  try {
-    encryptionKeyBuffer = Buffer.from(ENCRYPTION_KEY, 'hex');
 
-    // Validate key length is exactly 32 bytes for AES-256
+if (process.env.ENCRYPTION_KEY) {
+  try {
+    encryptionKeyBuffer = Buffer.from(process.env.ENCRYPTION_KEY, 'hex');
+
     if (encryptionKeyBuffer.length !== 32) {
-      console.warn('⚠️  Encryption key must be 32 bytes (64 hex chars), using fallback key');
-      encryptionKeyBuffer = crypto.randomBytes(32);
+      throw new Error(
+        'ENCRYPTION_KEY must be exactly 32 bytes (64 hex chars). ' +
+        'Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"'
+      );
     }
   } catch (error) {
-    console.warn('⚠️  Error with encryption key, using fallback key');
-    encryptionKeyBuffer = crypto.randomBytes(32);
+    if (error.message.includes('ENCRYPTION_KEY must be')) throw error;
+    throw new Error(
+      'ENCRYPTION_KEY is not valid hex. ' +
+      'Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"'
+    );
   }
+} else if (isProduction) {
+  throw new Error(
+    'ENCRYPTION_KEY is required in production. ' +
+    'Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"'
+  );
 } else {
-  encryptionKeyBuffer = ENCRYPTION_KEY;
+  console.warn('⚠️  ENCRYPTION_KEY not set — using random key (data will not persist across restarts)');
+  encryptionKeyBuffer = crypto.randomBytes(32);
 }
 
 // Export the key buffer for consistent usage

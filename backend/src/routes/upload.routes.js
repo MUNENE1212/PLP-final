@@ -24,7 +24,7 @@ router.post('/post-media', protect, uploadMultiple, uploadPostMedia);
 // Upload booking/work photos
 router.post('/booking/:bookingId/photos', protect, uploadMultiple, uploadBookingPhotos);
 
-// Delete file
-router.delete('/file/:fileId', protect, deleteFile);
+// Delete file (wildcard needed because Cloudinary publicIds contain '/')
+router.delete('/file/:publicId(*)', protect, deleteFile);
 
 module.exports = router;
